@@ -66,8 +66,7 @@ main                        # 生产环境（受保护）
 │   └──feat/xxx      # 功能分支
 │      ├── fix/xxx       # 修复分支
 │      └── refactor/xxx  # 重构分支
-├── docs/xxx                # 文档分支
-└── hotfix/xxx              # 紧急修复（从 main 创建）
+└── docs/xxx                # 文档分支
 ```
 
 ### 4.2 分支保护
