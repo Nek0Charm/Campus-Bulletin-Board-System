@@ -1,0 +1,17 @@
+{
+	"devDependencies": {
+		"husky": "^9.1.7",
+		"lint-staged": "^15.5.2"
+	},
+	"scripts": {
+		"prepare": "husky",
+		"format": "uvx black backend",
+		"lint": "uvx ruff check backend"
+	},
+	"lint-staged": {
+		"backend/**/*.py": [
+			"uvx black",
+			"uvx ruff check --fix"
+		]
+	}
+}
