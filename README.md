@@ -62,3 +62,47 @@ pnpm run lint    # backend 静态检查（等效于在 backend/ 目录 uvx ruff 
 - Redis: `localhost:6379`
 
 > 当前仓库中的 `frontend/` 仅保留占位文件。
+
+## 工作流程
+> 详见 docs/DevelopmentSpecification.md
+```
+# 1. 从 develop 创建功能分支
+git checkout develop
+git pull origin develop
+git checkout -b feat/user-crud-0401
+
+# 2. 开发并提交
+git add .
+git commit -m "feat(user): add user CRUD API"
+git push origin feat/user-crud-0401
+
+# 3. 合并到 develop（所有组员）
+git checkout develop
+git merge feat/user-crud-0401 --no-ff
+git push origin develop
+
+# 5. develop → main（组长协商后执行）
+```
+
+如何快速更改文档：
+```bash
+# 1. 在docs/xxx 分支提交修改
+git checkout docs/readme-update-xxxx
+git add README.md
+git commit -m "docs: update README"
+git push origin docs/readme-update-xxxx
+
+# 2. 提交 PR 将 docs/xxx 合并到 develop （在github操作）
+```
+
+开发时需要同步其他人的更改：
+```bash
+# 1. 拉取远程仓库
+git fetch origin
+
+# 2. 切换到当前工作分支
+git checkout feat/xxxx
+
+# 3. 合并 develop 分支的更改
+git merge origin/develop
+```
