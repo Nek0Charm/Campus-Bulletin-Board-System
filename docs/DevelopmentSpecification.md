@@ -7,7 +7,7 @@
 | 项目信息 | 详情 |
 | :------- | :--- |
 | 名称 | Campus Bulletin Board System (校园论坛) |
-| 仓库 | https://github.com/Nek0Charm/Campus-Bulletin-Board-System- |
+| 仓库 | https://github.com/Nek0Charm/Campus-Bulletin-Board-System |
 | 描述 | 一个面向大学校园的在线论坛系统，提供用户注册、发帖、评论、点赞等功能|
 
 
