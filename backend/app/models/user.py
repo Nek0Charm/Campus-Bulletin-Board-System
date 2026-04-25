@@ -25,6 +25,7 @@ class User(Base, IDMixin, TimestampMixin):
     email: Mapped[str] = mapped_column(String(255), unique=True, nullable=False)
     password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
     nickname: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
+    # 昵称是对外展示给其他用户看的，可以为空
     avatar_url: Mapped[Optional[str]] = mapped_column(String(1024), nullable=True)
     role: Mapped[str] = mapped_column(String(20), nullable=False, default="user")
     status: Mapped[str] = mapped_column(String(20), nullable=False, default="active")

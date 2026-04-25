@@ -9,9 +9,12 @@ FastAPI 应用入口，负责创建 app 实例并注册路由。
 
 """
 
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 
 from app.config import get_settings
+from app.database import init_db
 from app.routers import admin
 from app.routers import auth
 from app.routers import boards
@@ -23,7 +26,18 @@ from app.routers import users
 
 settings = get_settings()
 
-app = FastAPI(title=settings.PROJECT_NAME, version=settings.VERSION)
+"""
+约等于 on_startup 和 on_shutdown 的组合，我也不清楚为什么这样写，但ai会
+"""
+
+
+@asynccontextmanager
+async def lifespan(_: FastAPI):
+    init_db()
+    yield
+
+
+app = FastAPI(title=settings.PROJECT_NAME, version=settings.VERSION, lifespan=lifespan)
 
 app.include_router(auth.router, prefix=settings.API_PREFIX)
 app.include_router(users.router, prefix=settings.API_PREFIX)
