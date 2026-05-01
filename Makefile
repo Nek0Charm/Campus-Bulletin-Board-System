@@ -6,7 +6,7 @@ FRONTEND_DIR ?= frontend
 BACKEND_DEV_CMD ?= uv run uvicorn app.main:app --reload
 FRONTEND_DEV_CMD ?= pnpm run dev
 
-.PHONY: help deps-up deps-down deps-logs deps-ps deps-reset-db backend frontend dev format lint
+.PHONY: help deps-up deps-down deps-logs deps-ps deps-reset-db backend frontend dev format lint migration-new migrate migrate-rollback migrate-history
 
 help:
 	@echo "可用命令："
@@ -17,6 +17,10 @@ help:
 	@echo "  make backend                      # 启动后端（默认: uv run uvicorn app.main:app --reload）"
 	@echo "  make frontend                     # 启动前端（默认: pnpm run dev）"
 	@echo "  make dev                          # 先启动依赖服务，再给出前后端启动提示"
+	@echo "  make migration-new msg=\"...\"       # 自动生成新迁移"
+	@echo "  make migrate                      # 执行所有待处理的迁移"
+	@echo "  make migrate-rollback             # 回滚最近一次迁移"
+	@echo "  make migrate-history              # 查看迁移历史"
 
 deps-up:
 	@$(COMPOSE) up -d postgres redis
@@ -52,3 +56,15 @@ format:
  
 lint:
 	@cd $(BACKEND_DIR) && uvx ruff check .
+
+migration-new:
+	@cd $(BACKEND_DIR) && uv run alembic revision --autogenerate -m "$(msg)"
+
+migrate:
+	@cd $(BACKEND_DIR) && uv run alembic upgrade head
+
+migrate-rollback:
+	@cd $(BACKEND_DIR) && uv run alembic downgrade -1
+
+migrate-history:
+	@cd $(BACKEND_DIR) && uv run alembic history
