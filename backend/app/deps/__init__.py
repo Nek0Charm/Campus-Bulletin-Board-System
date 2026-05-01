@@ -11,6 +11,7 @@ from app.deps.auth import get_current_user
 from app.deps.auth import require_admin
 from app.deps.db import get_db
 from app.deps.services import get_auth_service
+from app.deps.services import get_user_service
 
 __all__ = [
     "get_db",
@@ -19,4 +20,5 @@ __all__ = [
     "get_current_user",
     "require_admin",
     "get_auth_service",
+    "get_user_service",
 ]
