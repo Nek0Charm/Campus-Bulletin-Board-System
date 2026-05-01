@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
@@ -36,9 +38,11 @@ class UserService:
         return self.get_profile(user)
 
     def get_public_profile(self, db: Session, user_id: str) -> UserPublicData:
-        user = (
-            db.query(User).filter(User.id == user_id, User.deleted_at.is_(None)).first()
-        )
+        try:
+            uid = UUID(user_id)
+        except ValueError:
+            raise HTTPException(status_code=404, detail="User not found")
+        user = db.query(User).filter(User.id == uid, User.deleted_at.is_(None)).first()
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
         return UserPublicData(
@@ -79,9 +83,11 @@ class UserService:
     def update_status(
         self, db: Session, user_id: str, payload: UpdateUserStatusRequest
     ) -> AdminUserData:
-        user = (
-            db.query(User).filter(User.id == user_id, User.deleted_at.is_(None)).first()
-        )
+        try:
+            uid = UUID(user_id)
+        except ValueError:
+            raise HTTPException(status_code=404, detail="User not found")
+        user = db.query(User).filter(User.id == uid, User.deleted_at.is_(None)).first()
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
         user.status = payload.status
