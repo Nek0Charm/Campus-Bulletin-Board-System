@@ -15,6 +15,9 @@ from app.schemas.auth import LoginRequest
 from app.schemas.auth import LogoutData
 from app.schemas.auth import RegisterData
 from app.schemas.auth import RegisterRequest
+from app.schemas.auth import ResetPasswordData
+from app.schemas.auth import ResetPasswordRequest
+from app.utils.redis import blacklist_token
 from app.utils.security import hash_password
 from app.utils.security import verify_password
 
@@ -94,5 +97,23 @@ class AuthService:
             ),
         )
 
-    def logout(self) -> LogoutData:
+    def logout(self, token: str) -> LogoutData:
+        payload = jwt.decode(
+            token, settings.JWT_SECRET, algorithms=[settings.JWT_ALGORITHM]
+        )
+        exp = int(payload.get("exp", 0))
+        now = int(datetime.now(timezone.utc).timestamp())
+        ttl = max(exp - now, 0)
+        if ttl > 0:
+            blacklist_token(token, ttl)
         return LogoutData(message="logout success")
+
+    def reset_password(
+        self, db: Session, user: User, payload: ResetPasswordRequest
+    ) -> ResetPasswordData:
+        if not verify_password(payload.old_password, user.password_hash):
+            raise HTTPException(status_code=401, detail="Old password is incorrect")
+        user.password_hash = hash_password(payload.new_password)
+        db.add(user)
+        db.commit()
+        return ResetPasswordData(message="password reset success")

@@ -5,7 +5,6 @@ Auth 路由集成测试：register / login / logout
 通过 override_deps 注入测试数据库 session 和 auth service。
 """
 
-
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
@@ -286,6 +285,116 @@ def test_login_updates_last_login_at(client, db_session):
 
 
 def test_logout(client):
-    resp = client.post(f"{API_PREFIX}/logout")
+    _register_user(client, "logoutuser", "logout@example.com")
+    login_resp = client.post(
+        f"{API_PREFIX}/login",
+        json={"account": "logoutuser", "password": "securepass123"},
+    )
+    token = login_resp.json()["data"]["access_token"]
+
+    resp = client.post(
+        f"{API_PREFIX}/logout",
+        headers={"Authorization": f"Bearer {token}"},
+    )
     assert resp.status_code == 200
     assert resp.json()["data"]["message"] == "logout success"
+
+
+def test_logout_blacklists_token(client):
+    _register_user(client, "bluser", "bl@example.com")
+    login_resp = client.post(
+        f"{API_PREFIX}/login",
+        json={"account": "bluser", "password": "securepass123"},
+    )
+    token = login_resp.json()["data"]["access_token"]
+
+    client.post(
+        f"{API_PREFIX}/logout",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+
+    resp = client.post(
+        f"{API_PREFIX}/reset-password",
+        json={"old_password": "securepass123", "new_password": "newpass12345"},
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert resp.status_code == 401
+    assert "revoked" in resp.json()["detail"]
+
+
+def test_logout_requires_auth(client):
+    resp = client.post(f"{API_PREFIX}/logout")
+    assert resp.status_code == 401
+
+
+# ---------- reset-password 测试 ----------
+
+
+def test_reset_password_success(client):
+    _register_user(client, "resetuser", "reset@example.com")
+    login_resp = client.post(
+        f"{API_PREFIX}/login",
+        json={"account": "resetuser", "password": "securepass123"},
+    )
+    token = login_resp.json()["data"]["access_token"]
+
+    resp = client.post(
+        f"{API_PREFIX}/reset-password",
+        json={"old_password": "securepass123", "new_password": "newpass12345"},
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert resp.status_code == 200
+    assert resp.json()["data"]["message"] == "password reset success"
+
+    resp = client.post(
+        f"{API_PREFIX}/login",
+        json={"account": "resetuser", "password": "securepass123"},
+    )
+    assert resp.status_code == 401
+
+    resp = client.post(
+        f"{API_PREFIX}/login",
+        json={"account": "resetuser", "password": "newpass12345"},
+    )
+    assert resp.status_code == 200
+
+
+def test_reset_password_wrong_old_password(client):
+    _register_user(client, "wrongold", "wrongold@example.com")
+    login_resp = client.post(
+        f"{API_PREFIX}/login",
+        json={"account": "wrongold", "password": "securepass123"},
+    )
+    token = login_resp.json()["data"]["access_token"]
+
+    resp = client.post(
+        f"{API_PREFIX}/reset-password",
+        json={"old_password": "wrongpassword1", "new_password": "newpass12345"},
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert resp.status_code == 401
+    assert "incorrect" in resp.json()["detail"].lower()
+
+
+def test_reset_password_short_new_password(client):
+    _register_user(client, "shortnew", "shortnew@example.com")
+    login_resp = client.post(
+        f"{API_PREFIX}/login",
+        json={"account": "shortnew", "password": "securepass123"},
+    )
+    token = login_resp.json()["data"]["access_token"]
+
+    resp = client.post(
+        f"{API_PREFIX}/reset-password",
+        json={"old_password": "securepass123", "new_password": "1234567"},
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert resp.status_code == 422
+
+
+def test_reset_password_requires_auth(client):
+    resp = client.post(
+        f"{API_PREFIX}/reset-password",
+        json={"old_password": "securepass123", "new_password": "newpass12345"},
+    )
+    assert resp.status_code == 401

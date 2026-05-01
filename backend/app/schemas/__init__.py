@@ -12,6 +12,8 @@ from app.schemas.auth import LoginRequest
 from app.schemas.auth import LogoutData
 from app.schemas.auth import RegisterData
 from app.schemas.auth import RegisterRequest
+from app.schemas.auth import ResetPasswordData
+from app.schemas.auth import ResetPasswordRequest
 
 __all__ = [
     "RegisterRequest",
@@ -20,4 +22,6 @@ __all__ = [
     "RegisterData",
     "LoginData",
     "LogoutData",
+    "ResetPasswordRequest",
+    "ResetPasswordData",
 ]

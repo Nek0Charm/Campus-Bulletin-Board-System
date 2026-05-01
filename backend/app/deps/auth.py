@@ -12,6 +12,7 @@ from sqlalchemy.orm import Session
 from app.config import get_settings
 from app.deps.db import get_db
 from app.models import User
+from app.utils.redis import is_token_blacklisted
 
 settings = get_settings()
 
@@ -40,6 +41,8 @@ def decode_access_token(token: str) -> dict[str, object]:
 def get_current_user(
     token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)
 ) -> User:
+    if is_token_blacklisted(token):
+        raise HTTPException(status_code=401, detail="Token has been revoked")
     payload = decode_access_token(token)
     try:
         user_id = UUID(str(payload.get("sub")))
