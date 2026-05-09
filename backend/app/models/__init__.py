@@ -10,10 +10,7 @@ from app.models.base import Base
 from app.models.base import IDMixin
 from app.models.base import TimestampMixin
 from app.models.user import User
+from app.models.post import Post
+from app.models.board import Board
 
-__all__ = [
-    "Base",
-    "IDMixin",
-    "TimestampMixin",
-    "User",
-]
+__all__ = ["Base", "IDMixin", "TimestampMixin", "User", "Base", "User", "Post", "Board"]

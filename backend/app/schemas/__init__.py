@@ -19,6 +19,8 @@ from app.schemas.user import UpdateProfileRequest
 from app.schemas.user import UpdateUserStatusRequest
 from app.schemas.user import UserProfileData
 from app.schemas.user import UserPublicData
+from app.schemas.post import PostCreate, PostUpdate, PostRead, PostListResponse
+from app.schemas.board import BoardRead, BoardCreate
 
 __all__ = [
     "RegisterRequest",
@@ -34,4 +36,10 @@ __all__ = [
     "UserPublicData",
     "AdminUserData",
     "UpdateUserStatusRequest",
+    "PostCreate",
+    "PostUpdate",
+    "PostRead",
+    "PostListResponse",
+    "BoardRead",
+    "BoardCreate",
 ]
