@@ -1,0 +1,16 @@
+stateDiagram-v2
+    [*] --> active: 注册成功
+    active --> active: 登录 / 操作
+    active --> banned: 管理员封禁
+    active --> inactive: 长期未登录(预留)
+    banned --> active: 管理员解封
+    inactive --> active: 下次登录
+    active --> [*]: 注销账号(软删除)
+    note right of active
+        正常状态
+        可发帖、评论、点赞
+    end note
+    note right of banned
+        封禁状态
+        拒绝所有操作 (403)
+    end note

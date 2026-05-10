@@ -1,0 +1,136 @@
+classDiagram
+    direction TB
+
+    class Base {
+        <<DeclarativeBase>>
+    }
+
+    class IDMixin {
+        +UUID id PK
+    }
+
+    class TimestampMixin {
+        +datetime created_at
+        +datetime updated_at
+        +datetime? deleted_at
+    }
+
+    class User {
+        +str username UK
+        +str email UK
+        +str password_hash
+        +str? nickname
+        +str? avatar_url
+        +str role
+        +str status
+        +datetime? last_login_at
+    }
+
+    class Board {
+        +str name UK
+        +str slug UK
+        +str? description
+        +int sort_order
+        +bool is_active
+        +UUID created_by FK
+    }
+
+    class Post {
+        +UUID board_id FK
+        +UUID author_id FK
+        +str title
+        +jsonb? content_json
+        +str status
+        +bool is_pinned
+        +bool is_featured
+        +bigint like_count
+        +bigint comment_count
+        +bigint view_count
+        +datetime? published_at
+    }
+
+    class Comment {
+        +UUID post_id FK
+        +UUID author_id FK
+        +UUID? parent_comment_id FK
+        +UUID? root_comment_id FK
+        +jsonb? content_json
+        +str status
+        +bigint like_count
+        +bigint reply_count
+    }
+
+    class Notification {
+        +UUID recipient_id FK
+        +UUID? actor_id FK
+        +str type
+        +str title
+        +str content
+        +str? related_type
+        +UUID? related_id
+        +bool is_read
+        +datetime? read_at
+    }
+
+    class Settings {
+        +str PROJECT_NAME
+        +str VERSION
+        +str API_PREFIX
+        +str DATABASE_URL
+        +str REDIS_HOST
+        +int REDIS_PORT
+        +str JWT_SECRET
+        +str JWT_ALGORITHM
+        +int JWT_ACCESS_TOKEN_EXPIRE_MINUTES
+    }
+
+    class AuthService {
+        +register(db, payload) RegisterData
+        +login(db, payload) LoginData
+        +logout(token) LogoutData
+        +reset_password(db, user, payload) ResetPasswordData
+    }
+
+    class UserService {
+        +get_profile(user) UserProfileData
+        +update_profile(db, user, payload) UserProfileData
+        +get_public_profile(db, user_id) UserPublicData
+        +list_users(db, page, page_size) tuple
+        +update_status(db, user_id, payload) AdminUserData
+    }
+
+    class ApiResponse~T~ {
+        +int code
+        +str message
+        +T? data
+        +str? request_id
+    }
+
+    class PaginatedResponse~T~ {
+        +int code
+        +str message
+        +PaginatedData~T~ data
+    }
+
+    Base <|-- User
+    Base <|-- Board
+    Base <|-- Post
+    Base <|-- Comment
+    Base <|-- Notification
+    IDMixin <|-- User
+    IDMixin <|-- Board
+    IDMixin <|-- Post
+    IDMixin <|-- Comment
+    IDMixin <|-- Notification
+    TimestampMixin <|-- User
+    TimestampMixin <|-- Board
+    TimestampMixin <|-- Post
+    TimestampMixin <|-- Comment
+
+    User "1" --> "*" Post : author
+    Board "1" --> "*" Post : contains
+    Post "1" --> "*" Comment : has
+    User "1" --> "*" Comment : author
+    Comment "1" --> "*" Comment : reply
+    User "1" --> "*" Notification : recipient
+    User "1" --> "*" Notification : actor
