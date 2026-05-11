@@ -15,7 +15,7 @@
 
 ### 2.1 前端技术
 
-React or Vue，未定，但需使用 typescript 开发，并用 pnpm 管理
+Vue 3 + TypeScript，使用 pnpm 管理
 
 ### 2.2 后端技术
 
