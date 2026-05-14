@@ -6,7 +6,7 @@
 
 | 层 | 技术 |
 | --- | --- |
-| 前端 | TypeScript（React / Vue 待定），pnpm |
+| 前端 | Vue 3 + TypeScript，pnpm |
 | 后端 | Python、FastAPI、SQLAlchemy、Pydantic、PyJWT、pwdlib |
 | 数据与缓存 | PostgreSQL、Redis |
 | 工程与质量 | Docker Compose、uv、black、ruff、pytest、Husky |

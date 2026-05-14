@@ -1,0 +1,12 @@
+stateDiagram-v2
+    [*] --> unread: 事件触发创建通知
+    unread --> read: 用户点击阅读
+    read --> [*]: 用户删除通知
+    note right of unread
+        is_read = false
+        显示未读红点
+    end note
+    note right of read
+        is_read = true
+        read_at 记录时间
+    end note

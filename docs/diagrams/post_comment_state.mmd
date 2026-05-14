@@ -1,0 +1,18 @@
+stateDiagram-v2
+    direction LR
+    state "帖子状态" as ps {
+        [*] --> draft: 创建(草稿/未发布)
+        draft --> normal: 发布
+        draft --> [*]: 删除草稿
+        normal --> hidden: 管理员隐藏
+        normal --> [*]: 软删除
+        hidden --> normal: 管理员恢复
+        hidden --> [*]: 软删除
+    }
+    state "评论状态" as cs {
+        [*] --> normal: 发布评论
+        normal --> hidden: 管理员隐藏
+        normal --> [*]: 软删除
+        hidden --> normal: 管理员恢复
+        hidden --> [*]: 软删除
+    }

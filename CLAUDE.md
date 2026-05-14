@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Campus Bulletin Board System (校园论坛) — a campus forum with user auth, posts, comments, likes, and notifications. Python >=3.14 backend (FastAPI), frontend not yet initialized.
+Campus Bulletin Board System (校园论坛) — a campus forum with user auth, posts, comments, likes, and notifications. Python >=3.14 backend (FastAPI), Vue 3 + TypeScript frontend (under frontend/).
 
 ## Development Commands
 
@@ -27,11 +27,21 @@ cd backend && uvx black .       # Format (or: pnpm run format from root)
 cd backend && uvx ruff check .  # Lint (or: pnpm run lint from root)
 ```
 
-### Tests
-No tests directory yet. When adding tests, use pytest + httpx inside `backend/tests/`, run with:
+### Database Migrations (Alembic)
 ```bash
-cd backend && uv run pytest
+make migration-new msg="description"   # Generate new migration from model changes
+make migrate                           # Apply pending migrations
+make migrate-rollback                  # Rollback last migration
+make migrate-history                   # View migration history
 ```
+
+### Tests
+Tests use pytest + httpx in `backend/tests/`. Run with:
+```bash
+cd backend && uv run pytest                     # All tests
+cd backend && uv run pytest tests/test_auth.py  # Single file
+```
+Test fixtures (test DB, test client, test user) are in `conftest.py`. Uses `fakeredis` so Redis doesn't need to be running.
 
 ### Git Hooks
 ```bash
@@ -49,8 +59,8 @@ main.py            → FastAPI app, lifespan (calls init_db), registers routers
 models/            → SQLAlchemy ORM models (Base, IDMixin, TimestampMixin in base.py)
 schemas/           → Pydantic request/response schemas (response.py has ApiResponse/PaginatedResponse/ErrorResponse)
 routers/           → FastAPI APIRouter modules (auth, users, boards, posts, comments, likes, notifications, admin)
-services/          → Business logic classes (e.g. AuthService)
-deps/              → FastAPI Depends providers: get_db, get_current_user, require_admin, get_auth_service
+services/          → Business logic classes (auth_service, user_service, post_service)
+deps/              → FastAPI Depends providers: get_db, get_current_user + require_admin (auth), get_*_service (services)
 utils/             → Helpers (security.py: hash_password, verify_password via pwdlib)
 ```
 
