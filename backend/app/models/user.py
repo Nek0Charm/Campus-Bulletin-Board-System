@@ -1,11 +1,15 @@
 from datetime import datetime
-from typing import Optional
+from typing import TYPE_CHECKING, Optional
+
+if TYPE_CHECKING:
+    from app.models.post import Post
 
 from sqlalchemy import CheckConstraint
 from sqlalchemy import DateTime
 from sqlalchemy import String
 from sqlalchemy.orm import Mapped
 from sqlalchemy.orm import mapped_column
+from sqlalchemy.orm import relationship
 
 from app.models.base import Base
 from app.models.base import IDMixin
@@ -30,3 +34,4 @@ class User(Base, IDMixin, TimestampMixin):
     role: Mapped[str] = mapped_column(String(20), nullable=False, default="user")
     status: Mapped[str] = mapped_column(String(20), nullable=False, default="active")
     last_login_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
+    posts: Mapped[list["Post"]] = relationship("Post", back_populates="author")
