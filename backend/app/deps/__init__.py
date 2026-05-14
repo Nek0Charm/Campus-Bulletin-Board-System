@@ -12,6 +12,8 @@ from app.deps.auth import require_admin
 from app.deps.db import get_db
 from app.deps.services import get_auth_service
 from app.deps.services import get_user_service
+from app.deps.services import get_post_service
+from app.deps.services import get_board_service
 
 __all__ = [
     "get_db",
@@ -21,4 +23,6 @@ __all__ = [
     "require_admin",
     "get_auth_service",
     "get_user_service",
+    "get_post_service",
+    "get_board_service",
 ]

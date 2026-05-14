@@ -2,7 +2,7 @@ from typing import List
 from uuid import UUID
 from datetime import datetime, date
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 
@@ -20,12 +20,13 @@ from app.schemas.response import (
     PaginationInfo,
 )
 from app.schemas.user import AdminUserData, UpdateUserStatusRequest
-from app.schemas.admin import AdminStatsResponse, BoardCreate, BoardUpdate, BoardRead
+from app.schemas.admin import AdminStatsResponse
+from app.schemas.board import BoardCreate, BoardUpdate, BoardRead
 from app.services.user_service import UserService
 from app.services.board_service import BoardService
 
 router = APIRouter(
-    prefix="/api/v1/admin",
+    prefix="/admin",
     tags=["Admin"],
     dependencies=[Depends(require_admin)],
 )
@@ -83,7 +84,11 @@ async def admin_list_boards(
     return ApiResponse(data=service.get_all(db))
 
 
-@router.post("/boards", response_model=ApiResponse[BoardRead])
+@router.post(
+    "/boards",
+    response_model=ApiResponse[BoardRead],
+    status_code=status.HTTP_201_CREATED,
+)
 async def admin_create_board(
     payload: BoardCreate,
     db: Session = Depends(get_db),
@@ -107,7 +112,7 @@ async def admin_edit_board(
     return ApiResponse(data=service.update(db, db_obj=board, obj_in=payload))
 
 
-@router.delete("/boards/{id}", response_model=ApiResponse)
+@router.delete("/boards/{id}", status_code=status.HTTP_204_NO_CONTENT)
 async def admin_delete_board(
     id: UUID,
     db: Session = Depends(get_db),
@@ -117,4 +122,3 @@ async def admin_delete_board(
     if not board:
         raise HTTPException(status_code=404, detail="Board not found")
     service.remove(db, db_obj=board)
-    return ApiResponse(message="Board deleted")
