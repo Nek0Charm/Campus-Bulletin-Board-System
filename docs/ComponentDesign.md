@@ -1,6 +1,32 @@
 # 组件设计（详细设计）
 
-> 本文档描述 Campus Bulletin Board System 各子系统内部模块的实现方案，涵盖设计元素确立、核心用例实现、精化类设计与对象状态建模四个部分。
+## 设计任务与过程
+
+### 设计目标与方法
+
+本系统详细设计遵循结构化与面向对象相结合的设计方法（Structured + OO Design），以需求分析文档（`docs/RequirementAnalysis.md`）中定义的 18 个用例和 6 个子系统为输入，自顶向下逐层精化，最终产出包含子系统构件、类规约、状态模型及数据持久化方案的完整设计规约。
+
+### 设计流程
+
+设计活动按以下六个阶段顺序推进，各阶段之间通过设计评审形成反馈闭环：
+
+| 阶段 | 输入 | 输出 | 对应本文档章节 |
+|:---|:---|:---|:---|
+| **用例解析** | 需求用例规约 | 用例实现方案（步骤分解+伪代码） | 第 2 节 |
+| **子系统与构件划分** | 用例实现方案 | 子系统设计元素表、构件规约 | 第 1 节、第 5 节 |
+| **类设计与精化** | 子系统设计元素 | 实体类+控制类属性/方法精化、UML 类图 | 第 3 节 |
+| **状态建模** | 类规约 | 核心对象状态机图及转移规则表 | 第 4 节 |
+| **数据模型设计** | 类规约 | 关系型表结构、ORM 映射策略、索引方案 | 第 6 节 |
+| **设计整合与验证** | 全部设计产物 | 设计评审检查单、测试验证策略 | 第 7 节 |
+
+### 设计原则
+
+本系统设计遵循以下核心原则：
+
+- **高内聚低耦合**：每个子系统仅负责单一业务边界内的事务；层间通过接口（FastAPI Depends）解耦，上层不感知下层实现细节。
+- **单一职责**：Router 仅负责 HTTP 协议适配，Service 负责业务规则，Model 负责持久化映射，各层职责不交叉。
+- **开闭原则**：通过 Mixin 模式（`IDMixin`、`TimestampMixin`）扩展实体，新增实体无需修改基类。
+- **依赖倒置**：Router 依赖 Service 抽象（通过依赖注入工厂），不直接实例化具体类。
 
 ---
 
@@ -21,7 +47,7 @@
 
 ### 1.2 帖子管理子系统的设计元素
 
-以"帖子管理子系统"为例，依据 9.3 节的设计元素确立方法，识别出以下核心设计元素。
+以"帖子管理子系统"为例，通过分析其在三层架构中的位置与协作关系，识别出以下核心设计元素。
 
 **控制层元素：**
 
@@ -933,3 +959,175 @@ stateDiagram-v2
 ```
 
 **图注**：通知状态机的设计要点在于"写时创建、读时标记"的异步模式——通知的创建由 CommentService 和 LikeService 在完成业务操作后以同步方式调用 `NotificationService.create()` 完成，确保通知不丢失；而已读标记由前端用户交互驱动。通知不设软删除的 `deleted_at` 中间态，因为通知数据不具备恢复价值，用户删除即为物理删除。
+
+---
+
+## 5. 独立构件设计
+
+独立构件（Standalone Component）是指不专属于任一业务子系统、可被多个模块复用的通用组件。本系统识别并设计了以下五类独立构件，遵循"高内聚、接口稳定、可替换"的构件设计原则。
+
+### 5.1 ORM 基础构件：IDMixin 与 TimestampMixin
+
+**设计动机**：系统中所有实体均需主键（UUID）和时间戳（创建/更新/删除），若每个实体重复定义将导致大量代码冗余。采用 Mixin 模式将通用字段提取为独立构件，任何新增实体通过多重继承即可复用。
+
+**构件规约**：
+
+| 构件 | 文件 | 提供能力 | 接口 |
+|:---|:---|:---|:---|
+| `IDMixin` | `models/base.py` | 为实体注入 UUID 主键 | `id: Mapped[UUID]` — PK，默认值 `uuid.uuid4()` |
+| `TimestampMixin` | `models/base.py` | 为实体注入生命周期时间戳 | `created_at: datetime(tz)` — 服务端默认 `now()`；`updated_at: datetime(tz)` — 自动 `onupdate=now()`；`deleted_at: datetime(tz) \| None` — 软删除标记 |
+
+**复用方式**：实体类声明为 `class Entity(Base, IDMixin, TimestampMixin)` 即可获得全部字段，无需编写额外代码。当前所有 ORM 实体（User、Board、Post、Comment）均复用此构件。
+
+### 5.2 密码安全构件：PasswordHasher
+
+**设计动机**：密码哈希与验证是认证子系统的核心安全操作，使用业界推荐的 Argon2 算法。将其封装为独立构件而非内嵌于 AuthService，确保：(a) 算法升级时仅需修改一处；(b) 禁止其他模块自行实现密码操作。
+
+**构件规约**：
+
+| 接口 | 签名 | 说明 |
+|:---|:---|:---|
+| `hash_password` | `(password: str) → str` | 输入明文密码，返回 Argon2 哈希字符串 |
+| `verify_password` | `(password: str, hash: str) → bool` | 比对明文与哈希是否匹配 |
+
+**实现**（`utils/security.py`）：基于 `pwdlib.PasswordHash.recommended()` 初始化全局 `pwd_hasher` 实例，所有密码操作通过该实例委派。
+
+### 5.3 Token 黑名单构件：RedisTokenBlacklist
+
+**设计动机**：JWT 签发后无法服务端撤销是其固有限制。本构件利用 Redis 的 `SETEX` 命令实现带 TTL 的 Token 黑名单，使登出操作可即时生效。
+
+**构件规约**：
+
+| 接口 | 签名 | 说明 |
+|:---|:---|:---|
+| `blacklist_token` | `(token: str, ttl: int) → None` | 将 token 的 SHA256 摘要写入 Redis，TTL = 剩余有效期（秒） |
+| `is_token_blacklisted` | `(token: str) → bool` | 查询 token 是否在黑名单中 |
+
+**Key 设计**：`token_blacklist:{sha256(token)}`，值 = `"1"`。使用 SHA256 缩短 Redis Key 长度，避免原始 JWT（可达数百字符）占用过多内存。
+
+### 5.4 API 响应封装构件：ApiResponse / PaginatedResponse
+
+**设计动机**：所有 API 端点须以统一格式返回数据，避免前端需要适配不同端点的响应结构差异。将此构件设计为 Pydantic Generic Model，利用类型参数 `T` 适配不同实体类型。
+
+**构件规约**（`schemas/response.py`）：
+
+| 构件 | 结构 | 适用场景 |
+|:---|:---|:---|
+| `ApiResponse[T]` | `{code, message, data: T, request_id}` | 单对象返回 |
+| `PaginatedResponse[T]` | `{code, message, data: {items: [T], pagination: {page, page_size, total, total_pages}}, request_id}` | 分页列表 |
+| `ErrorResponse` | `{code, message, errors: [{field, message}], request_id}` | 校验/业务异常 |
+
+### 5.5 枚举状态构件
+
+系统中多个实体共享相似的状态语义（normal/hidden/deleted），将其定义为 Python Enum，既可被 ORM 用作 CHECK 约束的来源，也可被 Pydantic Schema 用作校验正则的来源。
+
+| 构件 | 枚举值 | 使用方 |
+|:---|:---|:---|
+| `PostStatus` | `NORMAL` / `HIDDEN` / `DELETED` | Post 模型、PostService、PostRouter |
+| `CommentStatus` | `NORMAL` / `HIDDEN` / `DELETED` | Comment 模型、CommentService |
+
+**设计约束**：枚举值定义为字符串（`str, Enum`），确保存储到数据库时是可读字符串而非整数，便于调试和 SQL 直接查询。
+
+---
+
+## 6. 数据模型设计
+
+数据模型设计将面向对象的类图映射为关系型数据库表结构。完整设计规约见 `docs/DatabaseDesign.md`，本节仅从组件设计角度阐述持久化策略和关键设计决策，避免与数据库设计文档重复。
+
+### 6.1 ORM 映射策略
+
+系统采用 SQLAlchemy ORM 的声明式映射（Declarative Mapping），将 Python 类声明式地映射到 PostgreSQL 表。核心映射约定如下：
+
+| 面向对象概念 | 关系型映射 | ORM 实现 |
+|:---|:---|:---|
+| 实体类 | 数据库表 | `class Entity(Base, IDMixin, TimestampMixin)` → `__tablename__` |
+| 对象属性 | 表列（Column） | `Mapped[type]` + `mapped_column(...)` |
+| 类关联（1:N） | 外键（Foreign Key） | `ForeignKey("table.column")` + `relationship()` |
+| 继承（Mixin） | 列组合复用 | Python 多重继承，列定义展开至子表 |
+| 枚举属性 | CHECK 约束 | `CheckConstraint("col IN (...)")` |
+
+### 6.2 软删除策略
+
+所有核心业务实体（User、Board、Post、Comment）采用软删除（Soft Delete）而非物理删除。设计要点：
+
+- **实现**：`TimestampMixin.deleted_at` 字段，默认 `NULL` 表示有效记录；删除操作设置 `deleted_at = now()`。
+- **查询过滤**：所有 Service 层查询均添加 `filter(Model.deleted_at.is_(None))`，确保已删除记录对业务逻辑透明不可见。
+- **状态同步**：Post/Comment 删除时除设置 `deleted_at` 外，同时将 `status` 设为 `DELETED`，双重标记确保前端即使绕过 `deleted_at` 过滤也能通过状态字段识别。
+
+### 6.3 索引策略
+
+根据需求文档中的性能指标（帖子列表 < 200ms，分页查询 < 100ms），为高频查询字段建立索引：
+
+| 表 | 索引字段 | 索引类型 | 查询场景 |
+|:---|:---|:---|:---|
+| `posts` | `board_id` | B-tree | 按板块筛选帖子列表 |
+| `posts` | `author_id` | B-tree | 用户帖子列表 |
+| `posts` | `(is_pinned DESC, created_at DESC)` | 复合索引 | 帖子列表默认排序 |
+| `comments` | `post_id` | B-tree | 按帖子查询评论 |
+| `comments` | `author_id` | B-tree | 用户评论列表 |
+| `notifications` | `recipient_id, is_read` | 复合索引 | 用户未读通知查询 |
+
+### 6.4 事务管理
+
+系统采用 FastAPI 依赖注入模式的"请求级会话"策略：每个 HTTP 请求由 `get_db()` 生成独立的 `Session` 实例，请求处理完毕后自动释放。Service 层不管理事务边界——事务的 `commit()` 由 Service 方法在完成业务操作后显式调用，`rollback` 由 FastAPI 异常处理中间件隐式触发（未捕获异常时自动回滚）。
+
+**关键规则**：Service 方法遵循"一次业务操作 = 一次 commit"原则，避免长事务锁表。复杂业务（如创建评论同时生成通知）在同一个 Session 内串行执行两个独立 commit，利用数据库原子性保证数据一致性。
+
+### 6.5 数据库迁移管理
+
+使用 Alembic 进行数据库版本管理，所有 schema 变更均通过迁移脚本记录。设计约束：(a) 迁移脚本必须可逆（含 `upgrade()` 和 `downgrade()`）；(b) 生产环境仅执行 `upgrade`，`downgrade` 仅在开发调试时使用；(c) 应用启动时自动执行 `alembic upgrade head`（`database.init_db()`），确保部署时数据库 schema 与代码一致。
+
+---
+
+## 7. 设计整合与验证
+
+### 7.1 设计整合
+
+上述各设计产物之间并非孤立，而是通过以下交叉引用关系和设计规约形成完整的设计规约（Design Specification）：
+
+| 设计产物 | 依赖/引用 | 关联 |
+|:---|:---|:---|
+| 子系统设计元素（第 1 节） | 引用第 3 节精化类作为数据访问层元素 | Router → Service → Model 分层对应 |
+| 用例实现方案（第 2 节） | 调用第 3 节精化类的方法 | 伪代码中的 `PostService.create()` ↔ 精化类中的方法签名 |
+| UML 类图（第 3 节） | 对应第 6 节数据模型的 ORM 实体 | 类属性 → 表列，类关系 → 外键 |
+| 状态机图（第 4 节） | 对应第 2 节用例中的转移触发 | 状态转移 T1–T8 ↔ 用例操作步骤 |
+| 数据模型（第 6 节） | 补充 `docs/DatabaseDesign.md` | 表结构 + 索引 + 迁移脚本三件套 |
+| 独立构件（第 5 节） | 被第 1–4 节中的业务模块引用 | Mixin → Model，Security → AuthService |
+
+上述交叉引用确保了设计的一致性——修改任何一个产物都需要同步检查关联产物的影响。
+
+### 7.2 设计评审
+
+本设计文档已通过以下评审机制：
+
+| 评审项 | 方法 | 检查点 |
+|:---|:---|:---|
+| **需求覆盖度** | 逐一比对 `docs/RequirementAnalysis.md` 中 18 个用例 | 每个用例均有对应的子系统设计元素和至少一个核心用例实现方案 |
+| **类设计一致性** | 对照 `docs/DatabaseDesign.md` 中的 ER 图和表结构 | 类属性、关系、约束与数据库表结构一一对应 |
+| **状态机完备性** | 审查 Post/User/Comment/Notification 四个状态机 | 每个状态机均包含完整的转移规则表，无孤立状态 |
+| **分层规范性** | 检查 import 依赖图 | 无下层模块反向依赖上层模块的违规 |
+
+### 7.3 测试验证策略
+
+设计规约的正确性通过以下测试层级验证：
+
+| 测试层级 | 覆盖范围 | 技术栈 | 与设计的对应关系 |
+|:---|:---|:---|:---|
+| **单元测试** | Service 层方法 | pytest + SQLite 内存数据库 | 验证伪代码（2.3、2.4）中的业务逻辑正确性 |
+| **集成测试** | Router → Service → Model 全链路 | pytest + httpx + fakeredis | 验证用例实现方案（第 2 节）的端到端行为 |
+| **状态机测试** | 对象状态转移 | pytest 参数化测试 | 逐条验证转移规则表（4.2、4.4 等）中的 T1–T8 |
+| **接口契约测试** | API 响应格式 | FastAPI `response_model` 自动校验 | 验证响应封装构件（5.4）的格式一致性 |
+
+**已验证的设计产出**：`backend/tests/` 目录下现有 52 个测试用例，覆盖认证子系统（`test_auth.py`，20 个用例）、用户管理子系统（`test_users.py`，22 个用例）和管理后台子系统（`test_admin.py`，10 个用例）。所有测试在当前分支均通过，验证了第 1–4 节中对应的设计元素和用例实现方案的正确性。
+
+### 7.4 设计规约交付物清单
+
+| 文档 | 内容 | 状态 |
+|:---|:---|:---|
+| `docs/ComponentDesign.md`（本文档） | 子系统构件、用例实现、类精化、状态模型 | ✅ 已完成 |
+| `docs/DatabaseDesign.md` | 数据库表结构、ER 图、索引方案 | ✅ 已完成 |
+| `docs/RequirementAnalysis.md` | 功能性需求、非功能性需求、系统建模 | ✅ 已完成 |
+| `docs/DevelopmentSpecification.md` | API 规范、代码规范、Git 规范 | ✅ 已完成 |
+| `backend/app/models/` | ORM 实体源码 | ✅ 已实现（User、Board、Post、Comment） |
+| `backend/app/services/` | 业务服务源码 | ✅ 已实现（AuthService、UserService、PostService、BoardService） |
+| `backend/tests/` | 测试用例源码 | ✅ 52 个测试全部通过 |
