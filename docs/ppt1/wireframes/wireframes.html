@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1200">
+<title>Campus BBS Wireframes</title>
+<style>
+  :root {
+    --bg: #f5f5f5;
+    --card: #fff;
+    --border: #bbb;
+    --text: #444;
+    --text-light: #999;
+    --accent: #888;
+    --tag: #d0d0d0;
+    --danger: #c0c0c0;
+    --hover: #e8e8e8;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: "PingFang SC","Microsoft YaHei",sans-serif; background: #e0e0e0; padding: 30px; }
+  .page { background: var(--bg); border: 2px dashed var(--border); border-radius: 6px; margin: 0 auto 40px; padding: 28px 20px 20px; position: relative; }
+  .page-label { position: absolute; top: 6px; left: 20px; background: #333; color: #fff; padding: 2px 14px; border-radius: 3px; font-size: 13px; font-weight: bold; letter-spacing: 1px; }
+  .page-note { position: absolute; top: 8px; right: 20px; color: var(--text-light); font-size: 12px; }
+  .header { display: flex; align-items: center; justify-content: space-between; padding: 10px 16px; background: var(--card); border: 1px solid var(--border); border-radius: 4px; margin-bottom: 14px; }
+  .header .logo { width: 100px; height: 28px; background: var(--accent); border-radius: 3px; }
+  .header .nav-links { display: flex; gap: 16px; }
+  .header .nav-links span { width: 50px; height: 14px; background: var(--border); border-radius: 2px; display: block; }
+  .header .user-avatar { width: 32px; height: 32px; background: var(--accent); border-radius: 50%; }
+  .container { display: flex; gap: 14px; }
+  .sidebar { width: 200px; background: var(--card); border: 1px solid var(--border); border-radius: 4px; padding: 12px; }
+  .sidebar .menu-item { height: 28px; background: var(--hover); border-radius: 3px; margin-bottom: 6px; }
+  .main { flex: 1; }
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 4px; padding: 14px; margin-bottom: 12px; }
+  .card-title { height: 18px; width: 200px; background: var(--text); border-radius: 2px; margin-bottom: 8px; }
+  .card-line { height: 10px; background: var(--border); border-radius: 2px; margin-bottom: 5px; }
+  .card-line.short { width: 60%; }
+  .card-meta { display: flex; gap: 16px; margin-top: 8px; }
+  .card-meta span { height: 10px; width: 60px; background: var(--tag); border-radius: 2px; display: block; }
+  .btn { display: inline-block; padding: 6px 16px; border: 1px solid var(--border); border-radius: 4px; font-size: 13px; color: var(--text); background: var(--card); }
+  .btn.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .btn.danger { background: var(--danger); color: #fff; border-color: var(--danger); }
+  .btn.small { padding: 3px 10px; font-size: 11px; }
+  .input { height: 34px; border: 1px solid var(--border); border-radius: 4px; background: var(--card); width: 100%; margin-bottom: 10px; padding: 0 10px; color: var(--text-light); font-size: 12px; display: flex; align-items: center; }
+  .textarea { height: 120px; border: 1px solid var(--border); border-radius: 4px; background: var(--card); width: 100%; margin-bottom: 10px; }
+  .table { width: 100%; border-collapse: collapse; }
+  .table th { text-align: left; padding: 8px 10px; border-bottom: 2px solid var(--border); font-size: 12px; color: var(--text); }
+  .table td { padding: 8px 10px; border-bottom: 1px solid var(--border); }
+  .table .cell { height: 10px; background: var(--border); border-radius: 2px; }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; background: var(--tag); color: var(--text); }
+  .badge.active { background: var(--accent); color: #fff; }
+  .pagination { display: flex; gap: 6px; justify-content: center; margin-top: 10px; }
+  .pagination span { width: 28px; height: 28px; border: 1px solid var(--border); border-radius: 3px; display: flex; align-items: center; justify-content: center; font-size: 11px; color: var(--text); }
+  .pagination span.active { background: var(--accent); color: #fff; }
+  .comment { border-left: 3px solid var(--border); padding-left: 12px; margin: 10px 0; }
+  .comment .reply { margin-left: 30px; }
+  .icon-btn { width: 50px; height: 20px; background: var(--border); border-radius: 3px; display: inline-block; }
+  .tag { display: inline-block; padding: 2px 8px; background: var(--tag); border-radius: 3px; font-size: 11px; color: var(--text); }
+  .row { display: flex; gap: 12px; }
+  .col { flex: 1; }
+  .divider { border-top: 1px solid var(--border); margin: 12px 0; }
+  h1 { font-size: 36px; text-align: center; color: #555; margin-bottom: 30px; font-weight: 300; letter-spacing: 4px; }
+  .tabs { display: flex; gap: 0; margin-bottom: 14px; border-bottom: 2px solid var(--border); }
+  .tabs .tab { padding: 8px 20px; font-size: 13px; color: var(--text-light); border-bottom: 2px solid transparent; margin-bottom: -2px; }
+  .tabs .tab.active { color: var(--text); border-bottom-color: var(--accent); font-weight: bold; }
+  .notification-item { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+  .notification-item .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); }
+  .notification-item .dot.read { background: var(--border); }
+  .flow-box { border: 2px solid var(--border); border-radius: 6px; padding: 12px 20px; text-align: center; font-size: 13px; color: var(--text); background: var(--card); display: inline-block; }
+  .flow-arrow { font-size: 20px; color: var(--accent); margin: 0 8px; }
+  .flow-row { display: flex; align-items: center; justify-content: center; gap: 0; margin: 10px 0; flex-wrap: wrap; }
+  .flow-label { font-size: 10px; color: var(--text-light); text-align: center; margin-top: 4px; }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+  .board-card { border: 1px solid var(--border); border-radius: 6px; padding: 20px; background: var(--card); text-align: center; }
+  .board-card .icon { width: 40px; height: 40px; background: var(--border); border-radius: 8px; margin: 0 auto 8px; }
+  .board-card .name { height: 14px; width: 80px; background: var(--text); border-radius: 2px; margin: 0 auto 6px; }
+  .board-card .desc { height: 10px; width: 120px; background: var(--border); border-radius: 2px; margin: 0 auto; }
+  .post-card { cursor: pointer; }
+  .post-card:hover { background: var(--hover); }
+  .empty-state { text-align: center; padding: 40px; color: var(--text-light); border: 2px dashed var(--border); border-radius: 6px; }
+  .sort-bar { display: flex; gap: 12px; margin-bottom: 12px; align-items: center; }
+  .sort-bar .sort-option { height: 24px; padding: 0 12px; border-radius: 12px; font-size: 12px; display: flex; align-items: center; border: 1px solid var(--border); color: var(--text); }
+  .sort-bar .sort-option.active { background: var(--accent); color: #fff; }
+  .rich-toolbar { display: flex; gap: 6px; padding: 8px; border: 1px solid var(--border); border-bottom: none; border-radius: 4px 4px 0 0; background: var(--card); }
+  .rich-toolbar span { width: 20px; height: 20px; background: var(--border); border-radius: 2px; }
+  .user-info-row { display: flex; align-items: center; gap: 10px; }
+  .user-info-row .avatar-lg { width: 56px; height: 56px; background: var(--accent); border-radius: 50%; }
+  .stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 14px; }
+  .stat-box { text-align: center; padding: 14px; border: 1px solid var(--border); border-radius: 4px; background: var(--card); }
+  .stat-box .num { font-size: 22px; font-weight: bold; color: var(--text); }
+  .stat-box .label { font-size: 11px; color: var(--text-light); margin-top: 4px; }
+  .modal-overlay { position: relative; border: 2px dashed var(--danger); border-radius: 8px; padding: 20px; background: rgba(0,0,0,0.03); }
+  .modal-overlay::before { content: "MODAL"; position: absolute; top: 6px; left: 10px; font-size: 10px; color: var(--danger); letter-spacing: 2px; }
+  .modal-box { background: var(--card); border: 1px solid var(--border); border-radius: 6px; padding: 20px; max-width: 400px; margin: 0 auto; }
+  .switch-row { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; }
+  .switch { width: 40px; height: 20px; border-radius: 10px; background: var(--border); }
+  .switch.on { background: var(--accent); }
+  label { font-size: 12px; color: var(--text); display: block; margin-bottom: 4px; }
+</style>
+</head>
+<body>
+
+<h1>Campus BBS &mdash; Wireframes</h1>
+
+<!-- ============================================================ -->
+<!-- PAGE 1: Login / Register -->
+<!-- ============================================================ -->
+<div class="page" style="max-width:800px;">
+  <div class="page-label">P1 &nbsp; 登录 / 注册</div>
+  <div style="display:flex; gap:30px; justify-content:center; padding:40px 0;">
+    <!-- Login -->
+    <div class="card" style="width:320px;">
+      <div style="text-align:center; margin-bottom:20px;">
+        <div style="width:60px;height:60px;background:var(--accent);border-radius:12px;margin:0 auto 8px;"></div>
+        <div style="height:16px;width:100px;background:var(--text);border-radius:2px;margin:0 auto;"></div>
+      </div>
+      <div class="input">Username / Email</div>
+      <div class="input">Password</div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+        <span style="font-size:11px;color:var(--text-light);">□ Remember me</span>
+        <span style="font-size:11px;color:var(--text-light);">Forgot password?</span>
+      </div>
+      <div class="btn primary" style="width:100%;text-align:center;">Log In</div>
+      <div style="text-align:center;margin-top:12px;font-size:11px;color:var(--text-light);">
+        Don't have an account? <span style="color:var(--accent);">Register</span>
+      </div>
+    </div>
+    <!-- Register -->
+    <div class="card" style="width:320px;">
+      <div style="text-align:center; margin-bottom:20px;">
+        <div style="height:18px;width:80px;background:var(--text);border-radius:2px;margin:0 auto 8px;"></div>
+      </div>
+      <div class="input">Username</div>
+      <div class="input">Email</div>
+      <div class="input">Password</div>
+      <div class="input">Confirm Password</div>
+      <div class="btn primary" style="width:100%;text-align:center;">Register</div>
+      <div style="text-align:center;margin-top:12px;font-size:11px;color:var(--text-light);">
+        Already have an account? <span style="color:var(--accent);">Log In</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- PAGE 2: Home – Board List -->
+<!-- ============================================================ -->
+<div class="page" style="max-width:1000px;">
+  <div class="page-label">P2 &nbsp; 首页 &mdash; 板块列表</div>
+  <div class="header">
+    <div class="logo"></div>
+    <div class="nav-links"><span></span><span></span><span></span></div>
+    <div style="display:flex;gap:10px;align-items:center;">
+      <div style="width:20px;height:20px;background:var(--border);border-radius:50%;"></div>
+      <div class="user-avatar"></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title"></div>
+    <div class="card-line short"></div>
+  </div>
+  <div class="grid-2">
+    <div class="board-card"><div class="icon"></div><div class="name"></div><div class="desc"></div><div style="font-size:11px;color:var(--text-light);margin-top:6px;">128 posts</div></div>
+    <div class="board-card"><div class="icon"></div><div class="name"></div><div class="desc"></div><div style="font-size:11px;color:var(--text-light);margin-top:6px;">95 posts</div></div>
+    <div class="board-card"><div class="icon"></div><div class="name"></div><div class="desc"></div><div style="font-size:11px;color:var(--text-light);margin-top:6px;">67 posts</div></div>
+    <div class="board-card"><div class="icon"></div><div class="name"></div><div class="desc"></div><div style="font-size:11px;color:var(--text-light);margin-top:6px;">42 posts</div></div>
+    <div class="board-card"><div class="icon"></div><div class="name"></div><div class="desc"></div><div style="font-size:11px;color:var(--text-light);margin-top:6px;">31 posts</div></div>
+    <div class="board-card"><div class="icon"></div><div class="name"></div><div class="desc"></div><div style="font-size:11px;color:var(--text-light);margin-top:6px;">15 posts</div></div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- PAGE 3: Board – Post List -->
+<!-- ============================================================ -->
+<div class="page" style="max-width:1000px;">
+  <div class="page-label">P3 &nbsp; 板块帖子列表</div>
+  <div class="header">
+    <div class="logo"></div>
+    <div class="nav-links"><span></span><span></span><span></span></div>
+    <div class="user-avatar"></div>
+  </div>
+  <div class="card" style="margin-bottom:10px;">
+    <div style="height:20px;width:180px;background:var(--text);border-radius:2px;margin-bottom:4px;"></div>
+    <div style="height:10px;width:260px;background:var(--border);border-radius:2px;"></div>
+  </div>
+  <div class="sort-bar">
+    <div class="sort-option active">Latest</div>
+    <div class="sort-option">Hot</div>
+    <div class="btn primary small" style="margin-left:auto;">+ New Post</div>
+  </div>
+  <div class="card post-card">
+    <div style="display:flex;gap:10px;">
+      <div style="flex:1;">
+        <div style="height:16px;width:300px;background:var(--text);border-radius:2px;margin-bottom:6px;"></div>
+        <div class="card-line short"></div>
+        <div class="card-meta"><span></span><span></span><span></span></div>
+      </div>
+      <div style="text-align:right;font-size:11px;color:var(--text-light);">
+        <div style="width:40px;height:14px;background:var(--border);border-radius:2px;"></div>
+        <div style="width:50px;height:10px;margin-top:4px;background:var(--border);border-radius:2px;"></div>
+      </div>
+    </div>
+  </div>
+  <div class="card post-card">
+    <div style="display:flex;gap:10px;">
+      <div style="flex:1;">
+        <div style="height:16px;width:260px;background:var(--text);border-radius:2px;margin-bottom:6px;"></div>
+        <div class="tag" style="margin-right:4px;">Pinned</div>
+        <div class="card-line short"></div>
+        <div class="card-meta"><span></span><span></span><span></span></div>
+      </div>
+      <div style="text-align:right;font-size:11px;color:var(--text-light);">
+        <div style="width:40px;height:14px;background:var(--border);border-radius:2px;"></div>
+        <div style="width:50px;height:10px;margin-top:4px;background:var(--border);border-radius:2px;"></div>
+      </div>
+    </div>
+  </div>
+  <div class="card post-card">
+    <div style="display:flex;gap:10px;">
+      <div style="flex:1;">
+        <div style="height:16px;width:340px;background:var(--text);border-radius:2px;margin-bottom:6px;"></div>
+        <div class="card-line short"></div>
+        <div class="card-meta"><span></span><span></span><span></span></div>
+      </div>
+      <div style="text-align:right;font-size:11px;color:var(--text-light);">
+        <div style="width:40px;height:14px;background:var(--border);border-radius:2px;"></div>
+        <div style="width:50px;height:10px;margin-top:4px;background:var(--border);border-radius:2px;"></div>
+      </div>
+    </div>
+  </div>
+  <div class="pagination"><span>&lt;</span><span class="active">1</span><span>2</span><span>3</span><span>...</span><span>8</span><span>&gt;</span></div>
+</div>
+
+<!-- ============================================================ -->
+<!-- PAGE 4: Post Detail -->
+<!-- ============================================================ -->
+<div class="page" style="max-width:1000px;">
+  <div class="page-label">P4 &nbsp; 帖子详情页</div>
+  <div class="header">
+    <div class="logo"></div>
+    <div class="nav-links"><span></span><span></span><span></span></div>
+    <div class="user-avatar"></div>
+  </div>
+  <div class="card">
+    <div style="height:22px;width:400px;background:var(--text);border-radius:2px;margin-bottom:8px;"></div>
+    <div class="user-info-row" style="margin-bottom:10px;">
+      <div style="width:28px;height:28px;background:var(--accent);border-radius:50%;"></div>
+      <span style="font-size:12px;color:var(--text);">Author Name</span>
+      <span style="font-size:11px;color:var(--text-light);">2026-05-09 14:30</span>
+      <span style="font-size:11px;color:var(--text-light);">👁 256</span>
+    </div>
+    <div class="divider"></div>
+    <div class="card-line" style="width:100%;"></div>
+    <div class="card-line" style="width:90%;"></div>
+    <div class="card-line" style="width:95%;"></div>
+    <div class="card-line" style="width:70%;"></div>
+    <div class="card-line" style="width:60%;margin-bottom:14px;"></div>
+    <div style="display:flex;gap:14px;">
+      <div class="icon-btn"></div>
+      <div class="icon-btn"></div>
+      <div class="icon-btn"></div>
+    </div>
+    <div class="divider"></div>
+    <div style="font-size:13px;color:var(--text);margin-bottom:8px;">Comments (12)</div>
+    <!-- Comment 1 -->
+    <div style="display:flex;gap:10px;margin-bottom:12px;">
+      <div style="width:28px;height:28px;background:var(--accent);border-radius:50%;flex-shrink:0;"></div>
+      <div style="flex:1;">
+        <div style="font-size:11px;color:var(--text-light);margin-bottom:3px;">UserA &middot; 2 hours ago</div>
+        <div class="card-line" style="width:85%;"></div>
+        <div class="card-line" style="width:60%;"></div>
+        <div style="display:flex;gap:14px;margin-top:4px;font-size:10px;color:var(--text-light);">
+          <span>♥ 8</span><span>Reply</span>
+        </div>
+        <!-- nested reply -->
+        <div style="display:flex;gap:8px;margin-top:8px;margin-left:20px;border-left:2px solid var(--border);padding-left:10px;">
+          <div style="width:22px;height:22px;background:var(--accent);border-radius:50%;flex-shrink:0;"></div>
+          <div style="flex:1;">
+            <div style="font-size:10px;color:var(--text-light);margin-bottom:2px;">UserB &middot; 1 hour ago</div>
+            <div class="card-line" style="width:70%;"></div>
+            <div style="display:flex;gap:14px;margin-top:3px;font-size:10px;color:var(--text-light);">
+              <span>♥ 3</span><span>Reply</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- Comment 2 -->
+    <div style="display:flex;gap:10px;margin-bottom:12px;">
+      <div style="width:28px;height:28px;background:var(--accent);border-radius:50%;flex-shrink:0;"></div>
+      <div style="flex:1;">
+        <div style="font-size:11px;color:var(--text-light);margin-bottom:3px;">UserC &middot; 30 min ago</div>
+        <div class="card-line" style="width:50%;"></div>
+        <div style="display:flex;gap:14px;margin-top:4px;font-size:10px;color:var(--text-light);">
+          <span>♥ 1</span><span>Reply</span>
+        </div>
+      </div>
+    </div>
+    <!-- Reply input -->
+    <div class="divider"></div>
+    <div class="textarea" style="height:60px;"></div>
+    <div class="btn primary small" style="float:right;">Submit</div>
+    <div style="clear:both;"></div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- PAGE 5: Create / Edit Post -->
+<!-- ============================================================ -->
+<div class="page" style="max-width:1000px;">
+  <div class="page-label">P5 &nbsp; 发帖 / 编辑帖子</div>
+  <div class="header">
+    <div class="logo"></div>
+    <div class="nav-links"><span></span><span></span><span></span></div>
+    <div class="user-avatar"></div>
+  </div>
+  <div class="card">
+    <div style="height:18px;width:120px;background:var(--text);border-radius:2px;margin-bottom:12px;"></div>
+    <label>Board</label>
+    <div class="input" style="width:200px;">Select board ▼</div>
+    <label>Title</label>
+    <div class="input" style="font-size:12px;color:var(--text-light);">Enter post title...</div>
+    <label>Content</label>
+    <div class="rich-toolbar">
+      <span></span><span></span><span></span><span></span><span></span>
+      <span style="margin-left:10px;"></span><span></span><span></span>
+    </div>
+    <div class="textarea" style="height:200px;border-radius:0 0 4px 4px;"></div>
+    <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:10px;">
+      <div class="btn">Save Draft</div>
+      <div class="btn primary">Publish</div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- PAGE 6: User Profile / Settings -->
+<!-- ============================================================ -->
+<div class="page" style="max-width:1000px;">
+  <div class="page-label">P6 &nbsp; 个人中心</div>
+  <div class="header">
+    <div class="logo"></div>
+    <div class="nav-links"><span></span><span></span><span></span></div>
+    <div class="user-avatar"></div>
+  </div>
+  <div class="container">
+    <div class="sidebar">
+      <div class="menu-item"></div>
+      <div class="menu-item" style="width:70%;"></div>
+      <div class="menu-item" style="width:80%;"></div>
+      <div class="menu-item" style="width:60%;"></div>
+    </div>
+    <div class="main">
+      <div class="card">
+        <div class="user-info-row" style="margin-bottom:14px;">
+          <div class="avatar-lg"></div>
+          <div>
+            <div style="height:16px;width:100px;background:var(--text);border-radius:2px;margin-bottom:4px;"></div>
+            <div style="height:10px;width:140px;background:var(--border);border-radius:2px;"></div>
+          </div>
+          <div class="btn small" style="margin-left:auto;">Edit</div>
+        </div>
+        <div class="stat-grid">
+          <div class="stat-box"><div class="num">38</div><div class="label">Posts</div></div>
+          <div class="stat-box"><div class="num">156</div><div class="label">Comments</div></div>
+          <div class="stat-box"><div class="num">420</div><div class="label">Likes</div></div>
+          <div class="stat-box"><div class="num">5</div><div class="label">Days</div></div>
+        </div>
+        <div class="divider"></div>
+        <label>Username</label>
+        <div class="input">current_username</div>
+        <label>Email</label>
+        <div class="input">user@example.com</div>
+        <label>Bio</label>
+        <div class="textarea" style="height:60px;"></div>
+        <div class="btn primary small">Save Changes</div>
+      </div>
+      <div class="card">
+        <div style="height:16px;width:100px;background:var(--text);border-radius:2px;margin-bottom:10px;"></div>
+        <label>Old Password</label>
+        <div class="input">••••••••</div>
+        <label>New Password</label>
+        <div class="input">••••••••</div>
+        <label>Confirm New Password</label>
+        <div class="input">••••••••</div>
+        <div class="btn primary small">Update Password</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- PAGE 7: Notifications -->
+<!-- ============================================================ -->
+<div class="page" style="max-width:1000px;">
+  <div class="page-label">P7 &nbsp; 通知列表</div>
+  <div class="header">
+    <div class="logo"></div>
+    <div class="nav-links"><span></span><span></span><span></span></div>
+    <div style="position:relative;">
+      <div style="width:24px;height:24px;background:var(--accent);border-radius:50%;"></div>
+      <div style="position:absolute;top:-4px;right:-4px;width:16px;height:16px;background:var(--danger);border-radius:50%;font-size:9px;text-align:center;color:#fff;line-height:16px;">3</div>
+    </div>
+    <div class="user-avatar"></div>
+  </div>
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+      <div style="height:18px;width:100px;background:var(--text);border-radius:2px;"></div>
+      <span style="font-size:11px;color:var(--text-light);">Mark all read</span>
+    </div>
+    <div class="notification-item">
+      <div class="dot"></div>
+      <div style="flex:1;">
+        <div style="font-size:12px;color:var(--text);"><b>UserX</b> replied to your post <span style="color:var(--text-light);">"Topic Title Here"</span></div>
+        <div style="font-size:10px;color:var(--text-light);">5 minutes ago</div>
+      </div>
+    </div>
+    <div class="notification-item">
+      <div class="dot"></div>
+      <div style="flex:1;">
+        <div style="font-size:12px;color:var(--text);"><b>UserY</b> liked your comment</div>
+        <div style="font-size:10px;color:var(--text-light);">1 hour ago</div>
+      </div>
+    </div>
+    <div class="notification-item">
+      <div class="dot read"></div>
+      <div style="flex:1;">
+        <div style="font-size:12px;color:var(--text);"><b>UserZ</b> commented on <span style="color:var(--text-light);">"Another Topic"</span></div>
+        <div style="font-size:10px;color:var(--text-light);">3 hours ago</div>
+      </div>
+    </div>
+    <div class="notification-item">
+      <div class="dot read"></div>
+      <div style="flex:1;">
+        <div style="font-size:12px;color:var(--text);">🔔 <b>System</b>: Welcome to Campus BBS!</div>
+        <div style="font-size:10px;color:var(--text-light);">2 days ago</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- PAGE 8: Admin – User Management -->
+<!-- ============================================================ -->
+<div class="page" style="max-width:1000px;">
+  <div class="page-label">P8 &nbsp; 管理后台 &mdash; 用户管理</div>
+  <div class="header">
+    <div class="logo"></div>
+    <div style="font-size:13px;color:var(--text);">Admin Panel</div>
+    <div class="user-avatar"></div>
+  </div>
+  <div class="container">
+    <div class="sidebar">
+      <div class="menu-item"></div>
+      <div class="menu-item" style="background:var(--accent);"></div>
+      <div class="menu-item"></div>
+      <div class="menu-item"></div>
+    </div>
+    <div class="main">
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+          <div style="height:16px;width:80px;background:var(--text);border-radius:2px;"></div>
+          <div class="input" style="width:200px;margin:0;height:28px;">Search users...</div>
+        </div>
+        <table class="table">
+          <tr><th style="width:40px;"></th><th>Username</th><th>Email</th><th>Role</th><th>Status</th><th>Actions</th></tr>
+          <tr>
+            <td><div style="width:24px;height:24px;background:var(--accent);border-radius:50%;"></div></td>
+            <td><div class="cell" style="width:80px;"></div></td>
+            <td><div class="cell" style="width:130px;"></div></td>
+            <td><span class="badge active">Admin</span></td>
+            <td><span class="badge active">Active</span></td>
+            <td><div class="btn small danger">Ban</div></td>
+          </tr>
+          <tr>
+            <td><div style="width:24px;height:24px;background:var(--accent);border-radius:50%;"></div></td>
+            <td><div class="cell" style="width:80px;"></div></td>
+            <td><div class="cell" style="width:130px;"></div></td>
+            <td><span class="badge">User</span></td>
+            <td><span class="badge active">Active</span></td>
+            <td><div class="btn small danger">Ban</div></td>
+          </tr>
+          <tr>
+            <td><div style="width:24px;height:24px;background:var(--accent);border-radius:50%;"></div></td>
+            <td><div class="cell" style="width:80px;"></div></td>
+            <td><div class="cell" style="width:130px;"></div></td>
+            <td><span class="badge">User</span></td>
+            <td><span class="badge" style="background:var(--danger);color:#fff;">Banned</span></td>
+            <td><div class="btn small">Unban</div></td>
+          </tr>
+          <tr>
+            <td><div style="width:24px;height:24px;background:var(--accent);border-radius:50%;"></div></td>
+            <td><div class="cell" style="width:80px;"></div></td>
+            <td><div class="cell" style="width:130px;"></div></td>
+            <td><span class="badge">User</span></td>
+            <td><span class="badge active">Active</span></td>
+            <td><div class="btn small danger">Ban</div></td>
+          </tr>
+        </table>
+        <div class="pagination"><span>&lt;</span><span class="active">1</span><span>2</span><span>3</span><span>&gt;</span></div>
+        <!-- modal -->
+        <div class="modal-overlay" style="margin-top:16px;">
+          <div class="modal-box">
+            <div style="height:14px;width:160px;background:var(--text);border-radius:2px;margin-bottom:10px;"></div>
+            <div style="font-size:11px;color:var(--text-light);margin-bottom:12px;">Are you sure you want to ban user "xxx"?</div>
+            <div style="display:flex;gap:8px;justify-content:flex-end;">
+              <div class="btn small">Cancel</div>
+              <div class="btn small danger">Confirm</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- PAGE 9: Admin – Board Management -->
+<!-- ============================================================ -->
+<div class="page" style="max-width:1000px;">
+  <div class="page-label">P9 &nbsp; 管理后台 &mdash; 板块管理</div>
+  <div class="header">
+    <div class="logo"></div>
+    <div style="font-size:13px;color:var(--text);">Admin Panel</div>
+    <div class="user-avatar"></div>
+  </div>
+  <div class="container">
+    <div class="sidebar">
+      <div class="menu-item"></div>
+      <div class="menu-item"></div>
+      <div class="menu-item" style="background:var(--accent);"></div>
+      <div class="menu-item"></div>
+    </div>
+    <div class="main">
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+          <div style="height:16px;width:80px;background:var(--text);border-radius:2px;"></div>
+          <div class="btn primary small">+ New Board</div>
+        </div>
+        <table class="table">
+          <tr><th>#</th><th>Name</th><th>Slug</th><th>Posts</th><th>Sort</th><th>Status</th><th>Actions</th></tr>
+          <tr>
+            <td>1</td><td><div class="cell" style="width:100px;"></div></td><td><span style="font-size:11px;color:var(--text-light);">general</span></td>
+            <td>128</td><td>1</td>
+            <td><span class="badge active">Active</span></td>
+            <td><span class="btn small">Edit</span> <span class="btn small danger">Disable</span></td>
+          </tr>
+          <tr>
+            <td>2</td><td><div class="cell" style="width:100px;"></div></td><td><span style="font-size:11px;color:var(--text-light);">tech</span></td>
+            <td>95</td><td>2</td>
+            <td><span class="badge active">Active</span></td>
+            <td><span class="btn small">Edit</span> <span class="btn small danger">Disable</span></td>
+          </tr>
+          <tr>
+            <td>3</td><td><div class="cell" style="width:100px;"></div></td><td><span style="font-size:11px;color:var(--text-light);">life</span></td>
+            <td>67</td><td>3</td>
+            <td><span class="badge" style="background:var(--danger);color:#fff;">Disabled</span></td>
+            <td><span class="btn small">Edit</span> <span class="btn small">Enable</span></td>
+          </tr>
+          <tr>
+            <td>4</td><td><div class="cell" style="width:100px;"></div></td><td><span style="font-size:11px;color:var(--text-light);">sports</span></td>
+            <td>42</td><td>4</td>
+            <td><span class="badge active">Active</span></td>
+            <td><span class="btn small">Edit</span> <span class="btn small danger">Disable</span></td>
+          </tr>
+        </table>
+        <!-- New board modal -->
+        <div class="modal-overlay" style="margin-top:16px;">
+          <div class="modal-box">
+            <div style="height:14px;width:120px;background:var(--text);border-radius:2px;margin-bottom:10px;"></div>
+            <label>Board Name</label><div class="input"></div>
+            <label>Slug</label><div class="input"></div>
+            <label>Description</label><div class="textarea" style="height:50px;"></div>
+            <div class="switch-row"><span style="font-size:12px;color:var(--text);">Active</span><div class="switch on"></div></div>
+            <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:10px;">
+              <div class="btn small">Cancel</div>
+              <div class="btn small primary">Save</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- PAGE 10: Page Flow Diagram -->
+<!-- ============================================================ -->
+<div class="page" style="max-width:1100px;">
+  <div class="page-label">P10 &nbsp; 页面导航流程图 (Page Flow)</div>
+
+  <div style="text-align:center;padding:20px 0;">
+
+    <!-- Row 1: Entry -->
+    <div class="flow-row">
+      <div class="flow-box" style="border-style:dashed;">Login / Register</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box" style="background:var(--hover);">Home<br>(Board List)</div>
+    </div>
+    <div style="text-align:center;margin:6px 0;">
+      <span style="font-size:10px;color:var(--text-light);">↑ Public (no login required) &nbsp;&nbsp; ↓ Login required</span>
+    </div>
+    <div style="border-top:2px dashed var(--border);width:60%;margin:8px auto;"></div>
+
+    <!-- From Home -->
+    <div class="flow-row" style="margin-top:10px;">
+      <div class="flow-box" style="font-size:11px;">Board<br>Post List</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box" style="font-size:11px;">Post<br>Detail</div>
+      <div class="flow-arrow">←</div>
+      <div class="flow-box" style="font-size:11px;border-style:dashed;">Create<br>Post</div>
+    </div>
+
+    <div class="flow-row" style="margin-top:12px;">
+      <div class="flow-box" style="font-size:11px;">Notifications</div>
+      <div class="flow-arrow" style="font-size:14px;">↔</div>
+      <div class="flow-box" style="font-size:11px;">Profile<br>&amp; Settings</div>
+      <div class="flow-arrow" style="font-size:14px;">↔</div>
+      <div class="flow-box" style="font-size:11px;background:var(--hover);">Home</div>
+    </div>
+
+    <!-- Admin branch -->
+    <div style="border-top:2px dashed var(--border);width:60%;margin:14px auto;"></div>
+    <div style="font-size:11px;color:var(--text-light);margin-bottom:6px;">Admin only (role = admin)</div>
+    <div class="flow-row">
+      <div class="flow-box" style="font-size:11px;background:var(--hover);">Admin<br>Dashboard</div>
+      <div class="flow-arrow" style="font-size:14px;">↔</div>
+      <div class="flow-box" style="font-size:11px;">User<br>Management</div>
+      <div class="flow-arrow" style="font-size:14px;">↔</div>
+      <div class="flow-box" style="font-size:11px;">Board<br>Management</div>
+      <div class="flow-arrow" style="font-size:14px;">↔</div>
+      <div class="flow-box" style="font-size:11px;">Report<br>Handling</div>
+    </div>
+
+    <!-- Legend -->
+    <div style="display:flex;gap:20px;justify-content:center;margin-top:20px;padding-top:12px;border-top:1px solid var(--border);">
+      <div><span style="display:inline-block;width:20px;height:14px;border:1px solid var(--border);background:var(--card);border-radius:2px;vertical-align:middle;"></span> <span style="font-size:10px;color:var(--text-light);">Normal page</span></div>
+      <div><span style="display:inline-block;width:20px;height:14px;border:1px dashed var(--border);background:var(--card);border-radius:2px;vertical-align:middle;"></span> <span style="font-size:10px;color:var(--text-light);">Action / modal</span></div>
+      <div><span style="display:inline-block;width:20px;height:14px;background:var(--hover);border:1px solid var(--border);border-radius:2px;vertical-align:middle;"></span> <span style="font-size:10px;color:var(--text-light);">Hub page</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- PAGE 11: Interaction Notes -->
+<!-- ============================================================ -->
+<div class="page" style="max-width:1000px;">
+  <div class="page-label">P11 &nbsp; 关键交互说明</div>
+  <div class="grid-2">
+    <div class="card">
+      <div style="height:14px;width:80px;background:var(--text);border-radius:2px;margin-bottom:8px;"></div>
+      <table style="width:100%;font-size:11px;color:var(--text);border-collapse:collapse;">
+        <tr><td style="padding:4px 0;color:var(--text-light);">点赞</td><td>点击 → 即时状态切换（乐观更新）→ 失败回滚 + Toast</td></tr>
+        <tr><td style="padding:4px 0;color:var(--text-light);">评论</td><td>点击回复 → 展开输入框 → 提交 → 插入对应楼层下</td></tr>
+        <tr><td style="padding:4px 0;color:var(--text-light);">通知</td><td>点击通知项 → 标记已读 + 跳转关联帖子/评论</td></tr>
+        <tr><td style="padding:4px 0;color:var(--text-light);">注册</td><td>输入框失焦 → 前端格式校验 → 后端唯一性校验</td></tr>
+        <tr><td style="padding:4px 0;color:var(--text-light);">发帖</td><td>选择板块 → 填写标题/内容 → 发布（或保存草稿）</td></tr>
+      </table>
+    </div>
+    <div class="card">
+      <div style="height:14px;width:80px;background:var(--text);border-radius:2px;margin-bottom:8px;"></div>
+      <table style="width:100%;font-size:11px;color:var(--text);border-collapse:collapse;">
+        <tr><td style="padding:4px 0;color:var(--text-light);">Toast</td><td>操作成功/失败统一顶部弹出，3s 自动消失</td></tr>
+        <tr><td style="padding:4px 0;color:var(--text-light);">Loading</td><td>列表/详情页骨架屏，提交按钮 Loading 态</td></tr>
+        <tr><td style="padding:4px 0;color:var(--text-light);">Empty</td><td>统一空状态插画 + 引导文案</td></tr>
+        <tr><td style="padding:4px 0;color:var(--text-light);">Error</td><td>网络异常/500/404 统一错误页 + 重试按钮</td></tr>
+        <tr><td style="padding:4px 0;color:var(--text-light);">Confirm</td><td>删除/封禁等操作弹出确认对话框</td></tr>
+      </table>
+    </div>
+    <div class="card" style="grid-column:1/-1;">
+      <div style="height:14px;width:100px;background:var(--text);border-radius:2px;margin-bottom:8px;"></div>
+      <table style="width:100%;font-size:11px;color:var(--text);border-collapse:collapse;">
+        <tr>
+          <td style="padding:4px 8px;color:var(--text-light);">色彩</td>
+          <td><span style="display:inline-block;width:14px;height:14px;background:#4A90D9;border-radius:2px;vertical-align:middle;"></span> #4A90D9 主色</td>
+          <td><span style="display:inline-block;width:14px;height:14px;background:#52C41A;border-radius:2px;vertical-align:middle;"></span> #52C41A 成功</td>
+          <td><span style="display:inline-block;width:14px;height:14px;background:#FF4D4F;border-radius:2px;vertical-align:middle;"></span> #FF4D4F 错误</td>
+          <td><span style="display:inline-block;width:14px;height:14px;background:#FAAD14;border-radius:2px;vertical-align:middle;"></span> #FAAD14 警告</td>
+        </tr>
+        <tr>
+          <td style="padding:4px 8px;color:var(--text-light);">字体</td>
+          <td>正文 14px / 标题 18px</td>
+          <td>行高 1.5</td>
+          <td>字体 PingFang SC / Microsoft YaHei</td>
+          <td></td>
+        </tr>
+        <tr>
+          <td style="padding:4px 8px;color:var(--text-light);">组件库</td>
+          <td colspan="4">Element Plus (Vue 3) &mdash; 统一使用，避免自定义样式不一致</td>
+        </tr>
+        <tr>
+          <td style="padding:4px 8px;color:var(--text-light);">断点</td>
+          <td>Mobile &lt; 768px</td>
+          <td>Tablet 768-1024px</td>
+          <td>Desktop &gt; 1024px</td>
+          <td></td>
+        </tr>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div style="text-align:center;color:var(--text-light);padding:40px;font-size:14px;">
+  Campus BBS Wireframes &mdash; Screenshot each page for PPT
+</div>
+
+</body>
+</html>

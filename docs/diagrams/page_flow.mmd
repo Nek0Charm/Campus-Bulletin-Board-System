@@ -1,0 +1,48 @@
+graph TB
+    subgraph Public["公开页面（无需登录）"]
+        Login["登录 / 注册<br>Login / Register"]
+    end
+
+    subgraph Auth["登录后页面"]
+        Home["首页 · 板块列表<br>Home"]
+        BoardList["板块帖子列表<br>Board Post List"]
+        PostDetail["帖子详情<br>Post Detail"]
+        CreatePost["发帖 / 编辑<br>Create / Edit Post"]
+        Notif["通知列表<br>Notifications"]
+        Profile["个人中心<br>Profile & Settings"]
+    end
+
+    subgraph AdminPages["管理后台（仅 admin）"]
+        AdminDash["管理后台首页<br>Admin Dashboard"]
+        UserMgmt["用户管理<br>User Management"]
+        BoardMgmt["板块管理<br>Board Management"]
+        ReportMgmt["举报处理<br>Report Handling"]
+    end
+
+    Login -->|"注册成功 / 登录成功"| Home
+
+    Home -->|点击板块| BoardList
+    BoardList -->|返回| Home
+    BoardList -->|点击帖子| PostDetail
+    BoardList -->|发帖按钮| CreatePost
+    PostDetail -->|返回| BoardList
+    PostDetail -->|编辑按钮| CreatePost
+    CreatePost -->|发布成功| BoardList
+
+    Home -->|导航栏 · 铃铛图标| Notif
+    Notif -->|点击通知项| PostDetail
+    PostDetail -->|点击铃铛| Notif
+
+    Home -->|导航栏 · 头像| Profile
+    Profile -->|返回| Home
+    Notif -->|头像| Profile
+    Profile -->|通知入口| Notif
+
+    Home -->|"管理员入口（角色校验）"| AdminDash
+    AdminDash --> UserMgmt
+    AdminDash --> BoardMgmt
+    AdminDash --> ReportMgmt
+    UserMgmt --> AdminDash
+    BoardMgmt --> AdminDash
+    ReportMgmt --> AdminDash
+    AdminDash -->|返回首页| Home

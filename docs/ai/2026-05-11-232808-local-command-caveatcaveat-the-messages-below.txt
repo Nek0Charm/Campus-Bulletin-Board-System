@@ -1,0 +1,93 @@
+ ▐▛███▜▌   Claude Code v2.1.138
+▝▜█████▛▘  deepseek-v4-pro · API Usage Billing
+  ▘▘ ▝▝    ~/code/bbs
+
+❯ /clear                                                                        
+  ⎿  (no content)
+
+❯ @docs/ppt1/requirement_analysis.tex 综合ppt以及项目实际情况，撰写完整的需求分 
+  析文档和项目计划文档。ppt中展示完全的部分（如CRC                              
+  cards、数据流图等）需要补充完整。                                             
+  ⎿  Read docs/ppt1/requirement_analysis.tex (608 lines)
+
+● Let me start by exploring the project structure and existing documentation to
+  understand what's already built and what's documented.
+
+  Read 29 files, listed 6 directories (ctrl+o to expand)
+
+● Bash(git log --oneline -20)
+  ⎿  f0c78ca docs: update CLAUDE.md
+     15cb86f docs(ppt): add requirement analysis and project plan ppt
+     156eb5f Feat/post system 0508 (#15)
+     … +14 lines (ctrl+o to expand)
+
+  Read 5 files, listed 1 directory (ctrl+o to expand)
+
+● Now I have a thorough understanding of the project. Let me create task
+  tracking and write the comprehensive documents.
+
+● Write(docs/ppt1/requirement_analysis_full.md)
+  ⎿  Wrote 845 lines to docs/ppt1/requirement_analysis_full.md
+      1 # Campus Bulletin Board System — 需求分析文档
+      2 
+      3 > 版本：v1.0 | 日期：2026-05-11 | 作者：Group 10
+      4 
+      5 ---
+      6 
+      7 ## 一、项目背景
+      8 
+      9 ### 1.1 目标用户
+     … +929 lines (ctrl+o to expand)
+● Write(docs/ppt1/project_plan_full.md)
+  ⎿  Wrote 474 lines to docs/ppt1/project_plan_full.md
+      1 # Campus Bulletin Board System — 项目计划文档
+      2 
+      3 > 版本：v1.0 | 日期：2026-05-11 | 作者：Group 10
+      4 
+      5 ---
+      6 
+      7 ## 一、文档质量体系
+      8 
+      9 ### 1.1 文档结构
+     … +563 lines (ctrl+o to expand)
+
+● 两份完整文档已创建：
+
+  1. 需求分析文档 → docs/ppt1/requirement_analysis_full.md
+
+  涵盖内容：
+  - 项目背景与概述：目标用户、项目目标、预期收益
+  - 功能性需求：6 个子系统全部 18
+  个用例的详细描述（含参与者、前置条件、主流程、异常情况）
+  - 系统建模（Mermaid 原文嵌入）：
+    - 用例图 — 含完整的参与者-用例映射
+    - 系统上下文 DFD — 含外部实体和数据存储
+    - 第 0 层 DFD — 含 5 个核心处理模块的输入/输出说明
+    - 3 张状态图 — 用户生命周期、帖子评论状态、通知生命周期
+    - 类图 —
+  含全部实体（User/Board/Post/Comment/PostLike/CommentLike/Notification）和关系
+  - CRC Cards：7
+  个实体类（User/Post/Comment/Notification/Board/PostLike/CommentLike）+ 6
+  个服务类（AuthService/UserService/PostService/BoardService/CommentService/Noti
+  ficationService），全部补充完整
+  - 非功能性需求：安全性（3 个维度）、性能（4 类指标）、可维护性
+  - UI 设计：页面流程图 + 9 个核心页面的线框图说明
+  - 当前实现状态：标注了已完成/进行中的具体模块
+
+  2. 项目计划文档 → docs/ppt1/project_plan_full.md
+
+  涵盖内容：
+  - 文档质量体系：5 份核心文档 + 质量检查清单
+  - 项目范围：MVP 必做范围 + 3 轮迭代扩展 + 范围约束
+  - 开发过程模型：迭代流程（1 周/迭代）+ 敏捷实践 + Git 分支策略
+  - 规模估算：功能点（~46 FP）、代码行数（~13.5k-17k LOC）、工期（6 周/216
+  人时）
+  - 资源配置：6 人分工矩阵 + 子系统负责矩阵 + 技术栈 + 工具链
+  - 交付物定义：3 阶段交付物 + 验收标准
+  - 任务与计划：优先级矩阵 + 甘特图 + MVP 三周的详细任务分解 + 关键依赖路径图
+  - 风险分析：5 项风险（概率/影响/应对）
+  - 当前进展与下一步：区分已完成/进行中/下一步的详细计划
+
+✻ Worked for 12m 41s
+
+※ recap: 已创建两份完整文档：需求分析文档（含全部18个用例详述、CRC cards补全、DFD/状态图/类图）和项目计划文档（含甘特图、MVP三周任务分解、风险管理）。两文件位于 `docs/ppt1/` 下。 (disable recaps in /config)
