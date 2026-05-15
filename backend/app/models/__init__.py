@@ -12,5 +12,6 @@ from app.models.base import TimestampMixin
 from app.models.user import User
 from app.models.post import Post
 from app.models.board import Board
+from app.models.comment import Comment
 
-__all__ = ["Base", "IDMixin", "TimestampMixin", "User", "Base", "User", "Post", "Board"]
+__all__ = ["Base", "IDMixin", "TimestampMixin", "User", "Post", "Board", "Comment"]
