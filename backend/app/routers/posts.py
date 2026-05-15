@@ -20,7 +20,7 @@ from app.schemas.response import (
 from app.schemas.post import PostCreate, PostUpdate, PostRead
 from app.services.post_service import PostService
 
-router = APIRouter(prefix="/api/v1/posts", tags=["Posts"])
+router = APIRouter(prefix="/posts", tags=["Posts"])
 
 
 @router.post(
