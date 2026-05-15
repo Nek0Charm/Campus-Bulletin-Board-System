@@ -20,7 +20,8 @@ from app.schemas.user import UpdateUserStatusRequest
 from app.schemas.user import UserProfileData
 from app.schemas.user import UserPublicData
 from app.schemas.post import PostCreate, PostUpdate, PostRead, PostListResponse
-from app.schemas.board import BoardRead, BoardCreate
+from app.schemas.board import BoardCreate, BoardRead, BoardUpdate
+from app.schemas.admin import AdminStatsResponse
 
 __all__ = [
     "RegisterRequest",
@@ -40,6 +41,8 @@ __all__ = [
     "PostUpdate",
     "PostRead",
     "PostListResponse",
-    "BoardRead",
     "BoardCreate",
+    "BoardRead",
+    "BoardUpdate",
+    "AdminStatsResponse",
 ]
