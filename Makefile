@@ -6,7 +6,7 @@ FRONTEND_DIR ?= frontend
 BACKEND_DEV_CMD ?= uv run uvicorn app.main:app --reload
 FRONTEND_DEV_CMD ?= pnpm run dev
 
-.PHONY: help deps-up deps-down deps-logs deps-ps deps-reset-db backend frontend dev format lint migration-new migrate migrate-rollback migrate-history
+.PHONY: help deps-up deps-down deps-logs deps-ps deps-reset-db backend frontend dev format format-backend format-frontend lint lint-backend lint-frontend migration-new migrate migrate-rollback migrate-history
 
 help:
 	@echo "可用命令："
@@ -17,6 +17,12 @@ help:
 	@echo "  make backend                      # 启动后端（默认: uv run uvicorn app.main:app --reload）"
 	@echo "  make frontend                     # 启动前端（默认: pnpm run dev）"
 	@echo "  make dev                          # 先启动依赖服务，再给出前后端启动提示"
+	@echo "  make format                       # 格式化前后端代码（black + prettier）"
+	@echo "  make format-backend               # 格式化后端代码（black）"
+	@echo "  make format-frontend              # 格式化前端代码（prettier）"
+	@echo "  make lint                         # 静态检查前后端代码（ruff + oxlint + eslint）"
+	@echo "  make lint-backend                 # 静态检查后端代码（ruff）"
+	@echo "  make lint-frontend                # 静态检查前端代码（oxlint + eslint）"
 	@echo "  make migration-new msg=\"...\"       # 自动生成新迁移"
 	@echo "  make migrate                      # 执行所有待处理的迁移"
 	@echo "  make migrate-rollback             # 回滚最近一次迁移"
@@ -50,12 +56,22 @@ dev: deps-up
 	@echo "依赖服务已启动。请在两个终端分别执行："
 	@echo "  make backend"
 	@echo "  make frontend"
- 
-format:
+
+format: format-backend format-frontend
+
+format-backend:
 	@cd $(BACKEND_DIR) && uvx black .
- 
-lint:
+
+format-frontend:
+	@cd $(FRONTEND_DIR) && pnpm run format
+
+lint: lint-backend lint-frontend
+
+lint-backend:
 	@cd $(BACKEND_DIR) && uvx ruff check .
+
+lint-frontend:
+	@cd $(FRONTEND_DIR) && pnpm run lint
 
 migration-new:
 	@cd $(BACKEND_DIR) && uv run alembic revision --autogenerate -m "$(msg)"
