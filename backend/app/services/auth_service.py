@@ -17,6 +17,7 @@ from app.schemas.auth import RegisterData
 from app.schemas.auth import RegisterRequest
 from app.schemas.auth import ResetPasswordData
 from app.schemas.auth import ResetPasswordRequest
+from app.services.email_service import EmailService
 from app.utils.redis import blacklist_token
 from app.utils.security import hash_password
 from app.utils.security import verify_password
@@ -33,7 +34,9 @@ def _create_access_token(user_id: str, role: str) -> str:
 
 
 class AuthService:
-    def register(self, db: Session, payload: RegisterRequest) -> RegisterData:
+    def register(
+        self, db: Session, payload: RegisterRequest, email_service: EmailService
+    ) -> RegisterData:
         existing = (
             db.query(User)
             .filter(or_(User.username == payload.username, User.email == payload.email))
@@ -53,6 +56,10 @@ class AuthService:
         db.add(user)
         db.commit()
         db.refresh(user)
+
+        verify_token = email_service.generate_verify_token(str(user.id), user.email)
+        email_service.send_verification_email(user.email, verify_token)
+
         return RegisterData(
             user=AuthUserData(
                 id=str(user.id),
@@ -76,6 +83,8 @@ class AuthService:
             raise HTTPException(status_code=401, detail="Invalid account or password")
         if user.status != "active":
             raise HTTPException(status_code=403, detail=f"User is {user.status}")
+        if not user.email_verified:
+            raise HTTPException(status_code=403, detail="Email not verified")
 
         user.last_login_at = datetime.now(timezone.utc)
         db.add(user)

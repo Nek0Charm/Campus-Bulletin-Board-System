@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING, Optional
 if TYPE_CHECKING:
     from app.models.post import Post
 
+from sqlalchemy import Boolean
 from sqlalchemy import CheckConstraint
 from sqlalchemy import DateTime
 from sqlalchemy import String
@@ -33,5 +34,6 @@ class User(Base, IDMixin, TimestampMixin):
     avatar_url: Mapped[Optional[str]] = mapped_column(String(1024), nullable=True)
     role: Mapped[str] = mapped_column(String(20), nullable=False, default="user")
     status: Mapped[str] = mapped_column(String(20), nullable=False, default="active")
+    email_verified: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     last_login_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
     posts: Mapped[list["Post"]] = relationship("Post", back_populates="author")

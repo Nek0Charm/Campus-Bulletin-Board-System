@@ -73,6 +73,7 @@ def _register_and_login_sync(db, username="testuser", email="test@example.com"):
         nickname=username,
         role="user",
         status="active",
+        email_verified=True,
     )
     db.add(user)
     db.commit()

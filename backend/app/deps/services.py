@@ -2,6 +2,7 @@ from app.services.auth_service import AuthService
 from app.services.user_service import UserService
 from app.services.post_service import PostService
 from app.services.board_service import BoardService
+from app.services.email_service import EmailService
 
 
 def get_auth_service() -> AuthService:
@@ -20,9 +21,14 @@ def get_board_service() -> BoardService:
     return BoardService()
 
 
+def get_email_service() -> EmailService:
+    return EmailService()
+
+
 __all__ = [
     "get_auth_service",
     "get_user_service",
     "get_post_service",
     "get_board_service",
+    "get_email_service",
 ]

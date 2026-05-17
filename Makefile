@@ -29,13 +29,13 @@ help:
 	@echo "  make migrate-history              # 查看迁移历史"
 
 deps-up:
-	@$(COMPOSE) up -d postgres redis
+	@$(COMPOSE) up -d postgres redis mailpit
 
 deps-down:
 	@$(COMPOSE) down
 
 deps-logs:
-	@$(COMPOSE) logs -f postgres redis
+	@$(COMPOSE) logs -f postgres redis mailpit
 
 deps-ps:
 	@$(COMPOSE) ps
