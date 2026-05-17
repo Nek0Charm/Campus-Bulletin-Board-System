@@ -23,7 +23,11 @@ class Settings(BaseSettings):
     JWT_ALGORITHM: str = "HS256"
     JWT_ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
 
+    # Frontend
+    FRONTEND_BASE_URL: str = "http://localhost:5173"
+
     # Email / SMTP (defaults point to Mailpit for dev)
+    BACKEND_BASE_URL: str = "http://localhost:8000"
     SMTP_HOST: str = "localhost"
     SMTP_PORT: int = 1025
     SMTP_USER: str = ""

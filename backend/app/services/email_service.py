@@ -47,7 +47,7 @@ class EmailService:
             ) from exc
 
     def send_verification_email(self, to_email: str, token: str) -> None:
-        verify_url = f"{settings.API_PREFIX}/auth/verify-email?token={token}"
+        verify_url = f"{settings.FRONTEND_BASE_URL}/verify-email?token={token}"
         body = f"""Welcome to Campus BBS!
 
 Please verify your email address by visiting the link below:
