@@ -186,7 +186,7 @@
 
 \begin{frame}{实体关系概览}
     \centering
-    \includegraphics[height=0.9\textheight]{er_diagram.png}
+    \includegraphics[height=0.6\textheight]{er_diagram.png}
 \end{frame}
 
 \begin{frame}{核心表设计要点}
@@ -375,12 +375,12 @@
 \section{组件设计}
 % ================================================================
 
-\begin{frame}{后端分层架构}
+\begin{frame}{分层架构设计}
     \centering
     \includegraphics[height=0.9\textheight]{layered_architecture.png}
 \end{frame}
 
-\begin{frame}{帖子管理子系统：类图与设计元素}
+\begin{frame}{子系统内部设计元素说明（以帖子管理子系统为例）}
     \begin{columns}[T]
         \column{0.55\textwidth}
         \begin{block}{PostService 核心方法}
@@ -408,12 +408,39 @@
             \end{itemize}
         \end{block}
     \end{columns}
-    \vspace{0.1cm}
     \begin{exampleblock}{Schema 分层}
-        \texttt{PostCreate}（入参） $\rightarrow$ \texttt{PostService}（业务逻辑） $\rightarrow$ \texttt{PostRead}
+        \texttt{PostCreate}（入参） $\rightarrow$ \texttt{PostService}（业务逻辑） $\rightarrow$ \texttt{PostRead} （出参）
     \end{exampleblock}
 \end{frame}
 
+\begin{frame}{核心用例实现方案（以发布帖子为例）}
+    \begin{columns}[T]
+        \column{0.5\textwidth}
+        \begin{block}{参与者、前置条件、后置条件}
+            \begin{itemize}
+                \item \textbf{参与者}：已登录的普通用户
+                \item \textbf{前置条件}：用户状态为 active，已选择目标板块
+                \item \textbf{触发方式}：前端点击「发布」按钮
+                \item \textbf{后置条件}：系统创建一条新的帖子记录，帖子关联当前用户为作者、关联指定板块为所属板，返回完整的帖子信息
+            \end{itemize}
+        \end{block}
+        \column{0.5\textwidth}
+        \begin{block}{主流程}
+            \begin{enumerate}
+                \item \textbf{请求准入}：\texttt{get\_current\_user()} 鉴权
+                \item \textbf{输入校验}：Pydantic \texttt{PostCreate} 校验 title/content/board\_id
+                \item \textbf{数据封装}：合并业务字段 + author\_id + published\_at
+                \item \textbf{持久化}：\texttt{PostService.create()} $\rightarrow$ add $\rightarrow$ commit
+                \item \textbf{响应输出}：序列化为 \texttt{ApiResponse<PostRead>}
+            \end{enumerate}
+        \end{block}
+    \end{columns}
+\end{frame}
+
+\begin{frame}{类间关系（以帖子管理子系统为例）}
+    \centering
+    \includegraphics[height=0.9\textheight]{post_class_diagram.png}
+\end{frame}
 \begin{frame}{核心对象状态设计}
     \includegraphics[height=0.6\textheight]{post_state.png}
 \end{frame}
@@ -422,7 +449,103 @@
     \includegraphics[height=0.9\textheight]{user_state.png}
 \end{frame}
 \begin{frame}{核心对象状态设计}
-    \includegraphics[height=0.9\textheight]{notification_state.png}
+    \includegraphics[height=0.15\textheight]{notification_state.png}
+\end{frame}
+
+\begin{frame}{独立构件设计：ORM 基础构件}
+    \small
+    独立构件（Standalone Component）是指不专属于任一业务子系统、可被多个模块复用的通用组件。
+    \vspace{0.1cm}
+    
+    \begin{columns}[T]
+        \column{0.55\textwidth}
+        \begin{block}{Base + IDMixin + TimestampMixin}
+            \begin{itemize}
+                \item \textbf{Base}：SQLAlchemy \texttt{DeclarativeBase}
+                \item \textbf{IDMixin}：UUID 主键，默认 \texttt{uuid.uuid4()}
+                \item \textbf{TimestampMixin}：
+                \begin{itemize}
+                    \small
+                    \item \texttt{created\_at / updated\_at} — TIMESTAMPTZ
+                    \item \texttt{deleted\_at} — 软删除标志
+                \end{itemize}
+            \end{itemize}
+        \end{block}
+        \column{0.45\textwidth}
+        \begin{exampleblock}{使用方式}
+            \small
+            \texttt{class User(Base,\\ IDMixin, TimestampMixin)}
+            \vspace{0.1cm}
+
+            所有实体类统一继承，保证主键、时间戳、软删除语义一致。
+        \end{exampleblock}
+    \end{columns}
+    \vspace{0.1cm}
+    {\footnotesize\textbf{复用范围}：users、boards、posts、comments、notifications 等全部 15 张表}
+\end{frame}
+
+\begin{frame}{独立构件设计：密码安全构件}
+    \begin{columns}[T]
+        \column{0.5\textwidth}
+        \begin{block}{核心函数}
+            \begin{itemize}
+                \item \texttt{hash\_password(plain)}
+
+                $\rightarrow$ 返回 Argon2 加盐哈希
+                \item \texttt{verify\_password(plain, hash)}
+
+                $\rightarrow$ 返回 bool
+            \end{itemize}
+        \end{block}
+        \column{0.5\textwidth}
+        \begin{block}{安全策略}
+            \begin{itemize}
+                \item \textbf{算法}：pwdlib 推荐（Argon2）
+                \item \textbf{不存储明文}：仅保存 \texttt{password\_hash}
+                \item \textbf{自动加盐}：每次哈希随机盐值
+                \item \textbf{不可逆向}：无法从哈希还原密码
+            \end{itemize}
+        \end{block}
+    \end{columns}
+    \vspace{0.1cm}
+    \begin{exampleblock}{复用场景}
+        用户注册 \textbullet{} 用户登录 \textbullet{} 密码重置 \textbullet{} 管理员强制改密
+    \end{exampleblock}
+\end{frame}
+
+\begin{frame}{独立构件设计：统一响应封装}
+    \begin{columns}[T]
+        \column{0.5\textwidth}
+        \begin{block}{ApiResponse\textless T\textgreater}
+            \small
+            \begin{tabularx}{\linewidth}{lX}
+                \toprule
+                \textbf{字段} & \textbf{说明} \\
+                \midrule
+                code & HTTP 状态码 \\
+                message & 提示信息 \\
+                data & 泛型业务数据 \\
+                request\_id & 链路追踪 ID \\
+                \bottomrule
+            \end{tabularx}
+        \end{block}
+        \column{0.5\textwidth}
+        \begin{block}{派生类型}
+            \small
+            \begin{tabularx}{\linewidth}{lX}
+                \toprule
+                \textbf{类型} & \textbf{用途} \\
+                \midrule
+                PaginatedResponse & 列表分页返回 \\
+                ErrorResponse & 统一错误返回 \\
+                \bottomrule
+            \end{tabularx}
+        \end{block}
+    \end{columns}
+    \vspace{0.1cm}
+    \begin{alertblock}{设计约束}
+        所有 Router 必须返回 \texttt{ApiResponse} 或其派生类型；禁止直接返回裸模型对象，保证前后端契约一致。
+    \end{alertblock}
 \end{frame}
 
 \begin{frame}{ORM 映射与持久化策略}

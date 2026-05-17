@@ -1,6 +1,6 @@
 # Campus Bulletin Board System — 系统设计文档
 
-## 一、Campus BBS 系统体系结构
+## 一、系统体系结构
 
 ### 1.1 系统上下文图
 
