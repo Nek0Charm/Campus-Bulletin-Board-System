@@ -1,0 +1,29 @@
+stateDiagram-v2
+    direction LR
+
+    [*] --> Draft : T0 保存草稿
+    Draft --> Normal : T1 发布
+    Draft --> Deleted : T9 删除草稿
+    [*] --> Normal : T1 直接发布
+
+    Normal --> Pinned : T2 置顶
+    Normal --> Featured : T4 加精
+    Pinned --> Normal : T3 取消置顶
+    Featured --> Normal : T5 取消加精
+    Pinned --> Both : T4 加精
+    Featured --> Both : T2 置顶
+    Both --> Featured : T3 取消置顶
+    Both --> Pinned : T5 取消加精
+
+    Normal --> Hidden : T6 隐藏
+    Pinned --> Hidden : T6 隐藏
+    Featured --> Hidden : T6 隐藏
+    Both --> Hidden : T6 隐藏
+    Hidden --> Normal : T7 恢复
+
+    Normal --> Deleted : T8 删除
+    Pinned --> Deleted : T8 删除
+    Featured --> Deleted : T8 删除
+    Both --> Deleted : T8 删除
+    Hidden --> Deleted : T8 删除
+    Deleted --> [*]

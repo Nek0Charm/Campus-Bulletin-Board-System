@@ -1,0 +1,670 @@
+% !TEX program = xelatex
+\documentclass[aspectratio=169,UTF8]{ctexbeamer}
+\usetheme{metropolis}
+\metroset{
+    progressbar=frametitle,
+    numbering=counter,
+    sectionpage=progressbar
+}
+
+% 黑白灰平面配色
+\setbeamercolor{frametitle}{bg=white,fg=black}
+\setbeamercolor{progress bar}{fg=black,bg=gray!30}
+\setbeamercolor{normal text}{fg=black,bg=white}
+\setbeamercolor{block title}{bg=black,fg=white}
+\setbeamercolor{block body}{bg=gray!10,fg=black}
+\setbeamercolor{block title example}{bg=gray!50,fg=black}
+\setbeamercolor{block body example}{bg=gray!5,fg=black}
+\setbeamercolor{block title alerted}{bg=gray!30,fg=black}
+\setbeamercolor{block body alerted}{bg=gray!5,fg=black}
+\setbeamercolor{item}{fg=black}
+\setbeamercolor{itemize item}{fg=black}
+\setbeamercolor{itemize subitem}{fg=gray}
+\setbeamercolor{enumerate item}{fg=black}
+\setbeamercolor{title}{fg=black}
+\setbeamercolor{subtitle}{fg=gray}
+\setbeamercolor{author}{fg=gray}
+\setbeamercolor{institute}{fg=gray}
+\setbeamercolor{date}{fg=gray}
+\setbeamercolor{section title}{fg=black,bg=white}
+\setbeamercolor{frametitle}{bg=white,fg=black}
+
+% 常用宏包
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{tikz}
+\usepackage{xcolor}
+
+% 图片路径
+\graphicspath{{images/}}
+
+% 自定义强调色
+\definecolor{darkgray}{RGB}{30,30,30}
+\definecolor{midgray}{RGB}{120,120,120}
+\definecolor{lightgray}{RGB}{220,220,220}
+
+% 首页信息
+\title{Campus Bulletin Board System}
+\subtitle{校园论坛系统设计报告}
+\author{Group 10: 陈思源、胡睿翔、叶凤林、陈诺、黄磊、吴文涛}
+\institute{浙江大学}
+\date{\today}
+
+\begin{document}
+
+% ======================== 首页 ========================
+\begin{frame}
+    \titlepage
+\end{frame}
+
+% ======================== 目录 ========================
+\begin{frame}{目录}
+    \tableofcontents
+\end{frame}
+
+% ================================================================
+\section{系统体系结构}
+% ================================================================
+
+\begin{frame}{系统上下文}
+    \begin{columns}[T]
+        \column{0.5\textwidth}
+        \begin{block}{外部交互边界}
+            \begin{itemize}
+                \item \textbf{普通用户}：注册/登录、发帖、评论、点赞、搜索
+                \item \textbf{管理员}：用户管理、内容审核、板块管理、公告发布
+                \item \textbf{访客}：浏览帖子（只读）
+                \item \textbf{外部系统}：邮件服务（SMTP）、对象存储（OSS）
+            \end{itemize}
+        \end{block}
+        \column{0.5\textwidth}
+        \includegraphics[width=\textwidth]{context_dfd.png}
+    \end{columns}
+\end{frame}
+
+\begin{frame}{架构概览}
+    \begin{columns}[T]
+        \column{0.38\textwidth}
+        \begin{block}{三层架构}
+            \begin{enumerate}
+                \item \textbf{客户端层}：Vue3 + TypeScript SPA
+                \item \textbf{服务层}：FastAPI 应用服务器
+                \item \textbf{数据层}：PostgreSQL + Redis
+            \end{enumerate}
+        \end{block}
+        \vspace{0.2cm}
+        \begin{alertblock}{关键特点}
+            前后端分离 \textbullet{} RESTful API \textbullet{} JWT 认证
+        \end{alertblock}
+        \column{0.6\textwidth}
+        \includegraphics[width=\textwidth]{system_architecture.png}
+    \end{columns}
+\end{frame}
+
+\begin{frame}{六大子系统与交互关系}
+    \centering
+    \includegraphics[height=0.9\textheight]{subsystem_dependency.png}
+\end{frame}
+
+\begin{frame}{关键技术决策与部署}
+    \begin{columns}[T]
+        \column{0.5\textwidth}
+        \begin{block}{关键技术选型}
+            \small
+            \begin{tabularx}{\linewidth}{lXX}
+                \toprule
+                \textbf{决策} & \textbf{选型} & \textbf{理由} \\
+                \midrule
+                认证方案 & JWT+Redis 黑名单 & 无状态扩展性好 \\
+                主键策略 & UUID & 防 ID 枚举攻击 \\
+                软删除 & \texttt{deleted\_at} & 支持数据恢复审计 \\
+                搜索 & PostgreSQL 全文检索(暂定) & 校园级规模足够 \\
+                代码质量 & black+ruff+pytest & 保证代码质量 \\
+                \bottomrule
+            \end{tabularx}
+        \end{block}
+        \column{0.5\textwidth}
+        \begin{block}{开发环境部署}
+            \begin{itemize}
+                \item \textbf{Docker Compose}：PostgreSQL + Redis + Mailpit
+                \item \textbf{uv}：Python 虚拟环境管理
+                \item \textbf{uvicorn}：开发服务器热重载
+                \item \textbf{pnpm}: 前端包管理
+                \item \textbf{Vite}：前端热模块替换
+                \item \textbf{Husky}：pre-commit 自动 lint
+            \end{itemize}
+        \end{block}
+    \end{columns}
+
+\end{frame}
+
+
+\begin{frame}{技术栈}
+    \begin{exampleblock}{技术栈}
+        \footnotesize
+        \textbf{后端}: Python3.14 + FastAPI + SQLAlchemy + Pydantic + Alembic + pwdlib
+        
+        \textbf{前端}: Vue3 + TypeScript + Element Plus + Vite
+        
+        \textbf{数据层}: PostgreSQL + Redis
+    \end{exampleblock}
+\end{frame}
+
+% ================================================================
+\section{数据库设计}
+% ================================================================
+
+\begin{frame}{设计目标与通用约定}
+    \begin{columns}[T]
+        \column{0.5\textwidth}
+        \begin{block}{设计原则}
+            \begin{enumerate}
+                \item \textbf{强一致优先}：核心业务由 PostgreSQL 保证 ACID
+                \item \textbf{大文件分离}：图片走对象存储，DB 仅存元数据
+                \item \textbf{计数器冗余}：避免高频 COUNT 聚合
+                \item \textbf{软删除统一}：\texttt{deleted\_at}，数据可追溯
+            \end{enumerate}
+        \end{block}
+        \column{0.5\textwidth}
+        \begin{block}{通用约定}
+            \small
+            \begin{tabularx}{\linewidth}{lX}
+                \toprule
+                \textbf{约定} & \textbf{说明} \\
+                \midrule
+                主键 & UUID，防枚举 \\
+                时间戳 & TIMESTAMPTZ NOT NULL \\
+                软删除 & \texttt{deleted\_at} NULL \\
+                计数器 & BIGINT DEFAULT 0 \\
+                状态字段 & VARCHAR + CHECK \\
+                \bottomrule
+            \end{tabularx}
+        \end{block}
+    \end{columns}
+\end{frame}
+
+\begin{frame}{实体关系概览}
+    \centering
+    \includegraphics[height=0.9\textheight]{er_diagram.png}
+\end{frame}
+
+\begin{frame}{核心表设计要点}
+    \begin{columns}[T]
+        \column{0.5\textwidth}
+        \begin{block}{\texttt{users} — 用户表}
+            \begin{itemize}
+                \item \texttt{username} VARCHAR(32), UNIQUE
+                \item \texttt{email} VARCHAR(255), UNIQUE
+                \item \texttt{password\_hash} — pwdlib (Argon2)
+                \item \texttt{role} — CHECK IN ('user','admin')
+                \item \texttt{status} — CHECK IN ('active','inactive','banned')
+                \item \texttt{email\_verified} BOOLEAN
+            \end{itemize}
+        \end{block}
+        \column{0.5\textwidth}
+        \begin{block}{\texttt{posts} — 帖子表}
+            \begin{itemize}
+                \item \texttt{board\_id / author\_id} — FK
+                \item \texttt{content} TEXT（支持 Markdown）
+                \item \texttt{status} — CHECK IN ('normal','hidden','deleted')
+                \item \texttt{is\_pinned / is\_featured}
+                \item \texttt{like\_count / comment\_count / view\_count}
+            \end{itemize}
+        \end{block}
+    \end{columns}
+    \vspace{0.2cm}
+    \begin{block}{\texttt{notifications} — 通知表}
+        \begin{itemize}
+            \item \texttt{type} CHECK IN ('comment','reply','like','system')
+            \item \texttt{is\_read} BOOLEAN + \texttt{read\_at} TIMESTAMPTZ
+            \item 触发规则：评论帖子→通知作者、回复评论→通知被回复者、点赞→通知目标作者
+        \end{itemize}
+    \end{block}
+\end{frame}
+
+\begin{frame}{索引策略与关键决策}
+    \begin{columns}[T]
+        \column{0.48\textwidth}
+        \begin{block}{核心索引}
+            \begin{itemize}
+                \item \texttt{posts(board\_id, is\_pinned DESC, created\_at DESC)}
+                \item \texttt{notifications(recipient\_id, is\_read, created\_at)}
+                \item \texttt{comments(post\_id)}, \texttt{comments(parent\_comment\_id)}
+                \item \texttt{post\_likes(post\_id, user\_id)} UNIQUE
+                \item 所有 \texttt{deleted\_at} 建索引
+            \end{itemize}
+        \end{block}
+        \column{0.52\textwidth}
+        \begin{block}{关键设计决策}
+            \small
+            \begin{tabularx}{\linewidth}{lX}
+                \toprule
+                \textbf{决策} & \textbf{理由} \\
+                \midrule
+                UUID 主键 & 防枚举 \\
+                软删除 & 数据可追溯可恢复 \\
+                计数器冗余 & 换列表免 COUNT 聚合 \\
+                VARCHAR+CHECK & 避免 ENUM 迁移成本 \\
+                评论双外键 & 一次查询获取所有楼层 \\
+                通知异步化 & 不阻塞用户请求 \\
+                \bottomrule
+            \end{tabularx}
+        \end{block}
+    \end{columns}
+\end{frame}
+
+% ================================================================
+\section{关键过程描述}
+% ================================================================
+
+\begin{frame}{关键过程总览}
+    \begin{columns}[T]
+        \column{0.4\textwidth}
+        \begin{block}{关键过程}
+            \small
+            \begin{tabularx}{\linewidth}{lXr}
+                \toprule
+                \textbf{编号} & \textbf{过程} \\
+                \midrule
+                KP-1 & 登录与会话建立 \\
+                KP-2 & 鉴权与授权  \\
+                KP-3 & 发布帖子  \\
+                KP-4 & 评论/回复与通知 \\
+                KP-5 & 点赞/取消点赞  \\
+                KP-6 & 管理员封禁用户\\
+                \bottomrule
+            \end{tabularx}
+        \end{block}
+        \column{0.6\textwidth}
+        \includegraphics[width=\textwidth]{kp_overview.png}
+    \end{columns}
+\end{frame}
+
+\begin{frame}{KP-1 \& KP-2：认证与鉴权链路}
+    \begin{columns}[T]
+        \column{0.48\textwidth}
+        \begin{block}{KP-1 登录流程}
+            \begin{enumerate}
+                \item 客户端提交账号与密码
+                \item 按用户名或邮箱查询用户
+                \item \texttt{verify\_password()} 校验
+                \item 检查 \texttt{status == active}
+                \item 更新 \texttt{last\_login\_at}
+                \item 生成 JWT（含 sub, role, exp）
+                \item 返回 \texttt{ApiResponse<LoginData>}
+            \end{enumerate}
+        \end{block}
+        \column{0.52\textwidth}
+        \includegraphics[width=\textwidth]{auth_decision.png}
+    \end{columns}
+\end{frame}
+
+\begin{frame}{KP-3 \& KP-6：发布帖子与管理封禁}
+    \begin{columns}[T]
+        \column{0.5\textwidth}
+        \begin{block}{KP-3 发布帖子}
+            \textbf{流程：}
+            \begin{enumerate}
+                \item \textbf{请求准入}：\texttt{get\_current\_user()} 鉴权
+                \item \textbf{输入校验}：Pydantic \texttt{PostCreate}
+                \item \textbf{数据封装}：合并业务字段 + author\_id
+                \item \textbf{持久化}：add $\rightarrow$ commit $\rightarrow$ refresh
+                \item \textbf{响应输出}：\texttt{ApiResponse<PostRead>}
+            \end{enumerate}
+            \textbf{异常}：未登录 401、被封禁 403、校验失败 422
+        \end{block}
+        \column{0.5\textwidth}
+        \begin{block}{KP-6 管理员封禁用户}
+            \textbf{流程：}
+            \begin{enumerate}
+                \item \textbf{权限准入}：\texttt{require\_admin()} 双重校验
+                \item \textbf{输入校验}：UUID 格式 + 状态正则校验
+                \item \textbf{实体定位}：按 uuid 查询用户
+                \item \textbf{状态变更}：\texttt{status := "banned"}
+                \item \textbf{响应输出}：\texttt{AdminUserData}
+            \end{enumerate}
+            \textbf{效果}：登录被拒 + 现有 Token 下次请求拦截
+        \end{block}
+    \end{columns}
+\end{frame}
+
+\begin{frame}{KP-4：评论/回复与通知联动}
+    \begin{block}{评论/回复流程}
+        \begin{enumerate}
+            \item 校验目标帖子存在且未被删除
+            \item 若 \texttt{parent\_comment\_id} 为空 $\rightarrow$ 创建一级评论，\texttt{root\_comment\_id} 指向自身
+            \item 若不为空 $\rightarrow$ 继承根评论编号，创建回复
+            \item 同步更新 \texttt{post.comment\_count} / \texttt{parent.reply\_count}
+            \item 调用 \texttt{NotificationService} 创建通知
+        \end{enumerate}
+    \end{block}
+    \begin{exampleblock}{楼中楼树机制}
+        一级评论：\texttt{parent\_comment\_id IS NULL}，\texttt{root\_comment\_id} 指向自身；子回复：\texttt{parent\_comment\_id} 指向被回复评论，\texttt{root\_comment\_id} 指向根楼层
+    \end{exampleblock}
+\end{frame}
+
+\begin{frame}{KP-5：点赞/取消点赞与计数同步}
+    \begin{columns}[T]
+        \column{0.5\textwidth}
+        \begin{block}{点赞流程}
+            \begin{enumerate}
+                \item 确认目标帖子/评论存在
+                \item 检查未点过（UNIQUE 约束防重）
+                \item 新增 Like 记录
+                \item \texttt{like\_count + 1}
+                \item 创建 like 通知
+            \end{enumerate}
+        \end{block}
+        \column{0.5\textwidth}
+        \begin{block}{取消点赞流程}
+            \begin{enumerate}
+                \item 定位现有点赞记录
+                \item 删除记录
+                \item \texttt{like\_count - 1}（不低于 0）
+            \end{enumerate}
+        \end{block}
+    \end{columns}
+    \vspace{0.2cm}
+    \begin{alertblock}{关键约束}
+        在同一事务内更新记录+计数（保证一致性）\textbullet{} UNIQUE 约束保证幂等 \textbullet{} 计数不得小于零
+    \end{alertblock}
+\end{frame}
+
+% ================================================================
+\section{组件设计}
+% ================================================================
+
+\begin{frame}{后端分层架构}
+    \centering
+    \includegraphics[height=0.9\textheight]{layered_architecture.png}
+\end{frame}
+
+\begin{frame}{帖子管理子系统：类图与设计元素}
+    \begin{columns}[T]
+        \column{0.55\textwidth}
+        \begin{block}{PostService 核心方法}
+            \small
+            \begin{tabularx}{\linewidth}{>{\ttfamily\small}p{3.2cm}X}
+                \toprule
+                \textbf{方法} & \textbf{说明} \\
+                \midrule
+                create() & 构造并持久化新帖子 \\
+                get\_multi() & 分页查询，置顶优先 \\
+                get\_by\_id() & 按主键查询，预加载 \\
+                update() & 部分更新（exclude\_unset） \\
+                update\_special\_status() & 置顶/加精切换 \\
+                remove() & 软删除 \\
+                \bottomrule
+            \end{tabularx}
+        \end{block}
+        \column{0.45\textwidth}
+        \begin{block}{关键关系}
+            \begin{itemize}
+                \item \textbf{User $\rightarrow$ Post}：1:N（组合弱化——删除用户不级联删帖）
+                \item \textbf{Board $\rightarrow$ Post}：1:N（帖子必须归属板块）
+                \item \textbf{PostService $\leftrightarrow$ Post}：依赖关系（Session 注入）
+                \item \textbf{Post $\leftrightarrow$ PostStatus}：枚举（NORMAL / HIDDEN / DELETED）
+            \end{itemize}
+        \end{block}
+    \end{columns}
+    \vspace{0.1cm}
+    \begin{exampleblock}{Schema 分层}
+        \texttt{PostCreate}（入参） $\rightarrow$ \texttt{PostService}（业务逻辑） $\rightarrow$ \texttt{PostRead}
+    \end{exampleblock}
+\end{frame}
+
+\begin{frame}{核心对象状态设计}
+    \includegraphics[height=0.6\textheight]{post_state.png}
+\end{frame}
+
+\begin{frame}{核心对象状态设计}
+    \includegraphics[height=0.9\textheight]{user_state.png}
+\end{frame}
+\begin{frame}{核心对象状态设计}
+    \includegraphics[height=0.9\textheight]{notification_state.png}
+\end{frame}
+
+\begin{frame}{ORM 映射与持久化策略}
+    \begin{block}{ORM 映射策略}
+        \small
+        \begin{tabularx}{\linewidth}{lXX}
+            \toprule
+            \textbf{OO 概念} & \textbf{关系型映射} & \textbf{ORM 实现} \\
+            \midrule
+            实体类 & 数据库表 & \texttt{class Entity(Base, Mixins)} \\
+            对象属性 & 表列 & \texttt{Mapped[type] + mapped\_column} \\
+            类关联 (1:N) & 外键 & \texttt{ForeignKey + relationship()} \\
+            继承 (Mixin) & 列组合复用 & Python 多重继承 \\
+            枚举属性 & CHECK 约束 & \texttt{CheckConstraint} \\
+            \bottomrule
+        \end{tabularx}
+    \end{block}
+    \begin{columns}[T]
+        \column{0.5\textwidth}
+        \begin{exampleblock}{事务管理}
+            \begin{itemize}
+                \item 每次 HTTP 请求独立 Session
+                \item Service 方法内显式 commit
+                \item 异常时 FastAPI 自动 rollback
+            \end{itemize}
+        \end{exampleblock}
+        \column{0.5\textwidth}
+        \begin{exampleblock}{迁移管理（Alembic）}
+            \begin{itemize}
+                \item 所有 schema 变更通过迁移脚本
+                \item 迁移必须可逆（upgrade / downgrade）
+                \item 启动时自动执行 \texttt{alembic upgrade head}
+            \end{itemize}
+        \end{exampleblock}
+    \end{columns}
+\end{frame}
+
+% ================================================================
+\section{可靠性及安全性设计}
+% ================================================================
+
+\begin{frame}{可靠性设计：数据一致性与服务可用性}
+    \begin{columns}[T]
+        \column{0.48\textwidth}
+        \begin{block}{数据一致性保证}
+            \begin{enumerate}
+                \item \textbf{事务原子性}：点赞=写入记录+更新计数同时成功/回滚
+                \item \textbf{幂等约束}：\texttt{UNIQUE(post\_id, user\_id)} 防重
+                \item \textbf{原子更新计数}：数据库表达式更新，约束 $\ge$ 0
+                \item \textbf{软删除保护}：不物理删除，支持恢复与审计
+                \item \textbf{外键完整性}：帖子必须关联存在的板块和作者
+            \end{enumerate}
+        \end{block}
+        \column{0.52\textwidth}
+        \begin{block}{服务可用性策略}
+            \begin{enumerate}
+                \item \textbf{健康检查}：pg\_isready + redis-cli ping
+                \item \textbf{Redis 故障降级}：缓存查询回退 PostgreSQL
+                \item \textbf{连接池控制}：设置大小、超时、回收时间
+                \item \textbf{超时与重试}：查询允许短重试，写入不盲目重试
+                \item \textbf{缓存策略}：更新 DB 后删缓存、空值防穿透
+            \end{enumerate}
+        \end{block}
+    \end{columns}
+\end{frame}
+
+\begin{frame}{安全性设计：身份认证与权限控制}
+    \begin{columns}[T]
+        \column{0.48\textwidth}
+        \begin{block}{身份认证}
+            \begin{itemize}
+                \item \textbf{密码存储}：pwdlib (Argon2) 加盐哈希
+                \item \textbf{JWT 令牌}：含 sub/role/exp，访问受保护接口必须携带
+                \item \textbf{会话管理}：Redis 黑名单，登出/封禁即时吊销
+                \item \textbf{登录保护}：连续失败限制（429），防暴力破解
+            \end{itemize}
+        \end{block}
+        \column{0.52\textwidth}
+        \begin{block}{三层权限控制}
+            \small
+            \begin{tabularx}{\linewidth}{lX}
+                \toprule
+                \textbf{层级} & \textbf{机制} \\
+                \midrule
+                接口级鉴权 & 校验 JWT；管理接口校验 admin \\
+                资源级鉴权 & 用户仅操作自己的内容 \\
+                状态级鉴权 & banned 禁止一切操作 \\
+                \bottomrule
+            \end{tabularx}
+            \vspace{0.2cm}
+            \small
+            \begin{tabularx}{\linewidth}{lX}
+                \toprule
+                \textbf{角色} & \textbf{权限范围} \\
+                \midrule
+                访客 & 浏览公开帖子 \\
+                普通用户 & 发帖/评论/点赞/举报 \\
+                管理员 & 用户/板块/公告管理 + 审核 \\
+                \bottomrule
+            \end{tabularx}
+        \end{block}
+    \end{columns}
+\end{frame}
+
+\begin{frame}{安全性设计：输入防护与文件上传}
+    \begin{columns}[T]
+        \column{0.48\textwidth}
+        \begin{block}{输入校验与注入防护}
+            \begin{itemize}
+                \item \textbf{Pydantic 校验}：所有入参类型/长度/格式校验
+                \item \textbf{SQL 注入防护}：SQLAlchemy ORM 参数化查询
+                \item \textbf{XSS 防护}：服务端白名单过滤 HTML
+                \item \textbf{内容长度限制}：标题/评论等字段上限
+                \item \textbf{错误信息脱敏}：不暴露 SQL、路径、堆栈
+            \end{itemize}
+        \end{block}
+        \column{0.52\textwidth}
+        \begin{block}{文件上传安全}
+            \begin{itemize}
+                \item \textbf{类型白名单}：png / jpeg / webp / pdf
+                \item \textbf{大小限制}：头像/帖子图片/附件分别设置上限
+                \item \textbf{文件名安全}：存储 Key 使用 UUID/哈希
+                \item \textbf{哈希去重}：sha256 校验，避免重复存储
+                \item \textbf{访问控制}：私有文件生成临时访问链接
+            \end{itemize}
+        \end{block}
+    \end{columns}
+    \vspace{0.1cm}
+    \begin{alertblock}{管理后台安全要点}
+        管理员操作二次校验 \textbullet{} \texttt{admin\_audit\_logs} 全量记录 \textbullet{} 举报处理留痕 \textbullet{} 封禁即时生效 \textbullet{} 后台接口隔离（\texttt{/api/v1/admin}）
+    \end{alertblock}
+\end{frame}
+
+\begin{frame}{可靠性设计：备份恢复与日志监控}
+    \begin{columns}[T]
+        \column{0.5\textwidth}
+        \begin{block}{备份与恢复}
+            \begin{itemize}
+                \item PostgreSQL 每日完整备份
+                \item 重要版本迭代前手动备份
+                \item 每个迭代后至少一次恢复验证
+                \item 对象存储元数据与文件一致性校验
+            \end{itemize}
+        \end{block}
+        \column{0.5\textwidth}
+        \begin{block}{敏感数据保护}
+            \begin{itemize}
+                \item 密钥通过环境变量注入，不写业务代码
+                \item \texttt{password\_hash} 不出现在 API 响应/日志中
+                \item 生产环境统一 HTTPS 加密传输
+                \item 应用数据库账号最小权限原则
+                \item 日志对邮箱/Token/IP 进行脱敏
+            \end{itemize}
+        \end{block}
+    \end{columns}
+    \vspace{0.2cm}
+    \begin{block}{日志与监控体系}
+        \begin{itemize}
+            \item \textbf{业务日志}：登录/注册/发帖/评论/点赞/举报/封禁/公告
+            \item \textbf{审计日志}：管理员操作 $\rightarrow$ \texttt{admin\_audit\_logs}；举报处理 $\rightarrow$ \texttt{moderation\_logs}
+            \item \textbf{监控指标}：响应时间、错误率、DB 连接数、Redis 命中率、登录失败次数
+        \end{itemize}
+    \end{block}
+\end{frame}
+
+% ================================================================
+\section{用户界面设计}
+% ================================================================
+
+\begin{frame}{用户界面设计：总纲与技术栈}
+    \begin{columns}[T]
+        \column{0.4\textwidth}
+        \begin{block}{设计目标}
+            \begin{itemize}
+                \item \textbf{一致性}：组件复用率 $\ge$ 70\%
+                \item \textbf{可用性}：核心任务 $\le$ 3 步完成
+                \item \textbf{可访问性}：WCAG AA，色彩对比度 $\ge$ 4.5:1
+            \end{itemize}
+        \end{block}
+        \column{0.6\textwidth}
+        \begin{block}{前端技术栈}
+            \small
+            \begin{tabularx}{\linewidth}{lXX}
+                \toprule
+                \textbf{层} & \textbf{技术} & \textbf{选型理由} \\
+                \midrule
+                框架 & Vue 3 + TypeScript & 响应式成熟、TS 完备 \\
+                构建 & Vite & 热更新 $<$ 1s \\
+                UI 库 & Element Plus & 中文生态友好 \\
+                路由 & Vue Router 4 & 导航守卫、懒加载 \\
+                状态管理 & Pinia & TS 友好 \\
+                HTTP & Axios & 拦截器、超时控制 \\
+                富文本 & Tiptap & ProseMirror、Vue3 集成 \\
+                \bottomrule
+            \end{tabularx}
+        \end{block}
+    \end{columns}
+    \vspace{0.1cm}
+    {\small\textbf{设计原则：} 状态驱动视图 \textbullet{} 关注点分离（SFC） \textbullet{} 移动优先 \textbullet{} 最少惊讶 \textbullet{} 容错与降级}
+
+\end{frame}
+
+\begin{frame}{页面流转与核心页面设计}
+    \centering
+    \includegraphics[height=0.72\textheight]{page_flow.png}
+\end{frame}
+
+\begin{frame}{交互设计与视觉规范}
+    \begin{columns}[T]
+        \column{0.48\textwidth}
+        \begin{block}{全局交互模式}
+            \begin{itemize}
+                \item \textbf{即时校验}：表单失焦时校验
+                \item \textbf{防抖输入}：搜索/唯一性校验 300-500ms debounce
+                \item \textbf{乐观更新}：点赞先改 UI $\rightarrow$ 发 API $\rightarrow$ 失败回滚
+                \item \textbf{确认操作}：删除/封禁弹出确认框
+                \item \textbf{离开确认}：未保存内容 \texttt{beforeRouteLeave}
+                \item \textbf{骨架屏}：首次加载避免全局 spinner
+                \item \textbf{键盘快捷键}：Ctrl+Enter 提交、Esc 关闭弹窗
+            \end{itemize}
+        \end{block}
+        \column{0.52\textwidth}
+        \begin{block}{视觉设计 Token}
+            \begin{itemize}
+                \item \textbf{品牌色}：\#409eff（主色）、\#f56c6c（危险）、\#67c23a（成功）
+                \item \textbf{排版层级}：H1 28px / H2 24px / H3 18px / Body 14px
+                \item \textbf{间距}：4/8/16/24/32/48px 递增
+                \item \textbf{圆角}：sm 4px / md 8px / lg 12px
+                \item \textbf{响应式断点}：$<$ 768px / 768-1023px / $\ge$ 1024px
+                \item \textbf{内容最大宽度}：1200px 居中
+                \item \textbf{动画时长}：页面 200ms / 弹窗 300ms / 列表 300ms
+            \end{itemize}
+        \end{block}
+    \end{columns}
+\end{frame}
+
+\begin{frame}
+    \begin{center}
+        \Huge 谢谢观看
+        \vspace{1cm}
+        \Large Q.A.
+    \end{center}
+\end{frame}
+
+\end{document}

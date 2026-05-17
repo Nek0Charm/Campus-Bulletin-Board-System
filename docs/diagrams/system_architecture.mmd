@@ -1,0 +1,27 @@
+graph TD
+    subgraph 客户端层
+        A[用户端 SPA\nTypeScript / Vue3]
+        B[管理端 SPA\nTypeScript / Vue3]
+    end
+
+    API([HTTPS / REST API])
+
+    subgraph 服务层["服务层（FastAPI 应用服务器）"]
+        C[用户与认证子系统]
+        D[帖子与分区子系统]
+        E[评论与互动子系统]
+        F[通知与消息子系统]
+        G[搜索与推荐子系统]
+        H[管理后台子系统]
+    end
+
+    subgraph 数据层
+        I[(PostgreSQL\n主数据库)]
+        J[(Redis\n会话 / 缓存)]
+    end
+
+    A --> API
+    B --> API
+    API --> C & D & E & F & G & H
+    C & D & E & F & G & H --> I
+    C & D & E --> J

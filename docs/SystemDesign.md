@@ -955,9 +955,9 @@ flowchart LR
     A[点赞请求] --> B{目标对象存在}
     B -- 否 --> X1[404]
     B -- 是 --> C{是否已有点赞记录}
-    C -- 是 --> X2[保持唯一性，不重复计数]
+    C -- 是 --> X2["保持唯一性，不重复计数"]
     C -- 否 --> D[新增 Like 记录]
-    D --> E[like_count + 1]
+    D --> E["like_count + 1"]
     E --> F[创建 like 通知]
     F --> G[返回最新状态]
 ```
@@ -1063,19 +1063,6 @@ flowchart TD
 | KP-2 → KP-3/KP-4/KP-5/KP-6 | 所有受保护业务都依赖统一认证结果 |
 | KP-4/KP-5 → 通知子系统 | 评论、回复、点赞事件均会触发通知 |
 | KP-6 → KP-2 | 用户被封禁后，统一鉴权链路会立即收紧其访问能力 |
-
-### 3.10 实现现状与后续落地建议
-
-| 过程 | 当前代码依据 | 后续工作 |
-|:---|:---|:---|
-| KP-1 | `routers/auth.py`、`services/auth_service.py`、认证测试已覆盖 | 可补充登录限流与更细粒度审计 |
-| KP-2 | `deps/auth.py`、Redis 黑名单、管理后台全局依赖已完成 | 可统一处理 `inactive` 状态在请求期的策略 |
-| KP-3 | `routers/posts.py`、`services/post_service.py` 已完成主体逻辑 | 补齐目标板块存在性与启用状态校验 |
-| KP-4 | `comments.py`、`notifications.py` 仅有路由骨架 | 实现 CommentService、NotificationService 及事务测试 |
-| KP-5 | `likes.py` 仅有路由骨架 | 实现唯一约束、计数同步、并发场景测试 |
-| KP-6 | `routers/admin.py`、`services/user_service.py`、管理测试已覆盖 | 可补充封禁操作审计日志 |
-
-通过上述六个关键过程，可以从”认证入口、业务处理、跨子系统协作、后台管控”四个维度覆盖当前校园论坛系统的核心运行机制，并为后续评论、点赞、通知模块的实现提供统一过程基线。
 
 ---
 
@@ -1581,8 +1568,6 @@ class UserService:
 
 ```mermaid
 classDiagram
-    direction TB
-
     class User {
         +UUID id
         +str username
@@ -1673,11 +1658,11 @@ classDiagram
         <<router>>
         +POST / create_post()
         +GET / list_posts()
-        +GET /{id} get_post()
-        +PATCH /{id} update_post()
-        +DELETE /{id} delete_post()
-        +PATCH /{id}/pin pin_post()
-        +PATCH /{id}/feature feature_post()
+        +GET /:id get_post()
+        +PATCH /:id update_post()
+        +DELETE /:id delete_post()
+        +PATCH /:id/pin pin_post()
+        +PATCH /:id/feature feature_post()
     }
 
     User "1" --> "0..*" Post : publishes
@@ -1901,13 +1886,13 @@ stateDiagram-v2
 
     state Normal {
         [*] --> Plain
-        state Plain : 普通帖
+        Plain : 普通帖
     }
 
     state "置顶 + 加精 可叠加" as Decorated {
-        state Pinned : 置顶<br/>is_pinned=true
-        state Featured : 加精<br/>is_featured=true
-        state PinnedAndFeatured : 置顶且加精<br/>is_pinned=true<br/>is_featured=true
+        Pinned : 置顶<br/>is_pinned=true
+        Featured : 加精<br/>is_featured=true
+        PinnedAndFeatured : 置顶且加精<br/>is_pinned=true<br/>is_featured=true
     }
 
     Normal --> Pinned : T2 管理员置顶

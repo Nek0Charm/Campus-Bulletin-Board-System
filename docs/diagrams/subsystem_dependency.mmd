@@ -1,0 +1,28 @@
+graph TD
+    subgraph Core["核心子系统"]
+        AUTH["用户与认证子系统\nJWT / 权限中间件"]
+    end
+
+    subgraph Content["内容子系统"]
+        POST["帖子与分区子系统"]
+        COMMENT["评论与互动子系统"]
+    end
+
+    subgraph Support["支撑子系统"]
+        NOTIFY["通知与消息子系统"]
+        SEARCH["搜索与推荐子系统\nPostgreSQL 全文索引"]
+    end
+
+    subgraph AdminSys["管理子系统"]
+        ADMIN["管理后台子系统"]
+    end
+
+    AUTH -.->|"鉴权依赖"| POST
+    AUTH -.->|"鉴权依赖"| COMMENT
+    AUTH -.->|"鉴权依赖"| ADMIN
+
+    POST -->|"发帖事件"| NOTIFY
+    COMMENT -->|"评论事件"| NOTIFY
+    ADMIN -->|"审核操作"| NOTIFY
+
+    NOTIFY -.->|"索引更新"| SEARCH
