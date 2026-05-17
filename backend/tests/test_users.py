@@ -6,6 +6,7 @@ Users 路由集成测试：profile / public profile / admin 用户管理
 """
 
 import uuid
+from unittest.mock import Mock
 
 import pytest
 from fastapi.testclient import TestClient
@@ -13,8 +14,10 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 from app.database import get_db
+from app.deps import get_email_service
 from app.main import app
 from app.models.base import Base
+from app.services.email_service import EmailService
 
 # ---------- 测试数据库 fixtures ----------
 
@@ -41,9 +44,28 @@ def _override_get_db():
         db.close()
 
 
+def _make_mock_email_service() -> EmailService:
+    import app.services.email_service as mod
+
+    svc = EmailService()
+    svc.send_verification_email = Mock()
+    svc.generate_verify_token = mod.EmailService.generate_verify_token.__get__(
+        svc, EmailService
+    )
+    svc.decode_verify_token = mod.EmailService.decode_verify_token.__get__(
+        svc, EmailService
+    )
+    return svc
+
+
+def _override_get_email_service():
+    return _make_mock_email_service()
+
+
 @pytest.fixture()
 def client():
     app.dependency_overrides[get_db] = _override_get_db
+    app.dependency_overrides[get_email_service] = _override_get_email_service
     c = TestClient(app)
     yield c
     app.dependency_overrides.clear()
@@ -67,7 +89,7 @@ API_PREFIX = "/api/v1/users"
 def _register_and_login(
     client, username="testuser", email="test@example.com"
 ) -> tuple[str, str]:
-    """注册用户并登录，返回 (token, user_id)。"""
+    """注册用户，验证邮箱并登录，返回 (token, user_id)。"""
     client.post(
         f"{AUTH_PREFIX}/register",
         json={
@@ -76,6 +98,18 @@ def _register_and_login(
             "password": "securepass123",
         },
     )
+    # 验证邮箱后才能登录
+    db = next(_override_get_db())
+    try:
+        from app.models.user import User as UserModel
+
+        user = db.query(UserModel).filter(UserModel.username == username).first()
+        user.email_verified = True
+        db.add(user)
+        db.commit()
+    finally:
+        db.close()
+
     login_resp = client.post(
         f"{AUTH_PREFIX}/login",
         json={"account": username, "password": "securepass123"},

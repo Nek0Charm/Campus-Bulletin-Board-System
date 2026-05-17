@@ -23,6 +23,15 @@ class Settings(BaseSettings):
     JWT_ALGORITHM: str = "HS256"
     JWT_ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
 
+    # Email / SMTP (defaults point to Mailpit for dev)
+    SMTP_HOST: str = "localhost"
+    SMTP_PORT: int = 1025
+    SMTP_USER: str = ""
+    SMTP_PASSWORD: str = ""
+    SMTP_FROM: str = "noreply@campus-bbs.local"
+    SMTP_USE_TLS: bool = False
+    EMAIL_VERIFY_TOKEN_EXPIRE_MINUTES: int = 1440  # 24 hours
+
     model_config = {"env_file": ".env", "env_file_encoding": "utf-8"}
 
 
