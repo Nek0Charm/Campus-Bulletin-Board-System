@@ -90,7 +90,7 @@ graph TD
 
 | 子系统           | 核心职责                                 |
 | ---------------- | ---------------------------------------- |
-| 用户与认证子系统 | 注册、登录、JWT 签发与刷新、角色权限控制 |
+| 用户与认证子系统 | 注册（含邮箱验证）、登录、JWT 签发与刷新、角色权限控制 |
 | 帖子与分区子系统 | 板块管理、帖子 CRUD、置顶/加精、分页查询 |
 | 评论与互动子系统 | 评论树管理、点赞/取消点赞、互动计数维护  |
 | 通知与消息子系统 | 事件驱动通知生成、站内信、未读计数       |
@@ -202,32 +202,101 @@ graph TD
 
 ```mermaid
 erDiagram
-    USERS ||--o{ POSTS : creates
-    USERS ||--o{ COMMENTS : writes
-    USERS ||--o{ POST_LIKES : likes_post
-    USERS ||--o{ COMMENT_LIKES : likes_comment
-    USERS ||--o{ NOTIFICATIONS : receives
-    USERS ||--o{ NOTIFICATIONS : triggers
-    USERS ||--o{ MEDIA_ASSETS : uploads
-    USERS ||--o{ REPORTS : submits
-    USERS ||--o{ REPORTS : handles
-    USERS ||--o{ MODERATION_LOGS : operates
-    USERS ||--o{ AUTH_SESSIONS : owns
-    USERS ||--o{ ANNOUNCEMENTS : publishes
-    USERS ||--o{ ADMIN_AUDIT_LOGS : operates
+		USERS ||--o{ POSTS : creates
+		BOARDS ||--o{ POSTS : contains
+		POSTS ||--o{ COMMENTS : has
+		USERS ||--o{ COMMENTS : writes
+		COMMENTS ||--o{ COMMENTS : replies_to
 
-    BOARDS ||--o{ POSTS : contains
-    BOARDS }o--|| USERS : created_by
+		USERS ||--o{ POST_LIKES : makes
+		POSTS ||--o{ POST_LIKES : receives
+		USERS ||--o{ COMMENT_LIKES : makes
+		COMMENTS ||--o{ COMMENT_LIKES : receives
 
-    POSTS ||--o{ COMMENTS : has
-    POSTS ||--o{ POST_LIKES : liked_by
-    POSTS ||--o{ POST_ATTACHMENTS : has
+		USERS ||--o{ MEDIA_ASSETS : uploads
+		POSTS ||--o{ POST_ATTACHMENTS : has
+		MEDIA_ASSETS ||--o{ POST_ATTACHMENTS : attached_as
 
-    COMMENTS ||--o{ COMMENTS : replies_to
-    COMMENTS ||--o{ COMMENT_LIKES : liked_by
+		USERS ||--o{ NOTIFICATIONS : receives
+		USERS ||--o{ NOTIFICATIONS : triggers
 
-    MEDIA_ASSETS ||--o{ POST_ATTACHMENTS : attached_as
-    REPORTS ||--o{ MODERATION_LOGS : generates
+		USERS ||--o{ REPORTS : submits
+		USERS ||--o{ REPORTS : handles
+		REPORTS ||--o{ MODERATION_LOGS : generates
+		USERS ||--o{ MODERATION_LOGS : operates
+
+		USERS ||--o{ AUTH_SESSIONS : owns
+		USERS ||--o{ ANNOUNCEMENTS : publishes
+		USERS ||--o{ ADMIN_AUDIT_LOGS : operates
+
+		USERS {
+			uuid id PK
+			varchar username
+			varchar email
+		}
+		BOARDS {
+			uuid id PK
+			varchar name
+		}
+		POSTS {
+			uuid id PK
+			uuid board_id FK
+			uuid author_id FK
+			varchar title
+		}
+		COMMENTS {
+			uuid id PK
+			uuid post_id FK
+			uuid author_id FK
+			uuid parent_comment_id FK
+		}
+		POST_LIKES {
+			uuid id PK
+			uuid post_id FK
+			uuid user_id FK
+		}
+		COMMENT_LIKES {
+			uuid id PK
+			uuid comment_id FK
+			uuid user_id FK
+		}
+		MEDIA_ASSETS {
+			uuid id PK
+			uuid uploader_id FK
+			varchar object_key
+		}
+		POST_ATTACHMENTS {
+			uuid id PK
+			uuid post_id FK
+			uuid media_id FK
+		}
+		NOTIFICATIONS {
+			uuid id PK
+			uuid recipient_id FK
+			uuid actor_id FK
+		}
+		REPORTS {
+			uuid id PK
+			uuid reporter_id FK
+			uuid handled_by FK
+		}
+		MODERATION_LOGS {
+			uuid id PK
+			uuid report_id FK
+			uuid operator_id FK
+		}
+		AUTH_SESSIONS {
+			uuid id PK
+			uuid user_id FK
+		}
+		ANNOUNCEMENTS {
+			uuid id PK
+			uuid created_by FK
+		}
+		ADMIN_AUDIT_LOGS {
+			uuid id PK
+			uuid admin_id FK
+		}
 ```
 
 **实体关系概要：**
@@ -1100,14 +1169,15 @@ flowchart TD
 
 | 元素 | 类型 | 职责描述 |
 |:---|:---|:---|
-| `AuthRouter` | APIRouter 实例 | 定义认证类 RESTful 端点，注册 OAuth2 密码凭证流（`OAuth2PasswordBearer`），所有请求委托 `AuthService` 处理 |
+| `AuthRouter` | APIRouter 实例 | 定义认证类 RESTful 端点（含 `/verify-email`），注册 OAuth2 密码凭证流（`OAuth2PasswordBearer`），所有请求委托 `AuthService` 处理 |
 | `oauth2_scheme` | OAuth2PasswordBearer 实例 | 从请求头提取 Bearer Token，tokenUrl 指向 `/api/v1/auth/login` |
 
 **业务层元素：**
 
 | 元素 | 类型 | 职责描述 |
 |:---|:---|:---|
-| `AuthService` | 业务服务类 | 封装认证全流程：注册时校验用户名/邮箱唯一性并哈希密码；登录时支持用户名或邮箱双标识、校验密码并签发 JWT；登出时计算 Token 剩余有效期并写入 Redis 黑名单；密码重置时校验旧密码并写回新哈希 |
+| `AuthService` | 业务服务类 | 封装认证全流程：注册时校验用户名/邮箱唯一性、哈希密码并调用 EmailService 发送验证邮件；登录时支持用户名或邮箱双标识、校验密码与 email_verified 状态并签发 JWT；登出时计算 Token 剩余有效期并写入 Redis 黑名单；密码重置时校验旧密码并写回新哈希 |
+| `EmailService` | 业务服务类 | 签发/解码邮箱验证 Token（JWT, 24h 有效期，含 `type="email_verify"` 声明）；通过 SMTP 发送验证邮件（开发环境使用 Mailpit） |
 
 **数据访问层元素：**
 
@@ -1123,6 +1193,8 @@ flowchart TD
 | `LoginRequest` | 请求 Schema | 登录入参：`account`（用户名或邮箱）、`password` |
 | `LoginData` | 响应 Schema | 登录出参：`access_token`、`token_type`("bearer")、`expires_in`(秒)、用户摘要 |
 | `ResetPasswordRequest` | 请求 Schema | 改密入参：`old_password`、`new_password`(≥8) |
+| `VerifyEmailRequest` | 请求 Schema | 邮箱验证入参：`token`（JWT 字符串） |
+| `VerifyEmailData` | 响应 Schema | 邮箱验证出参：`message` |
 
 **横切元素：**
 
@@ -1131,6 +1203,7 @@ flowchart TD
 | `get_current_user` | 依赖注入函数 | JWT 认证链：校验黑名单 → 解码 Token → 查询用户 → 校验非封禁状态 → 返回 User 实例 |
 | `require_admin` | 依赖注入函数 | 在 `get_current_user` 基础上追加 `role=="admin"` 校验 |
 | `hash_password / verify_password` | 工具函数 | 基于 pwdlib `PasswordHash.recommended()` 的密码哈希与验证 |
+| `get_email_service` | 依赖注入函数 | 构造 EmailService 实例供路由层注入 |
 
 #### 4.1.4 管理后台子系统的设计元素
 
@@ -1455,6 +1528,7 @@ class UserService:
 | `avatar_url` | public | `str(1024) \| None` | 头像 URL，可为空 |
 | `role` | public | `str(20)` | 角色，CHECK `'user' \| 'admin'`，默认 `'user'` |
 | `status` | public | `str(20)` | 状态，CHECK `'active' \| 'inactive' \| 'banned'`，默认 `'active'` |
+| `email_verified` | public | `bool` | 邮箱验证标记，默认 `False`，NOT NULL |
 | `last_login_at` | public | `datetime \| None` | 最后登录时间 |
 | `created_at` | public | `datetime(tz)` | 创建时间，`server_default=now()` |
 | `updated_at` | public | `datetime(tz)` | 更新时间，`onupdate=now()` |
@@ -1518,6 +1592,7 @@ classDiagram
         +str? avatar_url
         +str role
         +str status
+        +bool email_verified
         +datetime? last_login_at
         +datetime created_at
         +datetime updated_at
@@ -1668,6 +1743,7 @@ classDiagram
         +str email
         +str role
         +str status
+        +bool email_verified
     }
 
     class Post {
