@@ -2,14 +2,18 @@
 Boards 路由集成测试：公开查询、admin 管理、软删除。
 """
 
+from unittest.mock import Mock
+
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 from app.database import get_db
+from app.deps import get_email_service
 from app.main import app
 from app.models.base import Base
+from app.services.email_service import EmailService
 
 SQLALCHEMY_DATABASE_URL = "sqlite:///test.db"
 
@@ -34,9 +38,28 @@ def _override_get_db():
         db.close()
 
 
+def _make_mock_email_service() -> EmailService:
+    import app.services.email_service as mod
+
+    svc = EmailService()
+    svc.send_verification_email = Mock()
+    svc.generate_verify_token = mod.EmailService.generate_verify_token.__get__(
+        svc, EmailService
+    )
+    svc.decode_verify_token = mod.EmailService.decode_verify_token.__get__(
+        svc, EmailService
+    )
+    return svc
+
+
+def _override_get_email_service():
+    return _make_mock_email_service()
+
+
 @pytest.fixture()
 def client():
     app.dependency_overrides[get_db] = _override_get_db
+    app.dependency_overrides[get_email_service] = _override_get_email_service
     c = TestClient(app)
     yield c
     app.dependency_overrides.clear()
@@ -56,7 +79,7 @@ API_PREFIX = "/api/v1/boards"
 
 
 def _register_and_login(
-    client, username="boarduser", email="boarduser@example.com"
+    client, db_session, username="boarduser", email="boarduser@example.com"
 ) -> tuple[str, str]:
     client.post(
         f"{AUTH_PREFIX}/register",
@@ -66,6 +89,14 @@ def _register_and_login(
             "password": "securepass123",
         },
     )
+
+    from app.models.user import User
+
+    user = db_session.query(User).filter(User.username == username).first()
+    user.email_verified = True
+    db_session.add(user)
+    db_session.commit()
+
     login_resp = client.post(
         f"{AUTH_PREFIX}/login",
         json={"account": username, "password": "securepass123"},
@@ -77,7 +108,7 @@ def _register_and_login(
 def _register_and_login_admin(
     client, db_session, username="boardadmin", email="boardadmin@example.com"
 ) -> tuple[str, str]:
-    token, user_id = _register_and_login(client, username, email)
+    token, user_id = _register_and_login(client, db_session, username, email)
 
     from uuid import UUID
 
@@ -131,7 +162,7 @@ def test_get_board_detail(client, db_session):
 def test_non_admin_cannot_create_update_or_delete_board(client, db_session):
     admin_token, _ = _register_and_login_admin(client, db_session)
     user_token, _ = _register_and_login(
-        client, username="normaluser", email="normal@example.com"
+        client, db_session, username="normaluser", email="normal@example.com"
     )
     board_id = _create_board(client, admin_token).json()["data"]["id"]
     headers = {"Authorization": f"Bearer {user_token}"}
