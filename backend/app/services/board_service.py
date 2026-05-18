@@ -29,6 +29,14 @@ class BoardService:
             .first()
         )
 
+    def slug_exists(
+        self, db: Session, slug: str, *, exclude_id: UUID | None = None
+    ) -> bool:
+        query = db.query(Board).filter(Board.slug == slug)
+        if exclude_id is not None:
+            query = query.filter(Board.id != exclude_id)
+        return query.first() is not None
+
     def create(self, db: Session, *, obj_in: BoardCreate) -> Board:
         db_obj = Board(**obj_in.model_dump())
         db.add(db_obj)
