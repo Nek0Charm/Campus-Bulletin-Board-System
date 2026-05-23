@@ -19,7 +19,7 @@ class Settings(BaseSettings):
     REDIS_DB: int = 0
 
     # JWT
-    JWT_SECRET: str = "change-me-in-production"
+    JWT_SECRET: str = "SecretKeyMustBeAtLeast32BytesLongForSHA256"
     JWT_ALGORITHM: str = "HS256"
     JWT_ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
 
