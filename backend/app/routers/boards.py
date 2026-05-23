@@ -24,7 +24,7 @@ router = APIRouter(prefix="/boards", tags=["boards"])
     response_model=ApiResponse[BoardRead],
     status_code=status.HTTP_201_CREATED,
 )
-async def create_board(
+def create_board(
     payload: BoardCreate,
     db: Session = Depends(get_db),
     _current_user: User = Depends(require_admin),
@@ -32,11 +32,13 @@ async def create_board(
 ):
     if service.slug_exists(db, payload.slug):
         raise HTTPException(status_code=409, detail="Board slug already exists")
+    if service.name_exists(db, payload.name):
+        raise HTTPException(status_code=409, detail="Board name already exists")
     return ApiResponse(data=service.create(db, obj_in=payload))
 
 
 @router.get("", response_model=ApiResponse[list[BoardRead]])
-async def list_boards(
+def list_boards(
     db: Session = Depends(get_db),
     service: BoardService = Depends(get_board_service),
 ):
@@ -44,7 +46,7 @@ async def list_boards(
 
 
 @router.get("/{id}", response_model=ApiResponse[BoardRead])
-async def get_board(
+def get_board(
     id: UUID,
     db: Session = Depends(get_db),
     service: BoardService = Depends(get_board_service),
@@ -56,7 +58,7 @@ async def get_board(
 
 
 @router.patch("/{id}", response_model=ApiResponse[BoardRead])
-async def update_board(
+def update_board(
     id: UUID,
     payload: BoardUpdate,
     db: Session = Depends(get_db),
@@ -68,11 +70,13 @@ async def update_board(
         raise HTTPException(status_code=404, detail="Board not found")
     if payload.slug and service.slug_exists(db, payload.slug, exclude_id=id):
         raise HTTPException(status_code=409, detail="Board slug already exists")
+    if payload.name and service.name_exists(db, payload.name, exclude_id=id):
+        raise HTTPException(status_code=409, detail="Board name already exists")
     return ApiResponse(data=service.update(db, db_obj=board, obj_in=payload))
 
 
 @router.delete("/{id}", response_model=ApiResponse)
-async def delete_board(
+def delete_board(
     id: UUID,
     db: Session = Depends(get_db),
     _current_user: User = Depends(require_admin),

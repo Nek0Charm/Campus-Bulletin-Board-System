@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional, Tuple, List
 from uuid import UUID
 from sqlalchemy import desc
@@ -11,10 +11,16 @@ from app.schemas.post import PostCreate, PostUpdate
 class PostService:
     def create(self, db: Session, *, obj_in: PostCreate, author_id: UUID) -> Post:
         db_obj = Post(
-            **obj_in.model_dump(), author_id=author_id, published_at=datetime.now()
+            **obj_in.model_dump(),
+            author_id=author_id,
+            published_at=datetime.now(timezone.utc)
         )
         db.add(db_obj)
-        db.commit()
+        try:
+            db.commit()
+        except Exception:
+            db.rollback()
+            raise
         db.refresh(db_obj)
         return db_obj
 
@@ -50,12 +56,16 @@ class PostService:
         )
 
     def update(self, db: Session, *, db_obj: Post, obj_in: PostUpdate) -> Post:
-        update_data = obj_in.model_dump(exclude_unset=True)
+        update_data = obj_in.model_dump(exclude_unset=True, exclude_none=True)
         for field, value in update_data.items():
             setattr(db_obj, field, value)
 
-        db_obj.updated_at = datetime.now()
-        db.commit()
+        db_obj.updated_at = datetime.now(timezone.utc)
+        try:
+            db.commit()
+        except Exception:
+            db.rollback()
+            raise
         db.refresh(db_obj)
         return db_obj
 
@@ -63,12 +73,20 @@ class PostService:
         self, db: Session, *, db_obj: Post, field: str, val: bool
     ) -> Post:
         setattr(db_obj, field, val)
-        db.commit()
+        try:
+            db.commit()
+        except Exception:
+            db.rollback()
+            raise
         db.refresh(db_obj)
         return db_obj
 
     def remove(self, db: Session, *, db_obj: Post) -> Post:
-        db_obj.deleted_at = datetime.now()
+        db_obj.deleted_at = datetime.now(timezone.utc)
         db_obj.status = PostStatus.DELETED
-        db.commit()
+        try:
+            db.commit()
+        except Exception:
+            db.rollback()
+            raise
         return db_obj
