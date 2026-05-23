@@ -31,7 +31,7 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl=f"{settings.API_PREFIX}/auth/login
 
 
 @router.post("/register", response_model=ApiResponse[RegisterData])
-async def register(
+def register(
     payload: RegisterRequest,
     db: Session = Depends(get_db),
     service: AuthService = Depends(get_auth_service),
@@ -41,7 +41,7 @@ async def register(
 
 
 @router.post("/verify-email", response_model=ApiResponse[VerifyEmailData])
-async def verify_email(
+def verify_email(
     payload: VerifyEmailRequest,
     db: Session = Depends(get_db),
     email_service: EmailService = Depends(get_email_service),
@@ -67,7 +67,7 @@ async def verify_email(
 
 
 @router.post("/login", response_model=ApiResponse[LoginData])
-async def login(
+def login(
     payload: LoginRequest,
     db: Session = Depends(get_db),
     service: AuthService = Depends(get_auth_service),
@@ -76,7 +76,7 @@ async def login(
 
 
 @router.post("/logout", response_model=ApiResponse[LogoutData])
-async def logout(
+def logout(
     token: str = Depends(oauth2_scheme),
     current_user: User = Depends(get_current_user),
     service: AuthService = Depends(get_auth_service),
@@ -85,7 +85,7 @@ async def logout(
 
 
 @router.post("/reset-password", response_model=ApiResponse[ResetPasswordData])
-async def reset_password(
+def reset_password(
     payload: ResetPasswordRequest,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
