@@ -7,7 +7,9 @@ if TYPE_CHECKING:
 from sqlalchemy import Boolean
 from sqlalchemy import CheckConstraint
 from sqlalchemy import DateTime
+from sqlalchemy import Index
 from sqlalchemy import String
+from sqlalchemy import text
 from sqlalchemy.orm import Mapped
 from sqlalchemy.orm import mapped_column
 from sqlalchemy.orm import relationship
@@ -24,10 +26,22 @@ class User(Base, IDMixin, TimestampMixin):
         CheckConstraint(
             "status IN ('active', 'inactive', 'banned')", name="ck_users_status"
         ),
+        Index(
+            "uq_users_username",
+            "username",
+            unique=True,
+            postgresql_where=text("deleted_at IS NULL"),
+        ),
+        Index(
+            "uq_users_email",
+            "email",
+            unique=True,
+            postgresql_where=text("deleted_at IS NULL"),
+        ),
     )
 
-    username: Mapped[str] = mapped_column(String(32), unique=True, nullable=False)
-    email: Mapped[str] = mapped_column(String(255), unique=True, nullable=False)
+    username: Mapped[str] = mapped_column(String(32), nullable=False)
+    email: Mapped[str] = mapped_column(String(255), nullable=False)
     password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
     nickname: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
     # 昵称是对外展示给其他用户看的，可以为空
