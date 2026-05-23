@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional, List
 from uuid import UUID
 
@@ -32,7 +32,15 @@ class BoardService:
     def slug_exists(
         self, db: Session, slug: str, *, exclude_id: UUID | None = None
     ) -> bool:
-        query = db.query(Board).filter(Board.slug == slug)
+        query = db.query(Board).filter(Board.slug == slug, Board.deleted_at.is_(None))
+        if exclude_id is not None:
+            query = query.filter(Board.id != exclude_id)
+        return query.first() is not None
+
+    def name_exists(
+        self, db: Session, name: str, *, exclude_id: UUID | None = None
+    ) -> bool:
+        query = db.query(Board).filter(Board.name == name, Board.deleted_at.is_(None))
         if exclude_id is not None:
             query = query.filter(Board.id != exclude_id)
         return query.first() is not None
@@ -40,19 +48,32 @@ class BoardService:
     def create(self, db: Session, *, obj_in: BoardCreate) -> Board:
         db_obj = Board(**obj_in.model_dump())
         db.add(db_obj)
-        db.commit()
+        try:
+            db.commit()
+        except Exception:
+            db.rollback()
+            raise
         db.refresh(db_obj)
         return db_obj
 
     def update(self, db: Session, *, db_obj: Board, obj_in: BoardUpdate) -> Board:
-        update_data = obj_in.model_dump(exclude_unset=True)
+        update_data = obj_in.model_dump(exclude_unset=True, exclude_none=True)
         for field, value in update_data.items():
             setattr(db_obj, field, value)
-        db_obj.updated_at = datetime.now()
-        db.commit()
+        if update_data:
+            db_obj.updated_at = datetime.now(timezone.utc)
+        try:
+            db.commit()
+        except Exception:
+            db.rollback()
+            raise
         db.refresh(db_obj)
         return db_obj
 
     def remove(self, db: Session, *, db_obj: Board) -> None:
-        db_obj.deleted_at = datetime.now()
-        db.commit()
+        db_obj.deleted_at = datetime.now(timezone.utc)
+        try:
+            db.commit()
+        except Exception:
+            db.rollback()
+            raise

@@ -39,7 +39,10 @@ class AuthService:
     ) -> RegisterData:
         existing = (
             db.query(User)
-            .filter(or_(User.username == payload.username, User.email == payload.email))
+            .filter(
+                or_(User.username == payload.username, User.email == payload.email),
+                User.deleted_at.is_(None),
+            )
             .first()
         )
         if existing and existing.username == payload.username:
@@ -54,7 +57,11 @@ class AuthService:
             nickname=payload.nickname or None,
         )
         db.add(user)
-        db.commit()
+        try:
+            db.commit()
+        except Exception:
+            db.rollback()
+            raise
         db.refresh(user)
 
         verify_token = email_service.generate_verify_token(str(user.id), user.email)
@@ -88,7 +95,11 @@ class AuthService:
 
         user.last_login_at = datetime.now(timezone.utc)
         db.add(user)
-        db.commit()
+        try:
+            db.commit()
+        except Exception:
+            db.rollback()
+            raise
         db.refresh(user)
 
         access_token = _create_access_token(str(user.id), user.role)
@@ -124,5 +135,9 @@ class AuthService:
             raise HTTPException(status_code=401, detail="Old password is incorrect")
         user.password_hash = hash_password(payload.new_password)
         db.add(user)
-        db.commit()
+        try:
+            db.commit()
+        except Exception:
+            db.rollback()
+            raise
         return ResetPasswordData(message="password reset success")
