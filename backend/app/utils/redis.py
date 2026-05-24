@@ -1,8 +1,11 @@
 import hashlib
+import logging
 
 import redis
 
 from app.config import get_settings
+
+logger = logging.getLogger(__name__)
 
 settings = get_settings()
 
@@ -22,15 +25,21 @@ def get_redis() -> redis.Redis:
 
 
 def _token_key(token: str) -> str:
-    # JWT 可能很长，用 SHA256 缩短 key
     return f"token_blacklist:{hashlib.sha256(token.encode()).hexdigest()}"
 
 
 def blacklist_token(token: str, ttl: int) -> None:
-    r = get_redis()
-    r.setex(_token_key(token), ttl, "1")
+    try:
+        r = get_redis()
+        r.setex(_token_key(token), ttl, "1")
+    except redis.RedisError:
+        logger.warning("Redis unavailable, skipping token blacklist")
 
 
 def is_token_blacklisted(token: str) -> bool:
-    r = get_redis()
-    return r.exists(_token_key(token)) > 0
+    try:
+        r = get_redis()
+        return r.exists(_token_key(token)) > 0
+    except redis.RedisError:
+        logger.warning("Redis unavailable, skipping blacklist check")
+        return False

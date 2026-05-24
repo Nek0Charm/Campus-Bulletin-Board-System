@@ -49,11 +49,14 @@ def get_current_user(
     except ValueError as exc:
         raise HTTPException(status_code=401, detail="Invalid token subject") from exc
 
-    user = db.query(User).filter(User.id == user_id).first()
+    # 查询时筛选deleted_at为None，忽略软删除的数据
+    user = db.query(User).filter(User.id == user_id, User.deleted_at.is_(None)).first()
     if not user:
         raise HTTPException(status_code=401, detail="User not found")
-    if user.status == "banned":
-        raise HTTPException(status_code=403, detail="User is banned")
+    if user.status != "active":
+        raise HTTPException(status_code=403, detail=f"User is {user.status}")
+    if not user.email_verified:
+        raise HTTPException(status_code=403, detail="Email not verified")
     return user
 
 

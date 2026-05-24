@@ -12,6 +12,7 @@ FastAPI 应用入口，负责创建 app 实例并注册路由。
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import get_settings
 from app.database import init_db
@@ -38,6 +39,14 @@ async def lifespan(_: FastAPI):
 
 
 app = FastAPI(title=settings.PROJECT_NAME, version=settings.VERSION, lifespan=lifespan)
+# CORS 配置，允许前端访问 API。
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[settings.FRONTEND_BASE_URL],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 app.include_router(auth.router, prefix=settings.API_PREFIX)
 app.include_router(users.router, prefix=settings.API_PREFIX)

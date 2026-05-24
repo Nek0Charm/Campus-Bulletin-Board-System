@@ -17,6 +17,7 @@ from app.schemas import RegisterData
 from app.schemas import RegisterRequest
 from app.schemas import ResetPasswordData
 from app.schemas import ResetPasswordRequest
+from app.schemas import ResendVerifyRequest
 from app.schemas import VerifyEmailData
 from app.schemas import VerifyEmailRequest
 from app.schemas.response import ApiResponse
@@ -52,7 +53,11 @@ def verify_email(
 
     from app.models.user import User as UserModel
 
-    user = db.query(UserModel).filter(UserModel.id == UUID(user_id)).first()
+    user = (
+        db.query(UserModel)
+        .filter(UserModel.id == UUID(user_id), UserModel.deleted_at.is_(None))
+        .first()
+    )
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     if user.email_verified:
@@ -60,9 +65,39 @@ def verify_email(
 
     user.email_verified = True
     db.add(user)
-    db.commit()
+    try:
+        db.commit()
+    except Exception:
+        db.rollback()
+        raise
     return ApiResponse[VerifyEmailData](
         data=VerifyEmailData(message="Email verified successfully")
+    )
+
+
+# 添加重新发送验证邮件的接口
+@router.post("/resend-verification", response_model=ApiResponse[VerifyEmailData])
+def resend_verification(
+    payload: ResendVerifyRequest,
+    db: Session = Depends(get_db),
+    email_service: EmailService = Depends(get_email_service),
+):
+    from app.models.user import User as UserModel
+
+    user = (
+        db.query(UserModel)
+        .filter(UserModel.email == payload.email, UserModel.deleted_at.is_(None))
+        .first()
+    )
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    if user.email_verified:
+        raise HTTPException(status_code=409, detail="Email already verified")
+
+    verify_token = email_service.generate_verify_token(str(user.id), user.email)
+    email_service.send_verification_email(user.email, verify_token)
+    return ApiResponse[VerifyEmailData](
+        data=VerifyEmailData(message="Verification email resent")
     )
 
 
@@ -87,10 +122,11 @@ def logout(
 @router.post("/reset-password", response_model=ApiResponse[ResetPasswordData])
 def reset_password(
     payload: ResetPasswordRequest,
+    token: str = Depends(oauth2_scheme),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
     service: AuthService = Depends(get_auth_service),
 ):
     return ApiResponse[ResetPasswordData](
-        data=service.reset_password(db, current_user, payload)
+        data=service.reset_password(db, current_user, payload, token)
     )

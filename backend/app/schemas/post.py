@@ -17,8 +17,6 @@ class PostCreate(PostBase):
 class PostUpdate(BaseModel):
     title: Optional[str] = None
     content: Optional[str] = None
-    is_pinned: Optional[bool] = None
-    is_featured: Optional[bool] = None
 
 
 class AuthorInfo(BaseModel):

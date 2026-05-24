@@ -122,6 +122,8 @@ def pin_post(
     if current_user.role != "admin":
         raise HTTPException(status_code=403, detail="Admin only")
     post = service.get_by_id(db, id)
+    if not post:
+        raise HTTPException(status_code=404, detail="Post not found")
     return ApiResponse(
         data=service.update_special_status(
             db, db_obj=post, field="is_pinned", val=is_pinned
@@ -141,6 +143,8 @@ def feature_post(
     if current_user.role != "admin":
         raise HTTPException(status_code=403, detail="Admin only")
     post = service.get_by_id(db, id)
+    if not post:
+        raise HTTPException(status_code=404, detail="Post not found")
     return ApiResponse(
         data=service.update_special_status(
             db, db_obj=post, field="is_featured", val=is_featured
