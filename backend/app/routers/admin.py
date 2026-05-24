@@ -71,9 +71,13 @@ def admin_list_users(
 def admin_update_user_status(
     id: str,
     payload: UpdateUserStatusRequest,
+    current_user: User = Depends(require_admin),
     db: Session = Depends(get_db),
     service: UserService = Depends(get_user_service),
 ):
+    # 管理员不能 ban 自己
+    if str(id) == str(current_user.id) and payload.status == "banned":
+        raise HTTPException(status_code=400, detail="Cannot ban yourself")
     return ApiResponse(data=service.update_status(db, id, payload))
 
 

@@ -54,3 +54,7 @@ class VerifyEmailRequest(BaseModel):
 
 class VerifyEmailData(BaseModel):
     message: str
+
+
+class ResendVerifyRequest(BaseModel):
+    email: EmailStr

@@ -56,7 +56,7 @@ class PostService:
         )
 
     def update(self, db: Session, *, db_obj: Post, obj_in: PostUpdate) -> Post:
-        update_data = obj_in.model_dump(exclude_unset=True, exclude_none=True)
+        update_data = obj_in.model_dump(exclude_unset=True)
         for field, value in update_data.items():
             setattr(db_obj, field, value)
 

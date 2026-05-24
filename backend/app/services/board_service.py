@@ -57,7 +57,7 @@ class BoardService:
         return db_obj
 
     def update(self, db: Session, *, db_obj: Board, obj_in: BoardUpdate) -> Board:
-        update_data = obj_in.model_dump(exclude_unset=True, exclude_none=True)
+        update_data = obj_in.model_dump(exclude_unset=True)
         for field, value in update_data.items():
             setattr(db_obj, field, value)
         if update_data:
