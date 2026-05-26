@@ -20,7 +20,7 @@ router = APIRouter(prefix="/boards", tags=["boards"])
 
 
 @router.post(
-    "",
+    "/",
     response_model=ApiResponse[BoardRead],
     status_code=status.HTTP_201_CREATED,
 )
@@ -37,7 +37,7 @@ def create_board(
     return ApiResponse(data=service.create(db, obj_in=payload))
 
 
-@router.get("", response_model=ApiResponse[list[BoardRead]])
+@router.get("/", response_model=ApiResponse[list[BoardRead]])
 def list_boards(
     db: Session = Depends(get_db),
     service: BoardService = Depends(get_board_service),
