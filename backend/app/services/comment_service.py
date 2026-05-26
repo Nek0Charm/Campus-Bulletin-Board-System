@@ -3,7 +3,6 @@ from typing import List, Optional, Tuple
 from uuid import UUID
 
 from fastapi import HTTPException
-from sqlalchemy import desc
 from sqlalchemy.orm import Session, joinedload
 
 from app.models.comment import Comment, CommentStatus
