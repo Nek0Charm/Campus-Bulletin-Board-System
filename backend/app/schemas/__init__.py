@@ -25,6 +25,9 @@ from app.schemas.user import UserPublicData
 from app.schemas.post import PostCreate, PostUpdate, PostRead, PostListResponse
 from app.schemas.board import BoardCreate, BoardRead, BoardUpdate
 from app.schemas.admin import AdminStatsResponse
+from app.schemas.notification import NotificationMarkAllReadResult
+from app.schemas.notification import NotificationRead
+from app.schemas.notification import NotificationUnreadCount
 
 __all__ = [
     "RegisterRequest",
@@ -51,4 +54,7 @@ __all__ = [
     "BoardRead",
     "BoardUpdate",
     "AdminStatsResponse",
+    "NotificationRead",
+    "NotificationUnreadCount",
+    "NotificationMarkAllReadResult",
 ]
