@@ -46,7 +46,7 @@
         <el-divider />
 
         <!-- Post Content -->
-        <div class="post-content" v-html="sanitizeRichHTML(post.content)" />
+        <div class="post-content" v-html="sanitizeRichHTML(post.content ?? '')" />
 
         <el-divider />
 
