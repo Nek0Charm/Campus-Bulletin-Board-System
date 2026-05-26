@@ -38,7 +38,12 @@ async def lifespan(_: FastAPI):
     yield
 
 
-app = FastAPI(title=settings.PROJECT_NAME, version=settings.VERSION, lifespan=lifespan)
+app = FastAPI(
+    title=settings.PROJECT_NAME,
+    version=settings.VERSION,
+    lifespan=lifespan,
+    redirect_slashes=False,
+)
 # CORS 配置，允许前端访问 API。
 app.add_middleware(
     CORSMiddleware,

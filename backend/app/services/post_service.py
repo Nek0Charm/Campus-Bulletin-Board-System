@@ -29,6 +29,7 @@ class PostService:
         db: Session,
         *,
         board_id: Optional[UUID] = None,
+        author_id: Optional[UUID] = None,
         page: int = 1,
         page_size: int = 20
     ) -> Tuple[List[Post], int]:
@@ -40,6 +41,8 @@ class PostService:
 
         if board_id:
             query = query.filter(Post.board_id == board_id)
+        if author_id:
+            query = query.filter(Post.author_id == author_id)
 
         query = query.order_by(desc(Post.is_pinned), desc(Post.created_at))
 
