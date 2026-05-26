@@ -8,7 +8,7 @@ if TYPE_CHECKING:
 
 from uuid import UUID
 
-from sqlalchemy import String, Text, Boolean, ForeignKey, DateTime
+from sqlalchemy import BigInteger, String, Text, Boolean, ForeignKey, DateTime
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base, IDMixin, TimestampMixin
@@ -32,6 +32,7 @@ class Post(Base, IDMixin, TimestampMixin):
     is_pinned: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     is_featured: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     status: Mapped[str] = mapped_column(String(20), default="normal", nullable=False)
+    like_count: Mapped[int] = mapped_column(BigInteger, default=0, nullable=False)
 
     published_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=datetime.now, nullable=False
