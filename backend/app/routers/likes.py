@@ -13,7 +13,9 @@ from app.services.like_service import LikeService
 router = APIRouter(prefix="/likes", tags=["likes"])
 
 
-@router.post("/posts/{post_id}", response_model=ApiResponse, status_code=status.HTTP_200_OK)
+@router.post(
+    "/posts/{post_id}", response_model=ApiResponse, status_code=status.HTTP_200_OK
+)
 def like_post(
     post_id: UUID,
     db: Session = Depends(get_db),
@@ -24,7 +26,9 @@ def like_post(
     return ApiResponse(message="Liked")
 
 
-@router.delete("/posts/{post_id}", response_model=ApiResponse, status_code=status.HTTP_200_OK)
+@router.delete(
+    "/posts/{post_id}", response_model=ApiResponse, status_code=status.HTTP_200_OK
+)
 def unlike_post(
     post_id: UUID,
     db: Session = Depends(get_db),
@@ -35,7 +39,9 @@ def unlike_post(
     return ApiResponse(message="Unliked")
 
 
-@router.post("/comments/{comment_id}", response_model=ApiResponse, status_code=status.HTTP_200_OK)
+@router.post(
+    "/comments/{comment_id}", response_model=ApiResponse, status_code=status.HTTP_200_OK
+)
 def like_comment(
     comment_id: UUID,
     db: Session = Depends(get_db),
@@ -46,7 +52,9 @@ def like_comment(
     return ApiResponse(message="Liked")
 
 
-@router.delete("/comments/{comment_id}", response_model=ApiResponse, status_code=status.HTTP_200_OK)
+@router.delete(
+    "/comments/{comment_id}", response_model=ApiResponse, status_code=status.HTTP_200_OK
+)
 def unlike_comment(
     comment_id: UUID,
     db: Session = Depends(get_db),

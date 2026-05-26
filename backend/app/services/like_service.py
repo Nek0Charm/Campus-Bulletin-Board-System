@@ -10,7 +10,9 @@ from app.models.post import Post
 
 class LikeService:
     def like_post(self, db: Session, *, post_id: UUID, user_id: UUID) -> Post:
-        post = db.query(Post).filter(Post.id == post_id, Post.deleted_at.is_(None)).first()
+        post = (
+            db.query(Post).filter(Post.id == post_id, Post.deleted_at.is_(None)).first()
+        )
         if not post:
             raise HTTPException(status_code=404, detail="Post not found")
 
@@ -33,7 +35,9 @@ class LikeService:
         return post
 
     def unlike_post(self, db: Session, *, post_id: UUID, user_id: UUID) -> Post:
-        post = db.query(Post).filter(Post.id == post_id, Post.deleted_at.is_(None)).first()
+        post = (
+            db.query(Post).filter(Post.id == post_id, Post.deleted_at.is_(None)).first()
+        )
         if not post:
             raise HTTPException(status_code=404, detail="Post not found")
 
@@ -66,7 +70,9 @@ class LikeService:
 
         existing = (
             db.query(CommentLike)
-            .filter(CommentLike.comment_id == comment_id, CommentLike.user_id == user_id)
+            .filter(
+                CommentLike.comment_id == comment_id, CommentLike.user_id == user_id
+            )
             .first()
         )
         if existing:
@@ -82,7 +88,9 @@ class LikeService:
         db.refresh(comment)
         return comment
 
-    def unlike_comment(self, db: Session, *, comment_id: UUID, user_id: UUID) -> Comment:
+    def unlike_comment(
+        self, db: Session, *, comment_id: UUID, user_id: UUID
+    ) -> Comment:
         comment = (
             db.query(Comment)
             .filter(Comment.id == comment_id, Comment.deleted_at.is_(None))
@@ -93,7 +101,9 @@ class LikeService:
 
         existing = (
             db.query(CommentLike)
-            .filter(CommentLike.comment_id == comment_id, CommentLike.user_id == user_id)
+            .filter(
+                CommentLike.comment_id == comment_id, CommentLike.user_id == user_id
+            )
             .first()
         )
         if not existing:
