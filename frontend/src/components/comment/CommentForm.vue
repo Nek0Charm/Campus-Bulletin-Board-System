@@ -25,24 +25,35 @@
 import { ref } from 'vue'
 import { ElMessage } from 'element-plus'
 
-defineProps<{ replyTo?: string }>()
-const emit = defineEmits<{
-  submit: [content: string]
+const props = defineProps<{
+  replyTo?: string
+  onSubmit?: (content: string) => Promise<void>
+}>()
+
+defineEmits<{
   cancel: []
 }>()
 
 const content = ref('')
 const submitting = ref(false)
 
-function handleSubmit() {
-  if (!content.value.trim()) {
+async function handleSubmit() {
+  const text = content.value.trim()
+  if (!text) {
     ElMessage.warning('请输入评论内容')
     return
   }
+  if (submitting.value || !props.onSubmit) return
+
   submitting.value = true
-  emit('submit', content.value.trim())
-  content.value = ''
-  submitting.value = false
+  try {
+    await props.onSubmit(text)
+    content.value = ''
+  } catch {
+    // keep content for retry
+  } finally {
+    submitting.value = false
+  }
 }
 </script>
 

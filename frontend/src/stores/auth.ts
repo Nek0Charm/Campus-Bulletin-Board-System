@@ -21,6 +21,8 @@ export const useAuthStore = defineStore('auth', () => {
       token.value = data.access_token
       await fetchProfile()
       return true
+    } catch {
+      return false
     } finally {
       loading.value = false
     }
@@ -50,16 +52,24 @@ export const useAuthStore = defineStore('auth', () => {
   async function fetchProfile() {
     try {
       currentUser.value = await usersAPI.getProfile()
-    } catch {
-      removeToken()
-      token.value = null
-      currentUser.value = null
+    } catch (err: unknown) {
+      const status = (err as { response?: { status?: number } })?.response?.status
+      if (status === 401 || status === 403) {
+        removeToken()
+        token.value = null
+        currentUser.value = null
+      }
+      throw err
     }
   }
 
   async function restoreSession() {
     if (!token.value) return
-    await fetchProfile()
+    try {
+      await fetchProfile()
+    } catch {
+      // transient error — token not cleared, session can recover
+    }
   }
 
   return {

@@ -28,9 +28,9 @@
             <el-icon :size="14"><Delete /></el-icon> 删除
           </span>
         </div>
-        <template v-if="comment.children && comment.children.length">
+        <template v-if="comment.replies && comment.replies.length">
           <CommentItem
-            v-for="child in comment.children"
+            v-for="child in comment.replies"
             :key="child.id"
             :comment="child"
             :depth="depth + 1"

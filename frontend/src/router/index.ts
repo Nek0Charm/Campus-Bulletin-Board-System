@@ -112,7 +112,7 @@ router.beforeEach(async (to) => {
 
   const authStore = useAuthStore()
 
-  if (!authStore.isAuthenticated && authStore.token) {
+  if (authStore.token && !authStore.currentUser) {
     await authStore.restoreSession()
   }
 

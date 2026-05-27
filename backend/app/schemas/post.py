@@ -21,6 +21,7 @@ class PostUpdate(BaseModel):
 
 class AuthorInfo(BaseModel):
     id: UUID
+    username: str
     nickname: Optional[str]
     avatar_url: Optional[str]
 
@@ -33,7 +34,12 @@ class PostRead(PostBase):
     author: AuthorInfo
     is_pinned: bool
     is_featured: bool
+    status: str = "normal"
+    published_at: Optional[datetime] = None
+    like_count: int = 0
+    comment_count: int = 0
     created_at: datetime
+    updated_at: Optional[datetime] = None
 
     model_config = ConfigDict(from_attributes=True)
 

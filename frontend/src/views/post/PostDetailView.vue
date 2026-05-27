@@ -23,7 +23,6 @@
             <UserAvatar :name="post.author?.nickname || post.author?.username" :size="28" />
             <span class="meta-author">{{ post.author?.nickname || post.author?.username }}</span>
             <span class="meta-time">{{ formatDate(post.created_at) }}</span>
-            <span class="meta-views">👁 {{ post.view_count }}</span>
           </div>
         </div>
 
@@ -79,7 +78,11 @@
         <!-- Comment Form -->
         <div class="comment-input-area">
           <template v-if="authStore.isAuthenticated">
-            <CommentForm :reply-to="replyTo" @submit="handleCommentSubmit" @cancel="replyTo = ''" />
+            <CommentForm
+              :reply-to="replyTo"
+              :on-submit="handleCommentSubmit"
+              @cancel="cancelReply"
+            />
           </template>
           <div v-else class="login-prompt">
             <el-alert type="info" :closable="false" show-icon>
@@ -161,8 +164,15 @@ async function handleLike() {
       postStore.updateLikeCount(post.value!.id, 1)
       liked.value = true
     }
-  } catch {
-    ElMessage.error('操作失败')
+  } catch (err: unknown) {
+    const status = (err as { response?: { status?: number } })?.response?.status
+    if (status === 409) {
+      liked.value = true
+    } else if (status === 404 && !liked.value) {
+      liked.value = false
+    } else {
+      ElMessage.error('操作失败')
+    }
   }
 }
 
@@ -217,6 +227,11 @@ async function loadComments() {
 function handleReply(commentId: string, authorName: string) {
   replyTo.value = authorName
   replyToCommentId.value = commentId
+}
+
+function cancelReply() {
+  replyTo.value = ''
+  replyToCommentId.value = null
 }
 
 async function handleCommentSubmit(content: string) {
@@ -318,10 +333,6 @@ onMounted(() => {
 }
 
 .meta-time {
-  color: var(--color-text-placeholder);
-}
-
-.meta-views {
   color: var(--color-text-placeholder);
 }
 

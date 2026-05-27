@@ -16,7 +16,6 @@ export interface PostRead {
   status: PostStatus
   like_count: number
   comment_count: number
-  view_count: number
   published_at?: string
   created_at: string
   updated_at: string

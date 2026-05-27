@@ -16,7 +16,7 @@ export interface CommentRead {
   like_count: number
   reply_count: number
   created_at: string
-  children?: CommentRead[]
+  replies?: CommentRead[]
 }
 
 export interface CommentCreate {

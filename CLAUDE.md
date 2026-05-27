@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Campus Bulletin Board System (校园论坛) — a campus forum with user auth, posts, comments, likes, and notifications. Python >=3.14 backend (FastAPI), Vue 3 + TypeScript frontend.
+Campus Bulletin Board System (校园论坛) — a campus forum with user auth, posts, comments, likes, and notifications. Python >=3.14 backend (FastAPI), Vue 3 + TypeScript + Element Plus frontend.
 
 ## Development Commands
 
@@ -29,11 +29,13 @@ cd backend && uv run uvicorn app.main:app --reload # Dev server (or: make backen
 ### Frontend
 ```bash
 cd frontend && pnpm install           # Install dependencies
-cd frontend && pnpm run dev           # Vite dev server (or: make frontend)
+cd frontend && pnpm run dev           # Vite dev server on port 5173 (or: make frontend)
 cd frontend && pnpm run build         # Type-check + production build
 cd frontend && pnpm run type-check    # vue-tsc type check only
 cd frontend && pnpm run preview       # Vite preview of built output
 ```
+
+Vite dev server proxies `/api/v1` to `http://localhost:8000` — no CORS issues in dev.
 
 ### Lint & Format (or use make targets)
 ```bash
@@ -74,18 +76,18 @@ pnpm install && pnpm run prepare  # Install husky pre-commit (lint-staged: black
 ```
 config.py          → Settings (pydantic-settings, reads .env)
 database.py        → SQLAlchemy engine, SessionLocal, init_db() (runs alembic), get_db()
-main.py            → FastAPI app, lifespan (calls init_db), registers routers
+main.py            → FastAPI app, lifespan (calls init_db), registers routers, CORS middleware
 models/            → SQLAlchemy ORM models (Base, IDMixin, TimestampMixin in base.py)
 schemas/           → Pydantic request/response schemas (response.py has ApiResponse/PaginatedResponse/ErrorResponse)
 routers/           → FastAPI APIRouter modules (auth, users, boards, posts, comments, likes, notifications, admin)
-services/          → Business logic classes (auth_service, user_service, post_service, board_service, email_service)
+services/          → Business logic classes (auth, user, post, board, comment, like, notification, email)
 deps/              → FastAPI Depends providers: get_db, get_current_user + require_admin (auth), get_*_service (services)
 utils/             → Helpers: security.py (password hashing), redis.py (Redis client + token blacklist)
 ```
 
 All routers mount under `/api/v1/{router_prefix}`. Health check at `/health`.
 
-### Key Patterns
+### Key Backend Patterns
 
 - **API responses**: All endpoints wrap data in `ApiResponse[T]` / `PaginatedResponse[T]` / `ErrorResponse` from `schemas/response.py`. Format: `{code, message, data, request_id}`.
 - **Auth flow**: JWT (HS256) via PyJWT. Login accepts username or email (`or_()` filter). `get_current_user` checks Redis blacklist → decode JWT → verify user exists, not banned, and email is verified. OAuth2PasswordBearer tokenUrl is `/api/v1/auth/login`.
@@ -93,8 +95,9 @@ All routers mount under `/api/v1/{router_prefix}`. Health check at `/health`.
 - **Token blacklist**: `utils/redis.py` blacklists JWTs on logout under key `token_blacklist:{sha256(token)}` with TTL = remaining validity. `get_redis()` returns a lazy-initialized singleton `redis.Redis` instance.
 - **DB models**: Use `IDMixin` (UUID pk) + `TimestampMixin` (created_at/updated_at/deleted_at). Soft delete via `deleted_at` field. Services filter `deleted_at.is_(None)` when querying.
 - **User model**: Has `email_verified: bool` (default False), `role: str` ("user" | "admin"), `status: str` ("active" | "banned").
-- **Post model**: Has `is_pinned`, `is_featured`, `status` (PostStatus enum: NORMAL/HIDDEN/DELETED), `published_at`.
+- **Post model**: Has `is_pinned`, `is_featured`, `status` (PostStatus enum: NORMAL/HIDDEN/DELETED), `published_at`, `comment_count`, `like_count`, `view_count`.
 - **Board model**: Has `slug: str` and `sort_order: int`.
+- **Comment model**: Has `post_id`, `parent_comment_id`, `root_comment_id` (for nested threading), `like_count`, `reply_count`. Root comments have `root_comment_id` = NULL.
 - **Dependency injection**: Routers inject `db: Session` and `service` instances via `Depends()` from `deps/`. Services are stateless — `Session` is passed per-method.
 - **Password hashing**: `pwdlib.PasswordHash.recommended()` via `utils/security.py`.
 
@@ -106,15 +109,17 @@ All routers mount under `/api/v1/{router_prefix}`. Health check at `/health`.
 | `UserService` | `services/user_service.py` | get_profile, update_profile, get_public_profile, list_users, update_status |
 | `PostService` | `services/post_service.py` | create, get_multi (eager-loads author, sorted by is_pinned DESC, created_at DESC), get_by_id, update (partial via exclude_unset), update_special_status, remove |
 | `BoardService` | `services/board_service.py` | get_all, get_by_id, get_by_slug, create, update, remove |
+| `CommentService` | `services/comment_service.py` | create (validates post/parent exist, builds root/parent chain), get_multi (root comments + joined replies, paginated), get_by_id, update, remove (soft-deletes, decrements post.comment_count) |
+| `LikeService` | `services/like_service.py` | like_post, unlike_post (POST/DELETE on same `/likes/posts/{id}`), like_comment, unlike_comment (same pattern). Maintains like counts on Post/Comment. |
+| `NotificationService` | `services/notification_service.py` | create, list_for_user (unread-first ordering), get_for_user, get_unread_count, mark_read, mark_all_read |
 | `EmailService` | `services/email_service.py` | generate_verify_token, decode_verify_token, send_verification_email (SMTP via Mailpit in dev) |
 
-### Router Status
+### All Routers Fully Implemented
 
-Fully implemented: `auth`, `users`, `boards`, `posts`, `admin`
-Stubs (endpoints defined with `pass`): `comments`, `likes`, `notifications`
+All routers (`auth`, `users`, `boards`, `posts`, `comments`, `likes`, `notifications`, `admin`) are fully implemented — no stubs remain.
 
 Key admin endpoints (all require `require_admin`):
-- `GET /admin/stats` — system statistics
+- `GET /admin/stats` — system statistics (user/post/comment/board counts)
 - `GET /admin/users` — list all users
 - `PATCH /admin/users/{id}/status` — ban/unban users
 - `GET/POST /admin/boards`, `PATCH/DELETE /admin/boards/{id}` — board CRUD
@@ -122,6 +127,50 @@ Key admin endpoints (all require `require_admin`):
 ### Code Duplication
 
 `create_access_token()` is defined in both `deps/auth.py` (public) and `services/auth_service.py` (private `_create_access_token`). If modifying JWT logic, update both.
+
+## Frontend Architecture
+
+Vue 3 + TypeScript + Vite + Element Plus. Uses unplugin-auto-import and unplugin-vue-components for Element Plus tree-shaking (no manual imports needed).
+
+```
+frontend/src/
+  main.ts           → App entry (Vue, Pinia, Router, ElementPlus)
+  App.vue           → Root component with AppHeader/AppFooter/router-view
+  router/index.ts   → Routes with navigation guards (requiresAuth, requiresGuest, requiresAdmin)
+  api/              → Axios API modules (client.ts, auth.ts, users.ts, posts.ts, boards.ts, comments.ts, likes.ts, notifications.ts, admin.ts)
+  stores/           → Pinia stores (auth, posts, boards, notifications, ui)
+  components/       → Reusable components organized by domain (admin/, board/, comment/, common/, notification/, post/)
+  views/            → Page-level components (auth/, board/, post/, user/, notification/, admin/)
+  types/            → TypeScript interfaces (user.ts, post.ts, comment.ts, board.ts, notification.ts, api.ts)
+  utils/            → Helpers: storage.ts (token), format.ts, constants.ts, sanitize.ts, validation.ts
+```
+
+### API Client (`frontend/src/api/client.ts`)
+
+Axios instance with base URL from `VITE_API_BASE_URL` (empty in dev — proxy handles routing). Request interceptor attaches Bearer token. Response interceptor unwraps `ApiResponse.data` on success (2xx); on error, handles 401 (clears token), 429 (rate limit toast), 500 (server error toast).
+
+### Router Guards (`frontend/src/router/index.ts`)
+
+- `beforeEach`: sets document title, calls `authStore.restoreSession()` if token exists but no user loaded
+- `requiresAuth`: redirects to `/login?redirect=...` if not authenticated
+- `requiresGuest`: redirects to `/` if already authenticated
+- `requiresAdmin`: redirects to `/` if not admin
+
+### Auth Store (`frontend/src/stores/auth.ts`)
+
+Manages `token` (synced to localStorage via `utils/storage.ts`), `currentUser`, `loading`. `login()` calls API → stores token → fetches profile. `restoreSession()` re-fetches profile on page refresh if token exists. `logout()` calls API → clears token and user.
+
+### Key Frontend Patterns
+
+- **API calls**: All API functions return the unwrapped data (interceptor strips `ApiResponse` envelope). Stores and views receive bare payloads.
+- **Post store**: Manages `postList`, `currentPost`, `pagination`. `updateLikeCount(postId, delta)` for optimistic UI.
+- **Comment threading**: `CommentTree` renders root comments (page from `CommentWithReplies.replies`). `CommentItem` recurses via `children` prop.
+- **Element Plus**: Components auto-imported. Icons from `@element-plus/icons-vue` imported explicitly.
+
+### Frontend Config
+
+- Dev: Vite proxies `/api/v1` → `http://localhost:8000` (configured in `vite.config.ts`)
+- Production: `VITE_API_BASE_URL` in `.env.production` sets the API base URL. Currently empty — needs to be set for production deploys.
 
 ## Key Config
 
@@ -133,7 +182,7 @@ Key admin endpoints (all require `require_admin`):
 | `REDIS_HOST` / `REDIS_PORT` / `REDIS_DB` | `localhost` / `6379` / `0` | Redis connection |
 | `JWT_SECRET` | (dev default) | HS256 signing key |
 | `JWT_ACCESS_TOKEN_EXPIRE_MINUTES` | `60` | Access token TTL |
-| `FRONTEND_BASE_URL` | `http://localhost:5173` | Used in verification emails |
+| `FRONTEND_BASE_URL` | `http://localhost:5173` | Used in verification emails and CORS |
 | `BACKEND_BASE_URL` | `http://localhost:8000` | Backend self-URL |
 | `SMTP_HOST` / `SMTP_PORT` | `localhost` / `1025` | Mailpit in dev |
 | `SMTP_FROM` | `noreply@campus-bbs.local` | Email sender |
@@ -149,21 +198,6 @@ Pattern (repeated in each test file — not centralized in conftest.py):
 - `app.dependency_overrides[get_db]` — injects test DB session
 - `_make_mock_email_service()` — creates an `EmailService` with `send_verification_email` mocked (but real JWT token generation), injected via `app.dependency_overrides[get_email_service]`
 - `test_auth.py` and `test_users.py` use synchronous `TestClient`; `test_admin.py` uses `AsyncClient` + `pytest.mark.asyncio`
-
-## Frontend
-
-Vue 3 + TypeScript + Vite project in `frontend/`. Currently scaffolded with router and stores in place but no pages implemented yet.
-
-```
-frontend/src/
-  main.ts           → App entry (creates Vue app with Pinia + Router)
-  App.vue           → Root component
-  router/index.ts   → Vue Router with createWebHistory (routes array empty)
-  stores/           → Pinia stores
-  __tests__/        → Vitest tests
-```
-
-Key commands: `pnpm run dev` (Vite on 5173), `pnpm run build`, `pnpm run test:unit` (Vitest), `pnpm run type-check` (vue-tsc), `pnpm run lint` (oxlint + eslint).
 
 ## Database Design
 
@@ -186,10 +220,6 @@ Full schema spec in `docs/DatabaseDesign.md`. Core tables: users, boards, posts,
 - Commits: `<type>(<scope>): <subject>` — types: feat, fix, refactor, docs, test, chore
 - Flow: feature branch → develop (PR with review) → main (lead merges)
 - Pre-commit hook runs lint-staged (black + ruff --fix on backend/**/*.py)
-
-## Frontend
-
-`frontend/` is currently a placeholder (`.gitkeep` only). Planned: Vue 3 + TypeScript + Element Plus + Vite. No frontend code exists yet.
 
 ## API Conventions
 
