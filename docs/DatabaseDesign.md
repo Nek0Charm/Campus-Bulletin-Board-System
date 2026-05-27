@@ -124,10 +124,11 @@ erDiagram
 | username | VARCHAR(32) | UNIQUE, NOT NULL | 用户名 |
 | email | VARCHAR(255) | UNIQUE, NOT NULL | 邮箱 |
 | password_hash | VARCHAR(255) | NOT NULL | 密码哈希 |
-| nickname | VARCHAR(64) | NOT NULL | 昵称 |
+| nickname | VARCHAR(64) | NULL | 昵称 |
 | avatar_url | VARCHAR(1024) |  | 头像 URL |
 | role | VARCHAR(20) | NOT NULL, CHECK | 角色：user/admin |
 | status | VARCHAR(20) | NOT NULL, CHECK | 状态：active/inactive/banned |
+| email_verified | BOOLEAN | NOT NULL, DEFAULT FALSE | 邮箱是否已验证 |
 | last_login_at | TIMESTAMPTZ |  | 最后登录时间 |
 | created_at | TIMESTAMPTZ | NOT NULL | 创建时间 |
 | updated_at | TIMESTAMPTZ | NOT NULL | 更新时间 |
@@ -157,15 +158,15 @@ erDiagram
 | id | UUID | PK | 帖子唯一标识 |
 | board_id | UUID | FK, NOT NULL | 所属板块 ID |
 | author_id | UUID | FK, NOT NULL | 作者 ID |
-| title | VARCHAR(120) | NOT NULL | 帖子标题 |
-| content_json | JSONB |  | 富文本结构化内容 |
+| title | VARCHAR(255) | NOT NULL | 帖子标题 |
+| content | TEXT | NOT NULL | 帖子正文（纯文本/Markdown） |
 | status | VARCHAR(20) | NOT NULL, CHECK | 状态：normal/hidden/deleted |
 | is_pinned | BOOLEAN | NOT NULL | 是否置顶 |
 | is_featured | BOOLEAN | NOT NULL | 是否加精 |
 | like_count | BIGINT | NOT NULL, DEFAULT 0 | 点赞数 |
 | comment_count | BIGINT | NOT NULL, DEFAULT 0 | 评论数 |
 | view_count | BIGINT | NOT NULL, DEFAULT 0 | 浏览数 |
-| published_at | TIMESTAMPTZ |  | 发布时间 |
+| published_at | TIMESTAMPTZ | NOT NULL | 发布时间 |
 | created_at | TIMESTAMPTZ | NOT NULL | 创建时间 |
 | updated_at | TIMESTAMPTZ | NOT NULL | 更新时间 |
 | deleted_at | TIMESTAMPTZ |  | 软删除时间 |

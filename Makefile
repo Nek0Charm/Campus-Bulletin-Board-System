@@ -3,10 +3,10 @@
 COMPOSE ?= docker compose
 BACKEND_DIR ?= backend
 FRONTEND_DIR ?= frontend
-BACKEND_DEV_CMD ?= uv run python main.py
+BACKEND_DEV_CMD ?= uv run uvicorn app.main:app --reload
 FRONTEND_DEV_CMD ?= pnpm run dev
 
-.PHONY: help deps-up deps-down deps-logs deps-ps deps-reset-db backend frontend dev
+.PHONY: help deps-up deps-down deps-logs deps-ps deps-reset-db backend frontend dev format format-backend format-frontend lint lint-backend lint-frontend migration-new migrate migrate-rollback migrate-history
 
 help:
 	@echo "可用命令："
@@ -14,18 +14,28 @@ help:
 	@echo "  make deps-down                    # 停止并清理依赖服务"
 	@echo "  make deps-logs                    # 查看依赖服务日志"
 	@echo "  make deps-reset-db                # 重置 PostgreSQL 数据卷并重建数据库服务"
-	@echo "  make backend                      # 启动后端（默认: uv run python main.py）"
+	@echo "  make backend                      # 启动后端（默认: uv run uvicorn app.main:app --reload）"
 	@echo "  make frontend                     # 启动前端（默认: pnpm run dev）"
 	@echo "  make dev                          # 先启动依赖服务，再给出前后端启动提示"
+	@echo "  make format                       # 格式化前后端代码（black + prettier）"
+	@echo "  make format-backend               # 格式化后端代码（black）"
+	@echo "  make format-frontend              # 格式化前端代码（prettier）"
+	@echo "  make lint                         # 静态检查前后端代码（ruff + oxlint + eslint）"
+	@echo "  make lint-backend                 # 静态检查后端代码（ruff）"
+	@echo "  make lint-frontend                # 静态检查前端代码（oxlint + eslint）"
+	@echo "  make migration-new msg=\"...\"       # 自动生成新迁移"
+	@echo "  make migrate                      # 执行所有待处理的迁移"
+	@echo "  make migrate-rollback             # 回滚最近一次迁移"
+	@echo "  make migrate-history              # 查看迁移历史"
 
 deps-up:
-	@$(COMPOSE) up -d postgres redis
+	@$(COMPOSE) up -d postgres redis mailpit
 
 deps-down:
 	@$(COMPOSE) down
 
 deps-logs:
-	@$(COMPOSE) logs -f postgres redis
+	@$(COMPOSE) logs -f postgres redis mailpit
 
 deps-ps:
 	@$(COMPOSE) ps
@@ -46,3 +56,31 @@ dev: deps-up
 	@echo "依赖服务已启动。请在两个终端分别执行："
 	@echo "  make backend"
 	@echo "  make frontend"
+
+format: format-backend format-frontend
+
+format-backend:
+	@cd $(BACKEND_DIR) && uvx black .
+
+format-frontend:
+	@cd $(FRONTEND_DIR) && pnpm run format
+
+lint: lint-backend lint-frontend
+
+lint-backend:
+	@cd $(BACKEND_DIR) && uvx ruff check .
+
+lint-frontend:
+	@cd $(FRONTEND_DIR) && pnpm run lint
+
+migration-new:
+	@cd $(BACKEND_DIR) && uv run alembic revision --autogenerate -m "$(msg)"
+
+migrate:
+	@cd $(BACKEND_DIR) && uv run alembic upgrade head
+
+migrate-rollback:
+	@cd $(BACKEND_DIR) && uv run alembic downgrade -1
+
+migrate-history:
+	@cd $(BACKEND_DIR) && uv run alembic history

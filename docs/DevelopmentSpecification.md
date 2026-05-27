@@ -7,7 +7,7 @@
 | 项目信息 | 详情 |
 | :------- | :--- |
 | 名称 | Campus Bulletin Board System (校园论坛) |
-| 仓库 | https://github.com/Nek0Charm/Campus-Bulletin-Board-System- |
+| 仓库 | https://github.com/Nek0Charm/Campus-Bulletin-Board-System |
 | 描述 | 一个面向大学校园的在线论坛系统，提供用户注册、发帖、评论、点赞等功能|
 
 
@@ -15,7 +15,7 @@
 
 ### 2.1 前端技术
 
-React or Vue，未定，但需使用 typescript 开发，并用 pnpm 管理
+Vue 3 + TypeScript，使用 pnpm 管理
 
 ### 2.2 后端技术
 

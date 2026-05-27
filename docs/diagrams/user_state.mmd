@@ -1,0 +1,19 @@
+stateDiagram-v2
+    direction LR
+
+    [*] --> Active : U1 用户注册<br/>(AuthService.register)
+
+    Active --> Banned : U2 管理员封禁
+    Active --> Inactive : U3 管理员停用
+    Banned --> Active : U4 管理员解封
+    Inactive --> Active : U5 管理员重新激活
+
+    state Banned {
+        [*] --> LoginDenied
+        state LoginDenied : 登录被拒<br/>status="banned"
+    }
+
+    state Inactive {
+        [*] --> LoginDenied2
+        state LoginDenied2 : 登录被拒<br/>status="inactive"
+    }
