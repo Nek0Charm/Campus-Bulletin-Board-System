@@ -33,7 +33,11 @@ class UserService:
         if payload.avatar_url is not None:
             user.avatar_url = payload.avatar_url
         db.add(user)
-        db.commit()
+        try:
+            db.commit()
+        except Exception:
+            db.rollback()
+            raise
         db.refresh(user)
         return self.get_profile(user)
 
@@ -92,7 +96,11 @@ class UserService:
             raise HTTPException(status_code=404, detail="User not found")
         user.status = payload.status
         db.add(user)
-        db.commit()
+        try:
+            db.commit()
+        except Exception:
+            db.rollback()
+            raise
         db.refresh(user)
         return AdminUserData(
             id=str(user.id),

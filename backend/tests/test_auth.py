@@ -1,9 +1,11 @@
 """
-Auth 路由集成测试：register / login / logout
+Auth 路由集成测试：register / login / logout / email verification
 
 使用 TestClient + 内存 SQLite 替代真实 Postgres，避免外部依赖。
-通过 override_deps 注入测试数据库 session 和 auth service。
+通过 override_deps 注入测试数据库 session 和 mock 服务。
 """
+
+from unittest.mock import Mock
 
 import pytest
 from fastapi.testclient import TestClient
@@ -11,8 +13,10 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 from app.database import get_db
+from app.deps import get_email_service
 from app.main import app
 from app.models.base import Base
+from app.services.email_service import EmailService
 
 # ---------- 测试数据库 fixtures ----------
 
@@ -40,10 +44,31 @@ def _override_get_db():
         db.close()
 
 
+def _make_mock_email_service() -> EmailService:
+    """创建一个不实际发邮件的 mock EmailService。"""
+    import app.services.email_service as mod
+
+    svc = EmailService()
+    svc.send_verification_email = Mock()
+    # 使用真实 JWT 生成/解码
+    svc.generate_verify_token = mod.EmailService.generate_verify_token.__get__(
+        svc, EmailService
+    )
+    svc.decode_verify_token = mod.EmailService.decode_verify_token.__get__(
+        svc, EmailService
+    )
+    return svc
+
+
+def _override_get_email_service():
+    return _make_mock_email_service()
+
+
 @pytest.fixture()
 def client():
-    """注入测试 DB session 的 TestClient。"""
+    """注入测试 DB session 和 mock EmailService 的 TestClient。"""
     app.dependency_overrides[get_db] = _override_get_db
+    app.dependency_overrides[get_email_service] = _override_get_email_service
     c = TestClient(app)
     yield c
     app.dependency_overrides.clear()
@@ -178,7 +203,9 @@ def test_register_short_username(client):
 # ---------- login 测试 ----------
 
 
-def _register_user(client, username="logintest", email="login@example.com"):
+def _register_user(
+    client, username="logintest", email="login@example.com", verify=True
+):
     client.post(
         f"{API_PREFIX}/register",
         json={
@@ -187,6 +214,19 @@ def _register_user(client, username="logintest", email="login@example.com"):
             "password": "securepass123",
         },
     )
+    if verify:
+
+        db = next(_override_get_db())
+        try:
+            from app.models.user import User
+
+            user = db.query(User).filter(User.username == username).first()
+            if user:
+                user.email_verified = True
+                db.add(user)
+                db.commit()
+        finally:
+            db.close()
 
 
 def test_login_with_username(client):
@@ -398,3 +438,132 @@ def test_reset_password_requires_auth(client):
         json={"old_password": "securepass123", "new_password": "newpass12345"},
     )
     assert resp.status_code == 401
+
+
+# ---------- email verification 测试 ----------
+
+
+def test_register_user_unverified(client):
+    """新注册用户 email_verified 为 False。"""
+    resp = client.post(
+        f"{API_PREFIX}/register",
+        json={
+            "username": "unverified",
+            "email": "unverified@example.com",
+            "password": "securepass123",
+        },
+    )
+    assert resp.status_code == 200
+    from app.models.user import User
+
+    db = next(_override_get_db())
+    try:
+        user = db.query(User).filter(User.username == "unverified").first()
+        assert user is not None
+        assert user.email_verified is False
+    finally:
+        db.close()
+
+
+def test_login_unverified_user_fails(client):
+    """未验证邮箱的用户无法登录。"""
+    client.post(
+        f"{API_PREFIX}/register",
+        json={
+            "username": "unvlogin",
+            "email": "unvlogin@example.com",
+            "password": "securepass123",
+        },
+    )
+    resp = client.post(
+        f"{API_PREFIX}/login",
+        json={"account": "unvlogin", "password": "securepass123"},
+    )
+    assert resp.status_code == 403
+    assert "Email not verified" in resp.json()["detail"]
+
+
+def test_verify_email_success(client):
+    """使用有效 token 验证邮箱成功。"""
+    client.post(
+        f"{API_PREFIX}/register",
+        json={
+            "username": "verifyok",
+            "email": "verifyok@example.com",
+            "password": "securepass123",
+        },
+    )
+    svc = _make_mock_email_service()
+    token = svc.generate_verify_token("dummy", "verifyok@example.com")
+
+    from app.models.user import User
+
+    db = next(_override_get_db())
+    try:
+        user = db.query(User).filter(User.username == "verifyok").first()
+        token = svc.generate_verify_token(str(user.id), user.email)
+    finally:
+        db.close()
+
+    resp = client.post(
+        f"{API_PREFIX}/verify-email",
+        json={"token": token},
+    )
+    assert resp.status_code == 200
+    assert resp.json()["data"]["message"] == "Email verified successfully"
+
+    # 验证后可以登录
+    resp = client.post(
+        f"{API_PREFIX}/login",
+        json={"account": "verifyok", "password": "securepass123"},
+    )
+    assert resp.status_code == 200
+    assert resp.json()["data"]["access_token"]
+
+
+def test_verify_email_invalid_token(client):
+    """无效 token 返回 400。"""
+    resp = client.post(
+        f"{API_PREFIX}/verify-email",
+        json={"token": "invalid_token"},
+    )
+    assert resp.status_code == 400
+    assert "Invalid" in resp.json()["detail"]
+
+
+def test_verify_email_already_verified(client):
+    """重复验证邮箱返回 409。"""
+    _register_user(
+        client, verify=True, username="duptoken", email="duptoken@example.com"
+    )
+
+    svc = _make_mock_email_service()
+    from app.models.user import User
+
+    db = next(_override_get_db())
+    try:
+        user = db.query(User).filter(User.username == "duptoken").first()
+        token = svc.generate_verify_token(str(user.id), user.email)
+    finally:
+        db.close()
+
+    resp = client.post(
+        f"{API_PREFIX}/verify-email",
+        json={"token": token},
+    )
+    assert resp.status_code == 409
+    assert "already verified" in resp.json()["detail"]
+
+
+def test_verify_email_user_not_found(client):
+    """token 对应的用户不存在返回 404。"""
+    svc = _make_mock_email_service()
+    import uuid
+
+    token = svc.generate_verify_token(str(uuid.uuid4()), "ghost@example.com")
+
+    resp = client.post(
+        f"{API_PREFIX}/verify-email",
+        json={"token": token},
+    )
+    assert resp.status_code == 404

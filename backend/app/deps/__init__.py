@@ -14,6 +14,8 @@ from app.deps.services import get_auth_service
 from app.deps.services import get_user_service
 from app.deps.services import get_post_service
 from app.deps.services import get_board_service
+from app.deps.services import get_email_service
+from app.deps.services import get_notification_service
 
 __all__ = [
     "get_db",
@@ -25,4 +27,6 @@ __all__ = [
     "get_user_service",
     "get_post_service",
     "get_board_service",
+    "get_email_service",
+    "get_notification_service",
 ]

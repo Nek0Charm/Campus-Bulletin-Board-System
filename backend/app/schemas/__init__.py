@@ -14,6 +14,9 @@ from app.schemas.auth import RegisterData
 from app.schemas.auth import RegisterRequest
 from app.schemas.auth import ResetPasswordData
 from app.schemas.auth import ResetPasswordRequest
+from app.schemas.auth import VerifyEmailData
+from app.schemas.auth import VerifyEmailRequest
+from app.schemas.auth import ResendVerifyRequest
 from app.schemas.user import AdminUserData
 from app.schemas.user import UpdateProfileRequest
 from app.schemas.user import UpdateUserStatusRequest
@@ -22,6 +25,9 @@ from app.schemas.user import UserPublicData
 from app.schemas.post import PostCreate, PostUpdate, PostRead, PostListResponse
 from app.schemas.board import BoardCreate, BoardRead, BoardUpdate
 from app.schemas.admin import AdminStatsResponse
+from app.schemas.notification import NotificationMarkAllReadResult
+from app.schemas.notification import NotificationRead
+from app.schemas.notification import NotificationUnreadCount
 
 __all__ = [
     "RegisterRequest",
@@ -32,6 +38,9 @@ __all__ = [
     "LogoutData",
     "ResetPasswordRequest",
     "ResetPasswordData",
+    "VerifyEmailRequest",
+    "VerifyEmailData",
+    "ResendVerifyRequest",
     "UserProfileData",
     "UpdateProfileRequest",
     "UserPublicData",
@@ -45,4 +54,7 @@ __all__ = [
     "BoardRead",
     "BoardUpdate",
     "AdminStatsResponse",
+    "NotificationRead",
+    "NotificationUnreadCount",
+    "NotificationMarkAllReadResult",
 ]

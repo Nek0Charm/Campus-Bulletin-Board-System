@@ -179,7 +179,8 @@ main                        # 生产环境（受保护）
 |:-----|:-----|:-----|
 | 组长 | 1 人 | 架构设计、代码审核、Git 仓库管理、数据库表结构定义、文档撰写与维护 |
 | 副组长 | 1 人 | 进度追踪、Issue 分类/拆解/打标签、第一轮代码审核、CI/CD |
-| 开发者 | 4 人 | 认领 Issue、完成开发（包括单元测试）、PR时进行总结 |
+| 系统测试 | 1 人 | 测试用例设计与编写、测试报告撰写 |
+| 开发者 | 3 人 | 认领 Issue、完成开发、PR时进行总结 |
 | **合计** | **6 人** | — |
 
 **子系统负责矩阵：**
@@ -324,7 +325,7 @@ gantt
 | JWT 鉴权与 RBAC 中间件 | 开发者（Issue 认领） | get_current_user、require_admin |
 | 密码重置 API | 开发者（Issue 认领） | 完整密码修改流程 |
 | Token 黑名单（Redis） | 开发者（Issue 认领） | 登出即时失效 |
-| 认证模块测试 | 开发者（Issue 认领） | test_auth.py |
+| 认证模块测试 | 系统测试 | test_auth.py |
 
 #### 第 2 周（5/7–5/14）：Part2 帖子分区 + Part3 评论互动
 
@@ -336,7 +337,7 @@ gantt
 | Comment 模型 + Service + Router | 开发者（Issue 认领） | 评论/回复 CRUD API |
 | PostLike / CommentLike 模型 + API | 开发者（Issue 认领） | 点赞/取消点赞 API |
 | 计数同步逻辑 | 开发者（Issue 认领） | 点赞数/评论数/回复数自动更新 |
-| 板块/帖子模块测试 | 开发者（Issue 认领） | test_boards.py, test_posts.py |
+| 板块/帖子模块测试 | 系统测试 | test_boards.py, test_posts.py |
 | 前端：登录/注册页面 | 开发者（Issue 认领） | 登录注册 UI |
 | 前端：首页板块列表 | 开发者（Issue 认领） | 板块卡片布局 |
 
@@ -350,7 +351,7 @@ gantt
 | 管理后台：用户管理（列表/封禁/解封） | 开发者（Issue 认领） | Admin router 用户管理部分 |
 | 管理后台：板块管理（CRUD） | 开发者（Issue 认领） | Admin router 板块管理部分 |
 | 管理后台：系统统计 | 开发者（Issue 认领） | /admin/stats API |
-| 通知/管理模块测试 | 开发者（Issue 认领） | test_notifications.py, test_admin.py |
+| 通知/管理模块测试 | 系统测试 | test_notifications.py, test_admin.py |
 | 前端：帖子列表/详情页 | 开发者（Issue 认领） | 帖子浏览 UI |
 | 前端：发帖/编辑页 | 开发者（Issue 认领） | 发帖编辑 UI |
 | 前端：管理后台基础页面 | 开发者（Issue 认领） | 用户管理/板块管理 UI |

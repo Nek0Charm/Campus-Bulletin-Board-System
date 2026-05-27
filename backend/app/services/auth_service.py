@@ -1,13 +1,13 @@
 from datetime import datetime
-from datetime import timedelta
 from datetime import timezone
 
-import jwt
 from fastapi import HTTPException
 from sqlalchemy import or_
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.config import get_settings
+from app.deps.auth import create_access_token, decode_access_token
 from app.models.user import User
 from app.schemas.auth import AuthUserData
 from app.schemas.auth import LoginData
@@ -17,6 +17,7 @@ from app.schemas.auth import RegisterData
 from app.schemas.auth import RegisterRequest
 from app.schemas.auth import ResetPasswordData
 from app.schemas.auth import ResetPasswordRequest
+from app.services.email_service import EmailService
 from app.utils.redis import blacklist_token
 from app.utils.security import hash_password
 from app.utils.security import verify_password
@@ -24,19 +25,16 @@ from app.utils.security import verify_password
 settings = get_settings()
 
 
-def _create_access_token(user_id: str, role: str) -> str:
-    expire_at = datetime.now(timezone.utc) + timedelta(
-        minutes=settings.JWT_ACCESS_TOKEN_EXPIRE_MINUTES
-    )
-    payload = {"sub": user_id, "role": role, "exp": expire_at}
-    return jwt.encode(payload, settings.JWT_SECRET, algorithm=settings.JWT_ALGORITHM)
-
-
 class AuthService:
-    def register(self, db: Session, payload: RegisterRequest) -> RegisterData:
+    def register(
+        self, db: Session, payload: RegisterRequest, email_service: EmailService
+    ) -> RegisterData:
         existing = (
             db.query(User)
-            .filter(or_(User.username == payload.username, User.email == payload.email))
+            .filter(
+                or_(User.username == payload.username, User.email == payload.email),
+                User.deleted_at.is_(None),
+            )
             .first()
         )
         if existing and existing.username == payload.username:
@@ -51,8 +49,27 @@ class AuthService:
             nickname=payload.nickname or None,
         )
         db.add(user)
-        db.commit()
+
+        # 使用 try-except 确保数据库操作的原子性
+        try:
+            db.commit()
+        except IntegrityError:
+            db.rollback()
+            raise HTTPException(
+                status_code=409, detail="Username or email already exists"
+            )
+        except Exception:
+            db.rollback()
+            raise
         db.refresh(user)
+
+        try:
+            verify_token = email_service.generate_verify_token(str(user.id), user.email)
+            email_service.send_verification_email(user.email, verify_token)
+        except Exception:
+            db.rollback()
+            raise
+
         return RegisterData(
             user=AuthUserData(
                 id=str(user.id),
@@ -68,7 +85,8 @@ class AuthService:
         user = (
             db.query(User)
             .filter(
-                or_(User.username == payload.account, User.email == payload.account)
+                or_(User.username == payload.account, User.email == payload.account),
+                User.deleted_at.is_(None),
             )
             .first()
         )
@@ -76,13 +94,19 @@ class AuthService:
             raise HTTPException(status_code=401, detail="Invalid account or password")
         if user.status != "active":
             raise HTTPException(status_code=403, detail=f"User is {user.status}")
+        if not user.email_verified:
+            raise HTTPException(status_code=403, detail="Email not verified")
 
         user.last_login_at = datetime.now(timezone.utc)
         db.add(user)
-        db.commit()
+        try:
+            db.commit()
+        except Exception:
+            db.rollback()
+            raise
         db.refresh(user)
 
-        access_token = _create_access_token(str(user.id), user.role)
+        access_token = create_access_token(str(user.id), user.role)
         return LoginData(
             access_token=access_token,
             token_type="bearer",
@@ -98,9 +122,7 @@ class AuthService:
         )
 
     def logout(self, token: str) -> LogoutData:
-        payload = jwt.decode(
-            token, settings.JWT_SECRET, algorithms=[settings.JWT_ALGORITHM]
-        )
+        payload = decode_access_token(token)
         exp = int(payload.get("exp", 0))
         now = int(datetime.now(timezone.utc).timestamp())
         ttl = max(exp - now, 0)
@@ -109,11 +131,23 @@ class AuthService:
         return LogoutData(message="logout success")
 
     def reset_password(
-        self, db: Session, user: User, payload: ResetPasswordRequest
+        self, db: Session, user: User, payload: ResetPasswordRequest, token: str
     ) -> ResetPasswordData:
         if not verify_password(payload.old_password, user.password_hash):
             raise HTTPException(status_code=401, detail="Old password is incorrect")
         user.password_hash = hash_password(payload.new_password)
         db.add(user)
-        db.commit()
+        try:
+            db.commit()
+        except Exception:
+            db.rollback()
+            raise
+
+        decoded = decode_access_token(token)
+        exp = int(decoded.get("exp", 0))
+        now = int(datetime.now(timezone.utc).timestamp())
+        ttl = max(exp - now, 0)
+        if ttl > 0:
+            blacklist_token(token, ttl)
+
         return ResetPasswordData(message="password reset success")
