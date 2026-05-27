@@ -46,3 +46,15 @@ class ResetPasswordRequest(BaseModel):
 
 class ResetPasswordData(BaseModel):
     message: str
+
+
+class VerifyEmailRequest(BaseModel):
+    token: str = Field(min_length=1)
+
+
+class VerifyEmailData(BaseModel):
+    message: str
+
+
+class ResendVerifyRequest(BaseModel):
+    email: EmailStr

@@ -26,7 +26,7 @@ router = APIRouter(prefix="/posts", tags=["Posts"])
 @router.post(
     "/", response_model=ApiResponse[PostRead], status_code=status.HTTP_201_CREATED
 )
-async def create_post(
+def create_post(
     payload: PostCreate,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
@@ -38,16 +38,17 @@ async def create_post(
 
 
 @router.get("/", response_model=PaginatedResponse[PostRead])
-async def list_posts(
+def list_posts(
     board_id: Optional[UUID] = None,
+    author_id: Optional[UUID] = None,
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
     db: Session = Depends(get_db),
     service: PostService = Depends(get_post_service),
 ):
-    """获取帖子列表：支持分页、板块筛选，置顶优先"""
+    """获取帖子列表：支持分页、板块筛选、作者筛选，置顶优先"""
     items, total = service.get_multi(
-        db, board_id=board_id, page=page, page_size=page_size
+        db, board_id=board_id, author_id=author_id, page=page, page_size=page_size
     )
     return PaginatedResponse(
         data=PaginatedData(
@@ -63,7 +64,7 @@ async def list_posts(
 
 
 @router.get("/{id}", response_model=ApiResponse[PostRead])
-async def get_post(
+def get_post(
     id: UUID,
     db: Session = Depends(get_db),
     service: PostService = Depends(get_post_service),
@@ -75,7 +76,7 @@ async def get_post(
 
 
 @router.patch("/{id}", response_model=ApiResponse[PostRead])
-async def update_post(
+def update_post(
     id: UUID,
     payload: PostUpdate,
     db: Session = Depends(get_db),
@@ -93,7 +94,7 @@ async def update_post(
 
 
 @router.delete("/{id}", response_model=ApiResponse)
-async def delete_post(
+def delete_post(
     id: UUID,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
@@ -111,7 +112,7 @@ async def delete_post(
 
 
 @router.patch("/{id}/pin", response_model=ApiResponse[PostRead])
-async def pin_post(
+def pin_post(
     id: UUID,
     is_pinned: bool = True,
     current_user: User = Depends(get_current_user),
@@ -122,6 +123,8 @@ async def pin_post(
     if current_user.role != "admin":
         raise HTTPException(status_code=403, detail="Admin only")
     post = service.get_by_id(db, id)
+    if not post:
+        raise HTTPException(status_code=404, detail="Post not found")
     return ApiResponse(
         data=service.update_special_status(
             db, db_obj=post, field="is_pinned", val=is_pinned
@@ -130,7 +133,7 @@ async def pin_post(
 
 
 @router.patch("/{id}/feature", response_model=ApiResponse[PostRead])
-async def feature_post(
+def feature_post(
     id: UUID,
     is_featured: bool = True,
     current_user: User = Depends(get_current_user),
@@ -141,6 +144,8 @@ async def feature_post(
     if current_user.role != "admin":
         raise HTTPException(status_code=403, detail="Admin only")
     post = service.get_by_id(db, id)
+    if not post:
+        raise HTTPException(status_code=404, detail="Post not found")
     return ApiResponse(
         data=service.update_special_status(
             db, db_obj=post, field="is_featured", val=is_featured

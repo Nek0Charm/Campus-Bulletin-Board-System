@@ -1,0 +1,96 @@
+erDiagram
+		USERS ||--o{ POSTS : creates
+		BOARDS ||--o{ POSTS : contains
+		POSTS ||--o{ COMMENTS : has
+		USERS ||--o{ COMMENTS : writes
+		COMMENTS ||--o{ COMMENTS : replies_to
+
+		USERS ||--o{ POST_LIKES : makes
+		POSTS ||--o{ POST_LIKES : receives
+		USERS ||--o{ COMMENT_LIKES : makes
+		COMMENTS ||--o{ COMMENT_LIKES : receives
+
+		USERS ||--o{ MEDIA_ASSETS : uploads
+		POSTS ||--o{ POST_ATTACHMENTS : has
+		MEDIA_ASSETS ||--o{ POST_ATTACHMENTS : attached_as
+
+		USERS ||--o{ NOTIFICATIONS : receives
+		USERS ||--o{ NOTIFICATIONS : triggers
+
+		USERS ||--o{ REPORTS : submits
+		USERS ||--o{ REPORTS : handles
+		REPORTS ||--o{ MODERATION_LOGS : generates
+		USERS ||--o{ MODERATION_LOGS : operates
+
+		USERS ||--o{ AUTH_SESSIONS : owns
+		USERS ||--o{ ANNOUNCEMENTS : publishes
+		USERS ||--o{ ADMIN_AUDIT_LOGS : operates
+
+		USERS {
+			uuid id PK
+			varchar username
+			varchar email
+		}
+		BOARDS {
+			uuid id PK
+			varchar name
+		}
+		POSTS {
+			uuid id PK
+			uuid board_id FK
+			uuid author_id FK
+			varchar title
+		}
+		COMMENTS {
+			uuid id PK
+			uuid post_id FK
+			uuid author_id FK
+			uuid parent_comment_id FK
+		}
+		POST_LIKES {
+			uuid id PK
+			uuid post_id FK
+			uuid user_id FK
+		}
+		COMMENT_LIKES {
+			uuid id PK
+			uuid comment_id FK
+			uuid user_id FK
+		}
+		MEDIA_ASSETS {
+			uuid id PK
+			uuid uploader_id FK
+			varchar object_key
+		}
+		POST_ATTACHMENTS {
+			uuid id PK
+			uuid post_id FK
+			uuid media_id FK
+		}
+		NOTIFICATIONS {
+			uuid id PK
+			uuid recipient_id FK
+			uuid actor_id FK
+		}
+		REPORTS {
+			uuid id PK
+			uuid reporter_id FK
+			uuid handled_by FK
+		}
+		MODERATION_LOGS {
+			uuid id PK
+			uuid report_id FK
+			uuid operator_id FK
+		}
+		AUTH_SESSIONS {
+			uuid id PK
+			uuid user_id FK
+		}
+		ANNOUNCEMENTS {
+			uuid id PK
+			uuid created_by FK
+		}
+		ADMIN_AUDIT_LOGS {
+			uuid id PK
+			uuid admin_id FK
+		}

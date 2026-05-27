@@ -74,9 +74,19 @@
 |:-----|:-----|
 | 参与者 | 访客 |
 | 前置条件 | 未登录状态 |
-| 主流程 | 1. 用户访问注册页面；2. 填写用户名（3-32 字符）、邮箱、密码（8-128 字符）、昵称（可选）；3. 提交注册表单；4. 服务端校验用户名和邮箱唯一性；5. 密码使用 Argon2 哈希后存储；6. 创建用户记录（默认角色 user，状态 active）；7. 返回注册成功及用户信息 |
+| 主流程 | 1. 用户访问注册页面；2. 填写用户名（3-32 字符）、邮箱、密码（8-128 字符）、昵称（可选）；3. 提交注册表单；4. 服务端校验用户名和邮箱唯一性；5. 密码使用 Argon2 哈希后存储；6. 创建用户记录（默认角色 user，状态 active，email_verified = false）；7. 签发邮箱验证 Token（JWT，24 小时有效期）并通过 SMTP 发送验证邮件；8. 返回注册成功及用户信息 |
+| 后置条件 | 用户需完成邮箱验证后方可登录 |
+| 异常情况 | 用户名已存在 → 409 Conflict；邮箱已注册 → 409 Conflict；参数不合法 → 422 Unprocessable Entity；邮件发送失败 → 500 Internal Server Error |
+
+**UC-1.1 邮箱验证**
+
+| 属性 | 内容 |
+|:-----|:-----|
+| 参与者 | 注册用户 |
+| 前置条件 | 已注册但邮箱未验证（email_verified = false） |
+| 主流程 | 1. 用户点击邮件中的验证链接；2. 服务端解码并校验验证 Token（JWT，含 type="email_verify"）；3. 查找对应用户；4. 设置 email_verified = true；5. 返回验证成功 |
 | 后置条件 | 用户可使用注册凭据登录 |
-| 异常情况 | 用户名已存在 → 409 Conflict；邮箱已注册 → 409 Conflict；参数不合法 → 422 Unprocessable Entity |
+| 异常情况 | Token 无效 → 400 Bad Request；Token 过期 → 400 Bad Request；用户不存在 → 404 Not Found；邮箱已验证 → 409 Conflict |
 
 **UC-2 用户登录**
 
@@ -84,9 +94,9 @@
 |:-----|:-----|
 | 参与者 | 注册用户 / 管理员 |
 | 前置条件 | 拥有有效的用户名/邮箱和密码 |
-| 主流程 | 1. 用户输入账号（用户名或邮箱）和密码；2. 服务端查询匹配用户；3. 使用 Argon2 验证密码哈希；4. 检查用户状态（active 方可登录）；5. 生成 JWT Token（HS256，默认 60 分钟有效期）；6. 更新 last_login_at；7. 返回 Token、过期时间和用户信息 |
+| 主流程 | 1. 用户输入账号（用户名或邮箱）和密码；2. 服务端查询匹配用户；3. 使用 Argon2 验证密码哈希；4. 检查用户状态（status 为 active 且 email_verified 为 true 方可登录）；5. 生成 JWT Token（HS256，默认 60 分钟有效期）；6. 更新 last_login_at；7. 返回 Token、过期时间和用户信息 |
 | 后置条件 | 后续请求携带 JWT Token 进行身份认证 |
-| 异常情况 | 账号或密码错误 → 401；用户被 banned → 403 |
+| 异常情况 | 账号或密码错误 → 401；用户被 banned → 403；邮箱未验证 → 403 |
 
 **UC-3 密码重置**
 
@@ -366,25 +376,29 @@ flowchart TB
 
 ```mermaid
 stateDiagram-v2
-    [*] --> active: 注册成功
+    [*] --> unverified: 注册成功
+    unverified --> active: 邮箱验证通过
     active --> active: 登录 / 操作
     active --> banned: 管理员封禁
     active --> inactive: 长期未登录(预留)
     banned --> active: 管理员解封
     inactive --> active: 下次登录
+    unverified --> [*]: 注销账号(软删除)
     active --> [*]: 注销账号(软删除)
+    note right of unverified: email_verified=false，不可登录
     note right of active: 正常状态，可发帖、评论、点赞
     note right of banned: 封禁状态，拒绝所有操作 (403)
 ```
 
 **状态说明：**
 
-| 状态 | 说明 | 允许操作 |
-|:-----|:-----|:---------|
-| active | 正常状态，注册后默认 | 全部功能 |
-| inactive | 非活跃状态（预留） | 仅可登录，登录后自动恢复 active |
-| banned | 被封禁，由管理员操作 | 所有认证请求返回 403 |
-| deleted | 软删除（deleted_at 非空） | 不可登录，数据保留 |
+| 状态 | email_verified | 说明 | 允许操作 |
+|:-----|:---------------|:-----|:---------|
+| unverified | false | 刚注册，邮箱未验证 | 仅可验证邮箱，不可登录 |
+| active | true | 正常状态 | 全部功能 |
+| inactive | true | 非活跃状态（预留） | 仅可登录，登录后自动恢复 active |
+| banned | — | 被封禁，由管理员操作 | 所有认证请求返回 403 |
+| deleted | — | 软删除（deleted_at 非空） | 不可登录，数据保留 |
 
 #### 4.4.2 帖子与评论状态
 
@@ -453,6 +467,7 @@ classDiagram
         +str? avatar_url
         +str role
         +str status
+        +bool email_verified
         +datetime? last_login_at
     }
 
@@ -609,9 +624,10 @@ classDiagram
 
 | Responsibilities | Collaborators |
 |:-----------------|:--------------|
-| 用户注册：校验用户名/邮箱唯一性 | User |
+| 用户注册：校验用户名/邮箱唯一性，签发验证 Token 并调用 EmailService 发送验证邮件 | User, EmailService |
+| 邮箱验证：解码验证 Token（JWT，24h 有效期），设置 email_verified = true | EmailService, User |
 | 密码加密存储（Argon2 via pwdlib） | security.py |
-| 用户登录：验证密码、检查状态、生成 JWT Token（HS256） | User, security.py |
+| 用户登录：验证密码、检查状态（active + email_verified）、生成 JWT Token（HS256） | User, security.py |
 | 用户登出：Token 加入 Redis 黑名单，设置 TTL 与 JWT 过期时间一致 | Redis |
 | 密码重置：验证旧密码、更新为新哈希 | User, security.py |
 
@@ -836,7 +852,7 @@ graph TB
 
 | 子系统 | 状态 | 说明 |
 |:-------|:-----|:-----|
-| Part1 用户与认证 | ✅ 已实现 | 注册、登录（支持用户名/邮箱）、登出（Token 黑名单）、密码重置、RBAC |
+| Part1 用户与认证 | ✅ 已实现 | 注册（含邮箱验证）、登录（支持用户名/邮箱/邮箱验证拦截）、登出（Token 黑名单）、密码重置、RBAC |
 | Part2 帖子与分区 | 🔧 路由已定义 | 帖子 CRUD、置顶/加精、分页查询已实现；板块 Model/Service 待补充 |
 | Part3 评论与互动 | 🔧 路由已定义 | 路由骨架完成，业务逻辑待实现 |
 | Part4 通知 | 🔧 路由已定义 | 路由骨架完成，通知生成与读取逻辑待实现 |
@@ -850,6 +866,7 @@ graph TB
 | 数据库模型基类 | Base、IDMixin（UUID PK）、TimestampMixin（created_at/updated_at/deleted_at） |
 | Alembic 迁移 | 数据库版本管理，支持迁移生成、升级、回滚 |
 | JWT 认证 | HS256 Token 生成/解码，OAuth2PasswordBearer 集成，Redis 黑名单 |
+| EmailService | 邮箱验证 Token 签发/解码（JWT, 24h 有效期），SMTP 邮件发送（开发环境使用 Mailpit） |
 | API 响应格式 | ApiResponse、PaginatedResponse、ErrorResponse 统一封装 |
 | 测试框架 | pytest + httpx + fakeredis，auth 和 users 模块已有测试 |
 | Git Hooks | Husky pre-commit（lint-staged：black + ruff） |

@@ -19,9 +19,27 @@ class Settings(BaseSettings):
     REDIS_DB: int = 0
 
     # JWT
-    JWT_SECRET: str = "change-me-in-production"
+    # 规范地讲，密钥应该存储在.env文件中。
+    JWT_SECRET: str = "EXAMPLE_SECRET_KEY_CHANGE_ME_IN_PRODUCTION"
     JWT_ALGORITHM: str = "HS256"
     JWT_ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
+
+    def model_post_init(self, __context: object) -> None:
+        if not self.JWT_SECRET:
+            raise ValueError("JWT_SECRET must be set via .env or environment variable")
+
+    # Frontend
+    FRONTEND_BASE_URL: str = "http://localhost:5173"
+
+    # Email / SMTP (defaults point to Mailpit for dev)
+    BACKEND_BASE_URL: str = "http://localhost:8000"
+    SMTP_HOST: str = "localhost"
+    SMTP_PORT: int = 1025
+    SMTP_USER: str = ""
+    SMTP_PASSWORD: str = ""
+    SMTP_FROM: str = "noreply@campus-bbs.local"
+    SMTP_USE_TLS: bool = False
+    EMAIL_VERIFY_TOKEN_EXPIRE_MINUTES: int = 1440  # 24 hours
 
     model_config = {"env_file": ".env", "env_file_encoding": "utf-8"}
 

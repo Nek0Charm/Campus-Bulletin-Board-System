@@ -23,7 +23,7 @@ router = APIRouter(prefix="/users", tags=["users"])
 
 
 @router.get("/me", response_model=ApiResponse[UserProfileData])
-async def get_current_user_profile(
+def get_current_user_profile(
     current_user: User = Depends(get_current_user),
     service: UserService = Depends(get_user_service),
 ):
@@ -31,7 +31,7 @@ async def get_current_user_profile(
 
 
 @router.patch("/me", response_model=ApiResponse[UserProfileData])
-async def update_current_user_profile(
+def update_current_user_profile(
     payload: UpdateProfileRequest,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
@@ -43,7 +43,7 @@ async def update_current_user_profile(
 
 
 @router.get("/{id}", response_model=ApiResponse[UserPublicData])
-async def get_user_public_profile(
+def get_user_public_profile(
     id: str,
     db: Session = Depends(get_db),
     service: UserService = Depends(get_user_service),
@@ -52,7 +52,7 @@ async def get_user_public_profile(
 
 
 @router.get("/", response_model=PaginatedResponse[AdminUserData])
-async def list_users(
+def list_users(
     page: int = Query(ge=1, default=1),
     page_size: int = Query(ge=1, le=100, default=20),
     db: Session = Depends(get_db),
@@ -72,7 +72,7 @@ async def list_users(
 
 
 @router.patch("/{id}/status", response_model=ApiResponse[AdminUserData])
-async def update_user_status(
+def update_user_status(
     id: str,
     payload: UpdateUserStatusRequest,
     db: Session = Depends(get_db),

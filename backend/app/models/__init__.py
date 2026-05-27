@@ -13,5 +13,18 @@ from app.models.user import User
 from app.models.post import Post
 from app.models.board import Board
 from app.models.comment import Comment
+from app.models.notification import Notification
+from app.models.like import PostLike, CommentLike
 
-__all__ = ["Base", "IDMixin", "TimestampMixin", "User", "Post", "Board", "Comment"]
+__all__ = [
+    "Base",
+    "IDMixin",
+    "TimestampMixin",
+    "User",
+    "Post",
+    "Board",
+    "Comment",
+    "Notification",
+    "PostLike",
+    "CommentLike",
+]
