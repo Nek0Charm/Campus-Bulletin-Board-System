@@ -114,6 +114,7 @@ import { ElMessage } from 'element-plus'
 import { ChatDotRound } from '@element-plus/icons-vue'
 import { useAuthStore } from '@/stores/auth'
 import { authAPI } from '@/api/auth'
+import type { RegisterRequest } from '@/types/user'
 import { validateUsername, validateEmail, validatePassword } from '@/utils/validation'
 
 const router = useRouter()
@@ -199,9 +200,18 @@ async function handleRegister() {
     return
   }
 
+  const payload: RegisterRequest = {
+    username: registerForm.username,
+    email: registerForm.email,
+    password: registerForm.password,
+  }
+  if (registerForm.nickname.trim()) {
+    payload.nickname = registerForm.nickname.trim()
+  }
+
   registering.value = true
   try {
-    await authStore.register(registerForm)
+    await authStore.register(payload)
     ElMessage.success('注册成功！请查收验证邮件。')
     router.push({ name: 'VerifyEmail', query: { email: registerForm.email } })
   } catch (err: unknown) {
