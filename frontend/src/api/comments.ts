@@ -7,11 +7,11 @@ export const commentsAPI = {
     postId: string,
     params?: { page?: number; page_size?: number },
   ): Promise<PaginatedData<CommentRead>> {
-    return httpClient.get(`/api/v1/posts/${postId}/comments`, { params })
+    return httpClient.get('/api/v1/comments/', { params: { post_id: postId, ...params } })
   },
 
   createComment(postId: string, payload: CommentCreate): Promise<CommentRead> {
-    return httpClient.post(`/api/v1/posts/${postId}/comments`, payload)
+    return httpClient.post('/api/v1/comments/', { ...payload, post_id: postId })
   },
 
   deleteComment(commentId: string): Promise<void> {

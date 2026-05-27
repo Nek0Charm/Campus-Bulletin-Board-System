@@ -2,18 +2,18 @@ import httpClient from './client'
 
 export const likesAPI = {
   likePost(postId: string): Promise<void> {
-    return httpClient.post(`/api/v1/posts/${postId}/like`)
+    return httpClient.post(`/api/v1/likes/posts/${postId}`)
   },
 
   unlikePost(postId: string): Promise<void> {
-    return httpClient.delete(`/api/v1/posts/${postId}/like`)
+    return httpClient.delete(`/api/v1/likes/posts/${postId}`)
   },
 
   likeComment(commentId: string): Promise<void> {
-    return httpClient.post(`/api/v1/comments/${commentId}/like`)
+    return httpClient.post(`/api/v1/likes/comments/${commentId}`)
   },
 
   unlikeComment(commentId: string): Promise<void> {
-    return httpClient.delete(`/api/v1/comments/${commentId}/like`)
+    return httpClient.delete(`/api/v1/likes/comments/${commentId}`)
   },
 }
