@@ -33,10 +33,8 @@ httpClient.interceptors.response.use(
       switch (status) {
         case 401:
           removeToken()
-          window.location.href = '/login'
           break
         case 403:
-          ElMessage.error('权限不足')
           break
         case 404:
           break
