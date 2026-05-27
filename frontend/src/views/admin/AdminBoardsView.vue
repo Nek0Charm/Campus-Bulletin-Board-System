@@ -18,13 +18,6 @@
           </template>
         </el-table-column>
         <el-table-column prop="sort_order" label="排序" width="70" />
-        <el-table-column prop="is_active" label="状态" width="80">
-          <template #default="{ row }">
-            <el-tag :type="row.is_active ? 'success' : 'info'" size="small">
-              {{ row.is_active ? '启用' : '停用' }}
-            </el-tag>
-          </template>
-        </el-table-column>
         <el-table-column label="操作" width="200">
           <template #default="{ row }">
             <el-button size="small" @click="openEditDialog(row)">编辑</el-button>
@@ -52,9 +45,6 @@
         </el-form-item>
         <el-form-item label="排序">
           <el-input-number v-model="form.sort_order" :min="0" />
-        </el-form-item>
-        <el-form-item label="启用">
-          <el-switch v-model="form.is_active" />
         </el-form-item>
       </el-form>
       <template #footer>
@@ -89,7 +79,6 @@ const form = reactive({
   slug: '',
   description: '',
   sort_order: 0,
-  is_active: true,
 })
 const formErrors = reactive({ name: '', slug: '' })
 
@@ -111,7 +100,6 @@ function openCreateDialog() {
   form.slug = ''
   form.description = ''
   form.sort_order = 0
-  form.is_active = true
   formErrors.name = ''
   formErrors.slug = ''
   dialogVisible.value = true
@@ -123,7 +111,6 @@ function openEditDialog(board: Board) {
   form.slug = board.slug
   form.description = board.description || ''
   form.sort_order = board.sort_order
-  form.is_active = board.is_active
   formErrors.name = ''
   formErrors.slug = ''
   dialogVisible.value = true

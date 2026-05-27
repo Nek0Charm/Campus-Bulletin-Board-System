@@ -4,7 +4,6 @@ export interface Board {
   slug: string
   description?: string
   sort_order: number
-  is_active: boolean
   post_count?: number
   created_at: string
 }
@@ -21,5 +20,4 @@ export interface BoardUpdate {
   slug?: string
   description?: string
   sort_order?: number
-  is_active?: boolean
 }
