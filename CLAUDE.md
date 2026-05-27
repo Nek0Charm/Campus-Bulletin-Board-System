@@ -187,6 +187,10 @@ Full schema spec in `docs/DatabaseDesign.md`. Core tables: users, boards, posts,
 - Flow: feature branch → develop (PR with review) → main (lead merges)
 - Pre-commit hook runs lint-staged (black + ruff --fix on backend/**/*.py)
 
+## Frontend
+
+`frontend/` is currently a placeholder (`.gitkeep` only). Planned: Vue 3 + TypeScript + Element Plus + Vite. No frontend code exists yet.
+
 ## API Conventions
 
 RESTful under `/api/v1/`. PATCH for partial updates. HTTP status codes follow spec in `docs/DevelopmentSpecification.md` (200/201/204/400/401/403/404/409/422/429/500).
