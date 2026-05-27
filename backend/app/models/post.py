@@ -33,6 +33,7 @@ class Post(Base, IDMixin, TimestampMixin):
     is_featured: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     status: Mapped[str] = mapped_column(String(20), default="normal", nullable=False)
     like_count: Mapped[int] = mapped_column(BigInteger, default=0, nullable=False)
+    comment_count: Mapped[int] = mapped_column(BigInteger, default=0, nullable=False)
 
     published_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=datetime.now, nullable=False
