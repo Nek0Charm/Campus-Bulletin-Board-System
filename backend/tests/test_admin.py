@@ -201,6 +201,40 @@ async def test_delete_nonexistent_board(client: AsyncClient, db_session):
     assert resp.status_code == status.HTTP_404_NOT_FOUND
 
 
+@pytest.mark.asyncio
+async def test_admin_list_boards(client: AsyncClient, db_session):
+    admin_client = await _get_admin_client(client, db_session)
+
+    await admin_client.post(f"{API_PREFIX}/admin/boards", json=TEST_BOARD)
+    await admin_client.post(
+        f"{API_PREFIX}/admin/boards",
+        json={
+            "name": "Board 2",
+            "slug": "board-2",
+            "description": "second",
+            "sort_order": 2,
+        },
+    )
+
+    resp = await admin_client.get(f"{API_PREFIX}/admin/boards")
+    assert resp.status_code == status.HTTP_200_OK
+    boards = resp.json()["data"]
+    assert len(boards) >= 2
+    assert boards[0]["sort_order"] <= boards[1]["sort_order"]
+
+
+@pytest.mark.asyncio
+async def test_admin_boards_requires_admin(client: AsyncClient, db_session):
+    _register_and_login_sync(db_session, "normie_board", "normie_board@example.com")
+    token = await _login(client, "normie_board")
+
+    resp = await client.get(
+        f"{API_PREFIX}/admin/boards",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert resp.status_code == status.HTTP_403_FORBIDDEN
+
+
 # ---------- users ----------
 
 
