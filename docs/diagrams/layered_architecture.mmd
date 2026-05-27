@@ -1,0 +1,37 @@
+graph TB
+    subgraph Client["客户端层"]
+        A["用户端 SPA\nVue3 + TypeScript"]
+        B["管理端 SPA\nVue3 + TypeScript"]
+    end
+
+    API(["HTTPS / REST API"])
+
+    subgraph Service["服务层 — FastAPI"]
+        direction TB
+        R["Router 控制层\nHTTP 协议适配"]
+        S["Service 业务层\n业务逻辑编排"]
+        M["Model 数据层\nORM / SQLAlchemy"]
+    end
+
+    subgraph Cross["横切关注点"]
+        DEPS["deps/ — 依赖注入\nget_current_user"]
+        UTILS["utils/ — 工具函数\nhash_password"]
+        SCHEMAS["schemas/ — 数据校验\nPydantic"]
+    end
+
+    subgraph Data["数据层"]
+        PG[("PostgreSQL\n主数据库")]
+        RD[("Redis\n缓存 / 会话 / 黑名单")]
+    end
+
+    A --> API
+    B --> API
+    API --> R
+    R -->|依赖注入| S
+    S --> M
+    M --> PG
+    M --> RD
+
+    R -.-> DEPS
+    S -.-> UTILS
+    R -.-> SCHEMAS

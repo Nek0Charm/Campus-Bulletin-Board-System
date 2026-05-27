@@ -1,0 +1,6 @@
+stateDiagram-v2
+    direction LR
+
+    [*] --> Unread : N1 事件触发<br/>(NotificationService.create)
+    Unread --> Read : N2 用户阅读<br/>(mark_read / mark_all_read)
+    Read --> [*] : 用户删除通知

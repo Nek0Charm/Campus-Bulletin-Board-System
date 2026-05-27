@@ -1,0 +1,106 @@
+classDiagram
+    class User {
+        +UUID id
+        +str username
+        +str email
+        +str password_hash
+        +str? nickname
+        +str? avatar_url
+        +str role
+        +str status
+        +bool email_verified
+        +datetime? last_login_at
+        +datetime created_at
+        +datetime updated_at
+        +datetime? deleted_at
+    }
+
+    class Board {
+        +UUID id
+        +str name
+        +str slug
+        +str? description
+        +int sort_order
+        +datetime created_at
+        +datetime updated_at
+        +datetime? deleted_at
+    }
+
+    class Post {
+        +UUID id
+        +str title
+        +str content
+        +UUID author_id
+        +UUID board_id
+        +bool is_pinned
+        +bool is_featured
+        +str status
+        +datetime published_at
+        +datetime created_at
+        +datetime updated_at
+        +datetime? deleted_at
+    }
+
+    class PostStatus {
+        <<enumeration>>
+        NORMAL
+        HIDDEN
+        DELETED
+    }
+
+    class PostCreate {
+        <<schema>>
+        +str title
+        +str content
+        +UUID board_id
+    }
+
+    class PostUpdate {
+        <<schema>>
+        +str? title
+        +str? content
+        +bool? is_pinned
+        +bool? is_featured
+    }
+
+    class PostRead {
+        <<schema>>
+        +UUID id
+        +str title
+        +str content
+        +UUID board_id
+        +UUID author_id
+        +AuthorInfo author
+        +bool is_pinned
+        +bool is_featured
+        +datetime created_at
+    }
+
+    class PostService {
+        +create(db, obj_in, author_id) Post
+        +get_multi(db, board_id?, page, page_size) tuple
+        +get_by_id(db, id) Post?
+        +update(db, db_obj, obj_in) Post
+        +update_special_status(db, db_obj, field, val) Post
+        +remove(db, db_obj) Post
+    }
+
+    class PostRouter {
+        <<router>>
+        +POST / create_post()
+        +GET / list_posts()
+        +GET /:id get_post()
+        +PATCH /:id update_post()
+        +DELETE /:id delete_post()
+        +PATCH /:id/pin pin_post()
+        +PATCH /:id/feature feature_post()
+    }
+
+    User "1" --> "0..*" Post : publishes
+    Board "1" --> "0..*" Post : contains
+    Post --> PostStatus : uses
+    PostService ..> Post : operates on
+    PostService ..> PostCreate : receives
+    PostService ..> PostUpdate : receives
+    PostRouter ..> PostService : delegates to
+    PostRouter ..> PostRead : outputs

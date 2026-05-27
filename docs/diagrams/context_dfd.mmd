@@ -1,0 +1,38 @@
+flowchart LR
+    subgraph External["外部实体"]
+        Visitor["访客"]
+        User["注册用户"]
+        Admin["管理员"]
+    end
+
+    subgraph System["Campus BBS 系统"]
+        Auth["用户与认证子系统\n3.1"]
+        Post["帖子与分区子系统\n3.2"]
+        Interaction["评论与互动子系统\n3.3"]
+        Notif["通知与消息子系统\n3.4"]
+        Search["搜索与推荐子系统\n3.5"]
+        AdminPanel["管理后台子系统\n3.6"]
+    end
+
+    subgraph Storage["数据存储"]
+        PG[("PostgreSQL\n主数据库")]
+        Redis[("Redis\n缓存 / 会话 / 黑名单")]
+    end
+
+    Visitor -->|注册| Auth
+    User -->|登录 / 登出 / 改密| Auth
+    User -->|发帖 / 浏览| Post
+    User -->|评论 / 点赞| Interaction
+    Interaction -->|触发事件| Notif
+    Notif -->|推送通知| User
+    User -->|搜索| Search
+    Search -->|返回结果| User
+    Admin -->|管理用户 / 板块 / 公告| AdminPanel
+
+    Auth --> PG
+    Auth --> Redis
+    Post --> PG
+    Interaction --> PG
+    Notif --> PG
+    Search --> PG
+    AdminPanel --> PG
