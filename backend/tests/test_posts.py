@@ -157,7 +157,7 @@ async def test_create_post_missing_title(client: AsyncClient, db_session):
     payload = {"content": "No title", "board_id": str(board.id)}
 
     resp = await ac.post(POSTS_LIST, json=payload)
-    assert resp.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+    assert resp.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
 
 
 @pytest.mark.asyncio
