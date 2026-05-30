@@ -7,8 +7,10 @@
     <div class="input-row">
       <el-input
         v-model="content"
-        :placeholder="replyTo ? `回复 ${replyTo}...` : '发表评论...'"
-        :rows="2"
+        :placeholder="
+          replyTo ? `回复 ${replyTo}...（支持 Markdown）` : '发表评论...（支持 Markdown）'
+        "
+        :rows="3"
         type="textarea"
         @keydown.enter.exact.prevent="handleSubmit"
       />

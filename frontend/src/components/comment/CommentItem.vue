@@ -9,7 +9,7 @@
           }}</span>
           <span class="comment-time">{{ formatTimeAgo(comment.created_at) }}</span>
         </div>
-        <div class="comment-content">{{ comment.content }}</div>
+        <div class="comment-content markdown-body" v-html="renderMarkdown(comment.content)" />
         <div class="comment-actions">
           <span class="action-btn" @click="emit('toggle-like', comment.id)">
             <el-icon :size="14" :color="liked ? '#f56c6c' : undefined">
@@ -50,6 +50,7 @@ import { computed } from 'vue'
 import { Star, StarFilled, ChatDotRound, Delete } from '@element-plus/icons-vue'
 import { useAuthStore } from '@/stores/auth'
 import UserAvatar from '@/components/common/UserAvatar.vue'
+import { renderMarkdown } from '@/utils/markdown'
 import { formatTimeAgo } from '@/utils/format'
 import type { CommentRead } from '@/types/comment'
 
@@ -122,6 +123,43 @@ const canDelete = computed(
   line-height: var(--line-height-base);
   margin-bottom: var(--spacing-xs);
   word-break: break-word;
+}
+
+.comment-content :deep(p) {
+  margin-bottom: 0.4em;
+  line-height: 1.6;
+}
+.comment-content :deep(p:last-child) {
+  margin-bottom: 0;
+}
+.comment-content :deep(ul),
+.comment-content :deep(ol) {
+  padding-left: 1.5em;
+  margin-bottom: 0.4em;
+}
+.comment-content :deep(code) {
+  background: rgba(175, 184, 193, 0.2);
+  border-radius: 2px;
+  padding: 1px 4px;
+  font-size: 0.9em;
+}
+.comment-content :deep(pre) {
+  background: #f6f8fa;
+  border-radius: 4px;
+  padding: 8px;
+  overflow-x: auto;
+  margin-bottom: 0.4em;
+  font-size: 0.85em;
+}
+.comment-content :deep(blockquote) {
+  border-left: 3px solid var(--color-border, #dcdfe6);
+  padding: 0.25em 0.75em;
+  margin: 0 0 0.4em;
+  color: var(--color-text-secondary);
+}
+.comment-content :deep(a) {
+  color: var(--color-primary, #409eff);
+  word-break: break-all;
 }
 
 .comment-actions {

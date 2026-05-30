@@ -354,3 +354,28 @@ def test_deleted_comment_not_in_list(client, db_session):
 
     resp = client.get(API_PREFIX + "/", params={"post_id": str(post.id)})
     assert resp.json()["data"]["pagination"]["total"] == 0
+
+
+# ── 内容校验 ──────────────────────────────────────────────────
+
+
+def test_create_comment_empty_content(client, db_session):
+    token, uid = _register_and_login(client, db_session)
+    post = _create_post(db_session, uid)
+    resp = client.post(
+        API_PREFIX + "/",
+        json={"post_id": str(post.id), "content": ""},
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert resp.status_code == 422
+
+
+def test_create_comment_content_too_long(client, db_session):
+    token, uid = _register_and_login(client, db_session)
+    post = _create_post(db_session, uid)
+    resp = client.post(
+        API_PREFIX + "/",
+        json={"post_id": str(post.id), "content": "x" * 10001},
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert resp.status_code == 422
