@@ -200,6 +200,9 @@ class TestLikeCountConcurrency:
                 headers={"Authorization": f"Bearer {token}"},
             )
 
+        race_requests([lambda: make_like(token_a), lambda: make_like(token_b)])
+
+        db_session.expire_all()
         db_session.refresh(post)
         actual_likes = (
             db_session.query(PostLike).filter(PostLike.post_id == post.id).count()
@@ -323,6 +326,9 @@ class TestLikeCountConcurrency:
                 headers={"Authorization": f"Bearer {token}"},
             )
 
+        race_requests([lambda: make_like(token_a), lambda: make_like(token_b)])
+
+        db_session.expire_all()
         db_session.refresh(comment)
         actual_likes = (
             db_session.query(CommentLike)
