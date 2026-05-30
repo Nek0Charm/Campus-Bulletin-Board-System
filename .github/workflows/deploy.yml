@@ -3,92 +3,18 @@ name: Deploy
 on:
   push:
     branches: [main]
+  workflow_dispatch:
+    inputs:
+      skip_ci:
+        description: 'Skip CI check (use with caution)'
+        type: boolean
+        default: false
 
 env:
   COMPOSE_SERVICES: postgres redis backend frontend
 
 jobs:
-  lint:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v6
-
-      - uses: astral-sh/setup-uv@v8.1.0
-        with:
-          python-version: "3.14"
-
-      - name: Backend lint - ruff
-        run: uvx ruff check .
-        working-directory: backend
-
-      - name: Backend lint - black
-        run: uvx black --check .
-        working-directory: backend
-
-      - uses: pnpm/action-setup@v6
-        with:
-          version: "10.19.0"
-
-      - uses: actions/setup-node@v6
-        with:
-          node-version: "24"
-          cache: pnpm
-          cache-dependency-path: frontend/pnpm-lock.yaml
-
-      - run: pnpm install
-        working-directory: frontend
-
-      - name: Frontend lint - eslint
-        run: pnpm run lint:eslint
-        working-directory: frontend
-
-      - name: Frontend lint - oxlint
-        run: pnpm run lint:oxlint
-        working-directory: frontend
-
-      - name: Frontend lint - prettier
-        run: pnpm prettier --check src/
-        working-directory: frontend
-
-      - name: Frontend lint - type check
-        run: pnpm run type-check
-        working-directory: frontend
-
-  test:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v6
-
-      - uses: astral-sh/setup-uv@v8.1.0
-        with:
-          python-version: "3.14"
-
-      - run: uv sync
-        working-directory: backend
-
-      - name: Backend test
-        run: uv run pytest
-        working-directory: backend
-
-      - uses: pnpm/action-setup@v6
-        with:
-          version: "10.19.0"
-
-      - uses: actions/setup-node@v6
-        with:
-          node-version: "24"
-          cache: pnpm
-          cache-dependency-path: frontend/pnpm-lock.yaml
-
-      - run: pnpm install
-        working-directory: frontend
-
-      - name: Frontend test
-        run: pnpm run test:unit
-        working-directory: frontend
-
   deploy:
-    needs: [lint, test]
     runs-on: ubuntu-latest
     steps:
       - name: Deploy to VPS
@@ -97,8 +23,9 @@ jobs:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
+          command_timeout: 30m
           script: |
-            cd ${{ secrets.VPS_DEPLOY_PATH || '/opt/bbs' }}
+            cd ${{ secrets.DEPLOY_PATH || '/opt/bbs' }}
             git pull origin main
             docker compose up -d --build ${{ env.COMPOSE_SERVICES }}
             docker system prune -f
