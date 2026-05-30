@@ -4,15 +4,15 @@ services:
     container_name: bbs-postgres
     restart: unless-stopped
     environment:
-      POSTGRES_USER: bbs_user
-      POSTGRES_PASSWORD: bbs_password
+      POSTGRES_USER: ${POSTGRES_USER:-bbs_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-bbs_password}
       POSTGRES_DB: bbs
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U bbs_user -d bbs"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-bbs_user} -d bbs"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -23,6 +23,8 @@ services:
     image: redis:7-alpine
     container_name: bbs-redis
     restart: unless-stopped
+    ports:
+      - "6379:6379"
     command: ["redis-server", "--appendonly", "yes"]
     volumes:
       - redis_data:/data
@@ -39,11 +41,11 @@ services:
     container_name: bbs-backend
     restart: unless-stopped
     environment:
-      DATABASE_URL: postgresql+psycopg2://bbs_user:bbs_password@postgres:5432/bbs
+      DATABASE_URL: postgresql+psycopg2://${POSTGRES_USER:-bbs_user}:${POSTGRES_PASSWORD:-bbs_password}@postgres:5432/bbs
       REDIS_HOST: redis
       REDIS_PORT: 6379
       REDIS_DB: 0
-      JWT_SECRET: ${JWT_SECRET}
+      JWT_SECRET: ${JWT_SECRET:-dev-secret-change-me-in-production-min-32-bytes}
       FRONTEND_BASE_URL: ${FRONTEND_BASE_URL:-http://localhost}
       BACKEND_BASE_URL: ${BACKEND_BASE_URL:-http://localhost:8000}
       SMTP_HOST: ${SMTP_HOST:-mailpit}

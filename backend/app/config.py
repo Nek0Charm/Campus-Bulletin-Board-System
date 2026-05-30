@@ -2,6 +2,8 @@
 统一管理后端配置（项目元信息、数据库、Redis、JWT 等）。
 """
 
+import warnings
+
 from pydantic_settings import BaseSettings
 
 
@@ -20,13 +22,21 @@ class Settings(BaseSettings):
 
     # JWT
     # 规范地讲，密钥应该存储在.env文件中。
-    JWT_SECRET: str = "EXAMPLE_SECRET_KEY_CHANGE_ME_IN_PRODUCTION"
+    JWT_SECRET: str = "dev-secret-change-me-in-production-min-32-bytes"
     JWT_ALGORITHM: str = "HS256"
     JWT_ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
 
     def model_post_init(self, __context: object) -> None:
-        if not self.JWT_SECRET:
-            raise ValueError("JWT_SECRET must be set via .env or environment variable")
+        insecure_defaults = {
+            "EXAMPLE_SECRET_KEY_CHANGE_ME_IN_PRODUCTION",
+            "dev-secret-change-me-in-production-min-32-bytes",
+        }
+        if not self.JWT_SECRET or self.JWT_SECRET in insecure_defaults:
+            warnings.warn(
+                "JWT_SECRET is using a default or empty value — "
+                "set a proper secret for production",
+                stacklevel=2,
+            )
 
     # Frontend
     FRONTEND_BASE_URL: str = "http://localhost:5173"

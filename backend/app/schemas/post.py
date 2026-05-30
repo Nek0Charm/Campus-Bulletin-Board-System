@@ -1,12 +1,12 @@
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 from uuid import UUID
 from datetime import datetime
 from typing import List, Optional
 
 
 class PostBase(BaseModel):
-    title: str
-    content: str
+    title: str = Field(..., min_length=1, max_length=255)
+    content: str = Field(..., min_length=1, max_length=50000)
     board_id: UUID
 
 
@@ -15,8 +15,15 @@ class PostCreate(PostBase):
 
 
 class PostUpdate(BaseModel):
-    title: Optional[str] = None
-    content: Optional[str] = None
+    title: Optional[str] = Field(None, min_length=1, max_length=255)
+    content: Optional[str] = Field(None, min_length=1, max_length=50000)
+
+    @field_validator("title", "content", mode="before")
+    @classmethod
+    def reject_none(cls, v):
+        if v is None:
+            raise ValueError("must not be null")
+        return v
 
 
 class AuthorInfo(BaseModel):

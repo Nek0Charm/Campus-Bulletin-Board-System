@@ -13,11 +13,11 @@
         />
       </el-form-item>
       <el-form-item label="内容" required>
-        <el-input
+        <MdEditor
           v-model="form.content"
-          type="textarea"
-          :rows="10"
-          placeholder="请输入帖子内容..."
+          placeholder="请输入帖子内容（支持 Markdown 语法）..."
+          :toolbars-exclude="['save', 'htmlPreview', 'pageFullscreen', 'fullscreen']"
+          style="min-height: 420px"
         />
       </el-form-item>
     </el-form>
@@ -31,10 +31,16 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, ref } from 'vue'
+import { reactive, ref, defineAsyncComponent } from 'vue'
 import { ElMessage } from 'element-plus'
+import 'md-editor-v3/lib/style.css'
 import BoardSelector from '@/components/board/BoardSelector.vue'
 import type { PostCreate, PostUpdate } from '@/types/post'
+import type { Component } from 'vue'
+
+const MdEditor = defineAsyncComponent(() =>
+  import('md-editor-v3').then((m) => m.MdEditor as Component),
+)
 
 const props = withDefaults(
   defineProps<{
