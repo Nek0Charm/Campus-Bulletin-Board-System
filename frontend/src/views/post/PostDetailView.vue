@@ -45,7 +45,7 @@
         <el-divider />
 
         <!-- Post Content -->
-        <div class="post-content" v-html="sanitizeRichHTML(post.content ?? '')" />
+        <div class="post-content markdown-body" v-html="renderMarkdown(post.content ?? '')" />
 
         <el-divider />
 
@@ -100,7 +100,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Edit, Delete, Star, StarFilled, ChatDotRound } from '@element-plus/icons-vue'
-import { sanitizeRichHTML } from '@/utils/sanitize'
+import { renderMarkdown } from '@/utils/markdown'
 import { usePostStore } from '@/stores/posts'
 import { useAuthStore } from '@/stores/auth'
 import { postsAPI } from '@/api/posts'
@@ -347,6 +347,105 @@ onMounted(() => {
   line-height: var(--line-height-base);
   color: var(--color-text-primary);
   min-height: 100px;
+}
+
+.post-content :deep(h1) {
+  font-size: 1.6em;
+  margin: 1em 0 0.5em;
+  font-weight: 700;
+  border-bottom: 1px solid var(--color-border-light);
+  padding-bottom: 0.3em;
+}
+.post-content :deep(h2) {
+  font-size: 1.4em;
+  margin: 1em 0 0.5em;
+  font-weight: 700;
+}
+.post-content :deep(h3) {
+  font-size: 1.2em;
+  margin: 0.8em 0 0.4em;
+  font-weight: 600;
+}
+.post-content :deep(h4) {
+  font-size: 1.1em;
+  margin: 0.8em 0 0.4em;
+  font-weight: 600;
+}
+.post-content :deep(p) {
+  margin-bottom: 1em;
+  line-height: 1.8;
+}
+.post-content :deep(ul),
+.post-content :deep(ol) {
+  padding-left: 2em;
+  margin-bottom: 1em;
+  line-height: 1.8;
+}
+.post-content :deep(li) {
+  margin-bottom: 0.25em;
+}
+.post-content :deep(blockquote) {
+  border-left: 4px solid var(--color-primary-light, #409eff);
+  padding: 0.5em 1em;
+  margin: 0 0 1em;
+  color: var(--color-text-secondary);
+  background: var(--color-bg-subtle, #f5f7fa);
+  border-radius: 0 4px 4px 0;
+}
+.post-content :deep(pre) {
+  background: #f6f8fa;
+  border-radius: 6px;
+  padding: 16px;
+  overflow-x: auto;
+  margin-bottom: 1em;
+  font-size: 0.9em;
+  line-height: 1.5;
+}
+.post-content :deep(code) {
+  background: rgba(175, 184, 193, 0.2);
+  border-radius: 3px;
+  padding: 2px 6px;
+  font-size: 0.9em;
+  font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+}
+.post-content :deep(pre code) {
+  background: none;
+  padding: 0;
+  border-radius: 0;
+}
+.post-content :deep(table) {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 1em;
+  line-height: 1.6;
+}
+.post-content :deep(th),
+.post-content :deep(td) {
+  border: 1px solid var(--color-border, #dcdfe6);
+  padding: 8px 12px;
+  text-align: left;
+}
+.post-content :deep(th) {
+  background: var(--color-bg-subtle, #f5f7fa);
+  font-weight: 600;
+}
+.post-content :deep(img) {
+  max-width: 100%;
+  height: auto;
+  border-radius: 4px;
+  margin: 1em 0;
+}
+.post-content :deep(hr) {
+  border: none;
+  border-top: 1px solid var(--color-border, #dcdfe6);
+  margin: 1.5em 0;
+}
+.post-content :deep(a) {
+  color: var(--color-primary, #409eff);
+  text-decoration: none;
+}
+.post-content :deep(a:hover) {
+  text-decoration: underline;
 }
 
 .interaction-bar {

@@ -2,19 +2,19 @@ from datetime import datetime
 from typing import List, Optional
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 from app.schemas.post import AuthorInfo
 
 
 class CommentCreate(BaseModel):
     post_id: UUID
-    content: str
+    content: str = Field(..., min_length=1, max_length=10000)
     parent_comment_id: Optional[UUID] = None
 
 
 class CommentUpdate(BaseModel):
-    content: str
+    content: str = Field(..., min_length=1, max_length=10000)
 
 
 class CommentRead(BaseModel):

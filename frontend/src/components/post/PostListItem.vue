@@ -14,6 +14,9 @@
         <span class="meta-author">{{ post.author?.nickname || post.author?.username }}</span>
         <span class="meta-time">{{ formatTimeAgo(post.created_at) }}</span>
       </div>
+      <div class="post-preview" v-if="post.content">
+        {{ preview }}
+      </div>
     </div>
     <div class="post-stats">
       <span class="stat-item">
@@ -29,14 +32,21 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
 import { Star, ChatDotRound } from '@element-plus/icons-vue'
 import PostStatusTag from './PostStatusTag.vue'
 import UserAvatar from '@/components/common/UserAvatar.vue'
 import { formatTimeAgo } from '@/utils/format'
+import { stripMarkdown } from '@/utils/markdown'
 import type { PostRead } from '@/types/post'
 
-defineProps<{ post: PostRead }>()
+const props = defineProps<{ post: PostRead }>()
 defineEmits<{ click: [postId: string] }>()
+
+const preview = computed(() => {
+  const text = stripMarkdown(props.post.content ?? '')
+  return text.length > 120 ? text.substring(0, 120) + '...' : text
+})
 </script>
 
 <style scoped>
@@ -93,6 +103,16 @@ defineEmits<{ click: [postId: string] }>()
 
 .meta-time {
   color: var(--color-text-placeholder);
+}
+
+.post-preview {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  margin-top: var(--spacing-xs);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  line-height: 1.4;
 }
 
 .post-stats {
