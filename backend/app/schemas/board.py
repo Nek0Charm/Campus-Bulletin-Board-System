@@ -1,7 +1,7 @@
 from datetime import datetime
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 class BoardCreate(BaseModel):
@@ -28,3 +28,10 @@ class BoardUpdate(BaseModel):
     slug: str | None = Field(default=None, min_length=1, max_length=64)
     description: str | None = Field(default=None, max_length=255)
     sort_order: int | None = None
+
+    @field_validator("name", "slug", mode="before")
+    @classmethod
+    def reject_none(cls, v):
+        if v is None:
+            raise ValueError("must not be null")
+        return v

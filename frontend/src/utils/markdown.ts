@@ -6,7 +6,7 @@ const md = new MarkdownIt({
   linkify: true,
   typographer: true,
   breaks: true,
-})
+}).enable('strikethrough')
 
 const defaultLinkRender =
   md.renderer.rules.link_open ??
@@ -28,6 +28,7 @@ const ALLOWED_TAGS = [
   'em',
   'u',
   'del',
+  's',
   'sup',
   'sub',
   'h1',
@@ -52,7 +53,7 @@ const ALLOWED_TAGS = [
   'td',
 ]
 
-const ALLOWED_ATTR = ['href', 'src', 'alt', 'title', 'target', 'rel']
+const ALLOWED_ATTR = ['href', 'src', 'alt', 'title', 'target', 'rel', 'class']
 
 export function renderMarkdown(text: string): string {
   const html = md.render(text ?? '')
@@ -65,5 +66,8 @@ export function renderMarkdown(text: string): string {
 export function stripMarkdown(text: string): string {
   if (!text) return ''
   const html = md.render(text)
-  return DOMPurify.sanitize(html, { ALLOWED_TAGS: [] })
+  const stripped = DOMPurify.sanitize(html, { ALLOWED_TAGS: [] })
+  const textarea = document.createElement('textarea')
+  textarea.innerHTML = stripped
+  return textarea.value
 }

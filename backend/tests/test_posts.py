@@ -537,3 +537,23 @@ async def test_create_post_content_too_long(client: AsyncClient, db_session):
     payload = {"title": "Title", "content": "x" * 50001, "board_id": str(board.id)}
     resp = await ac.post(POSTS_LIST, json=payload)
     assert resp.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+
+
+@pytest.mark.asyncio
+async def test_update_post_reject_null_title(client: AsyncClient, db_session):
+    ac, _, board = await _prepare_user_and_board(client, db_session)
+    resp = await ac.post(POSTS_LIST, json={**POST_PAYLOAD, "board_id": str(board.id)})
+    post_id = resp.json()["data"]["id"]
+
+    resp = await ac.patch(f"{POSTS_URL}/{post_id}", json={"title": None})
+    assert resp.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+
+
+@pytest.mark.asyncio
+async def test_update_post_reject_null_content(client: AsyncClient, db_session):
+    ac, _, board = await _prepare_user_and_board(client, db_session)
+    resp = await ac.post(POSTS_LIST, json={**POST_PAYLOAD, "board_id": str(board.id)})
+    post_id = resp.json()["data"]["id"]
+
+    resp = await ac.patch(f"{POSTS_URL}/{post_id}", json={"content": None})
+    assert resp.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY

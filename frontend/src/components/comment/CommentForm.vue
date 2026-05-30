@@ -12,7 +12,8 @@
         "
         :rows="3"
         type="textarea"
-        @keydown.enter.exact.prevent="handleSubmit"
+        @keydown.ctrl.enter.prevent="handleSubmit"
+        @keydown.meta.enter.prevent="handleSubmit"
       />
     </div>
     <div class="form-actions">

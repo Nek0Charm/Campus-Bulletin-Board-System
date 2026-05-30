@@ -42,6 +42,16 @@ describe('renderMarkdown', () => {
   it('handles empty string', () => {
     expect(renderMarkdown('')).toBe('')
   })
+
+  it('renders strikethrough', () => {
+    const html = renderMarkdown('~~deleted~~')
+    expect(html).toContain('<s>deleted</s>')
+  })
+
+  it('preserves language class on code blocks', () => {
+    const html = renderMarkdown('```python\nprint("hi")\n```')
+    expect(html).toContain('class="language-python"')
+  })
 })
 
 describe('stripMarkdown', () => {
@@ -51,6 +61,12 @@ describe('stripMarkdown', () => {
     expect(text).not.toContain('<strong>')
     expect(text).toContain('Hello')
     expect(text).toContain('bold')
+  })
+
+  it('decodes HTML entities to plain characters', () => {
+    const text = stripMarkdown('Tom & Jerry')
+    expect(text).toContain('Tom & Jerry')
+    expect(text).not.toContain('&amp;')
   })
 
   it('handles empty string', () => {
