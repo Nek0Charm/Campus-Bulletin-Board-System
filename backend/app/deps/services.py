@@ -6,6 +6,7 @@ from app.services.email_service import EmailService
 from app.services.notification_service import NotificationService
 from app.services.like_service import LikeService
 from app.services.comment_service import CommentService
+from app.services.announcement_service import AnnouncementService
 
 
 def get_auth_service() -> AuthService:
@@ -40,6 +41,10 @@ def get_comment_service() -> CommentService:
     return CommentService()
 
 
+def get_announcement_service() -> AnnouncementService:
+    return AnnouncementService()
+
+
 __all__ = [
     "get_auth_service",
     "get_user_service",
@@ -49,4 +54,5 @@ __all__ = [
     "get_notification_service",
     "get_like_service",
     "get_comment_service",
+    "get_announcement_service",
 ]

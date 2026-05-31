@@ -11,6 +11,7 @@ from app.services.post_service import PostService
 from app.services.board_service import BoardService
 from app.services.email_service import EmailService
 from app.services.notification_service import NotificationService
+from app.services.announcement_service import AnnouncementService
 
 __all__ = [
     "AuthService",
@@ -19,4 +20,5 @@ __all__ = [
     "BoardService",
     "EmailService",
     "NotificationService",
+    "AnnouncementService",
 ]

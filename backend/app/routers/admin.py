@@ -7,7 +7,11 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func
 
 from app.deps.db import get_db
-from app.deps.services import get_user_service, get_board_service
+from app.deps.services import (
+    get_user_service,
+    get_board_service,
+    get_announcement_service,
+)
 from app.deps.auth import require_admin
 from app.models.user import User
 from app.models.post import Post
@@ -22,8 +26,14 @@ from app.schemas.response import (
 from app.schemas.user import AdminUserData, UpdateUserStatusRequest
 from app.schemas.admin import AdminStatsResponse
 from app.schemas.board import BoardCreate, BoardUpdate, BoardRead
+from app.schemas.announcement import (
+    AnnouncementCreate,
+    AnnouncementUpdate,
+    AnnouncementRead,
+)
 from app.services.user_service import UserService
 from app.services.board_service import BoardService
+from app.services.announcement_service import AnnouncementService
 
 router = APIRouter(
     prefix="/admin",
@@ -126,3 +136,64 @@ def admin_delete_board(
     if not board:
         raise HTTPException(status_code=404, detail="Board not found")
     service.remove(db, db_obj=board)
+
+
+# ---------- announcements ----------
+
+
+@router.get("/announcements", response_model=ApiResponse[list[AnnouncementRead]])
+def admin_list_announcements(
+    db: Session = Depends(get_db),
+    service: AnnouncementService = Depends(get_announcement_service),
+):
+    """管理端列表（包含未发布/已过期，按创建时间倒序）。"""
+    from app.models.announcement import Announcement
+
+    items = (
+        db.query(Announcement)
+        .filter(Announcement.deleted_at.is_(None))
+        .order_by(Announcement.created_at.desc())
+        .all()
+    )
+    return ApiResponse(data=items)
+
+
+@router.post(
+    "/announcements",
+    response_model=ApiResponse[AnnouncementRead],
+    status_code=status.HTTP_201_CREATED,
+)
+def admin_create_announcement(
+    payload: AnnouncementCreate,
+    current_user: User = Depends(require_admin),
+    db: Session = Depends(get_db),
+    service: AnnouncementService = Depends(get_announcement_service),
+):
+    return ApiResponse(
+        data=service.create(db, obj_in=payload, admin_id=current_user.id)
+    )
+
+
+@router.patch("/announcements/{id}", response_model=ApiResponse[AnnouncementRead])
+def admin_edit_announcement(
+    id: UUID,
+    payload: AnnouncementUpdate,
+    db: Session = Depends(get_db),
+    service: AnnouncementService = Depends(get_announcement_service),
+):
+    announcement = service.get_by_id(db, id)
+    if not announcement:
+        raise HTTPException(status_code=404, detail="Announcement not found")
+    return ApiResponse(data=service.update(db, db_obj=announcement, obj_in=payload))
+
+
+@router.delete("/announcements/{id}", status_code=status.HTTP_204_NO_CONTENT)
+def admin_delete_announcement(
+    id: UUID,
+    db: Session = Depends(get_db),
+    service: AnnouncementService = Depends(get_announcement_service),
+):
+    announcement = service.get_by_id(db, id)
+    if not announcement:
+        raise HTTPException(status_code=404, detail="Announcement not found")
+    service.remove(db, db_obj=announcement)
