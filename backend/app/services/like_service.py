@@ -1,15 +1,25 @@
+from typing import Optional
 from uuid import UUID
 
 from fastapi import HTTPException
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
+from typing import TYPE_CHECKING
+
 from app.models.comment import Comment
 from app.models.like import CommentLike, PostLike
 from app.models.post import Post
+from app.models.user import User
+
+if TYPE_CHECKING:
+    from app.services.notification_service import NotificationService
 
 
 class LikeService:
+    def __init__(self, notification_service: Optional["NotificationService"] = None):
+        self._notification_service = notification_service
+
     def like_post(self, db: Session, *, post_id: UUID, user_id: UUID) -> Post:
         post = (
             db.query(Post).filter(Post.id == post_id, Post.deleted_at.is_(None)).first()
@@ -36,6 +46,7 @@ class LikeService:
             db.rollback()
             raise
         db.refresh(post)
+        self._notify_like_post(db, post=post, actor_id=user_id)
         return post
 
     def unlike_post(self, db: Session, *, post_id: UUID, user_id: UUID) -> Post:
@@ -93,6 +104,7 @@ class LikeService:
             db.rollback()
             raise
         db.refresh(comment)
+        self._notify_like_comment(db, comment=comment, actor_id=user_id)
         return comment
 
     def unlike_comment(
@@ -125,3 +137,47 @@ class LikeService:
             raise
         db.refresh(comment)
         return comment
+
+    # ------------------------------------------------------------------
+    # private helpers
+    # ------------------------------------------------------------------
+
+    def _get_actor_nickname(self, db: Session, user_id: UUID) -> str:
+        user = db.query(User).filter(User.id == user_id).first()
+        return user.nickname if user else "有人"
+
+    def _notify_like_post(self, db: Session, *, post: Post, actor_id: UUID) -> None:
+        if self._notification_service is None:
+            return
+        if actor_id == post.author_id:
+            return
+        nickname = self._get_actor_nickname(db, actor_id)
+        self._notification_service.create(
+            db,
+            recipient_id=post.author_id,
+            actor_id=actor_id,
+            type="like",
+            title="新点赞",
+            content=f"{nickname} 赞了你的帖子《{post.title}》",
+            related_type="post",
+            related_id=post.id,
+        )
+
+    def _notify_like_comment(
+        self, db: Session, *, comment: Comment, actor_id: UUID
+    ) -> None:
+        if self._notification_service is None:
+            return
+        if actor_id == comment.author_id:
+            return
+        nickname = self._get_actor_nickname(db, actor_id)
+        self._notification_service.create(
+            db,
+            recipient_id=comment.author_id,
+            actor_id=actor_id,
+            type="like",
+            title="新点赞",
+            content=f"{nickname} 赞了你的评论",
+            related_type="comment",
+            related_id=comment.id,
+        )
