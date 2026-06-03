@@ -17,6 +17,7 @@
           v-model="form.content"
           placeholder="请输入帖子内容（支持 Markdown 语法）..."
           :toolbars-exclude="['save', 'htmlPreview', 'pageFullscreen', 'fullscreen']"
+          :markdown-it-config="configureMd"
           style="min-height: 420px"
         />
       </el-form-item>
@@ -37,10 +38,16 @@ import 'md-editor-v3/lib/style.css'
 import BoardSelector from '@/components/board/BoardSelector.vue'
 import type { PostCreate, PostUpdate } from '@/types/post'
 import type { Component } from 'vue'
+import type MarkdownIt from 'markdown-it'
+import ins from 'markdown-it-ins'
 
 const MdEditor = defineAsyncComponent(() =>
   import('md-editor-v3').then((m) => m.MdEditor as Component),
 )
+
+function configureMd(md: MarkdownIt) {
+  md.use(ins)
+}
 
 const props = withDefaults(
   defineProps<{

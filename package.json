@@ -1,5 +1,6 @@
 {
 	"devDependencies": {
+		"@types/katex": "^0.16.8",
 		"eslint": "^10.4.0",
 		"husky": "^9.1.7",
 		"jiti": "^2.7.0",
@@ -21,5 +22,10 @@
 		"frontend/**/*.{json,css,md}": [
 			"prettier --write"
 		]
+	},
+	"dependencies": {
+		"katex": "^0.17.0",
+		"markdown-it-ins": "^4.0.0",
+		"markdown-it-katex": "^2.0.3"
 	}
 }
