@@ -10,12 +10,13 @@ Campus Bulletin Board System (校园论坛) — a campus forum with user auth, p
 
 ### Start infrastructure
 ```bash
-make deps-up          # Start PostgreSQL, Redis, and Mailpit via Docker Compose
+make deps-up          # Start PostgreSQL, Redis, Mailpit, and Garage via Docker Compose
 make deps-down        # Stop all services
 make deps-logs        # Tail logs for all services
 make deps-ps          # Show Docker service status
 make deps-reset-db    # Wipe and recreate Postgres volume
 make dev              # Start deps + print instructions for backend/frontend
+make init-garage      # Initialize Garage S3 storage (run once after first `deps-up`)
 ```
 
 Mailpit (SMTP on `localhost:1025`, web UI on `localhost:8025`) catches all dev emails.
@@ -79,10 +80,11 @@ database.py        → SQLAlchemy engine, SessionLocal, init_db() (runs alembic)
 main.py            → FastAPI app, lifespan (calls init_db), registers routers, CORS middleware
 models/            → SQLAlchemy ORM models (Base, IDMixin, TimestampMixin in base.py)
 schemas/           → Pydantic request/response schemas (response.py has ApiResponse/PaginatedResponse/ErrorResponse)
-routers/           → FastAPI APIRouter modules (auth, users, boards, posts, comments, likes, notifications, admin)
-services/          → Business logic classes (auth, user, post, board, comment, like, notification, email)
+routers/           → FastAPI APIRouter modules (auth, users, boards, posts, comments, likes, notifications, admin, media)
+services/          → Business logic classes (auth, user, post, board, comment, like, notification, email, media)
 deps/              → FastAPI Depends providers: get_db, get_current_user + require_admin (auth), get_*_service (services)
 utils/             → Helpers: security.py (password hashing), redis.py (Redis client + token blacklist)
+storage/           → S3-compatible object storage abstraction (base.py ABC, s3.py boto3 impl, memory.py test impl, factory.py singleton)
 ```
 
 All routers mount under `/api/v1/{router_prefix}`. Health check at `/health`.
@@ -113,16 +115,24 @@ All routers mount under `/api/v1/{router_prefix}`. Health check at `/health`.
 | `LikeService` | `services/like_service.py` | like_post, unlike_post (POST/DELETE on same `/likes/posts/{id}`), like_comment, unlike_comment (same pattern). Maintains like counts on Post/Comment. |
 | `NotificationService` | `services/notification_service.py` | create, list_for_user (unread-first ordering), get_for_user, get_unread_count, mark_read, mark_all_read |
 | `EmailService` | `services/email_service.py` | generate_verify_token, decode_verify_token, send_verification_email (SMTP via Mailpit in dev) |
+| `MediaService` | `services/media_service.py` | upload (MIME whitelist, size check, SHA256 dedup per user), get_by_id, get_file (proxy download), delete (soft-delete + S3 delete, owner/admin check), list_by_post, attach_to_post, update_avatar |
 
 ### All Routers Fully Implemented
 
-All routers (`auth`, `users`, `boards`, `posts`, `comments`, `likes`, `notifications`, `admin`) are fully implemented — no stubs remain.
+All routers (`auth`, `users`, `boards`, `posts`, `comments`, `likes`, `notifications`, `admin`, `media`) are fully implemented — no stubs remain.
 
 Key admin endpoints (all require `require_admin`):
 - `GET /admin/stats` — system statistics (user/post/comment/board counts)
 - `GET /admin/users` — list all users
 - `PATCH /admin/users/{id}/status` — ban/unban users
 - `GET/POST /admin/boards`, `PATCH/DELETE /admin/boards/{id}` — board CRUD
+
+Key media endpoints:
+- `POST /media/upload` — upload image (auth required, MIME whitelist, 5MB limit)
+- `GET /media/{id}` — proxy download (returns raw binary, no ApiResponse wrapper)
+- `GET /media/{id}/info` — get media metadata (ApiResponse wrapper)
+- `DELETE /media/{id}` — soft-delete media (owner or admin)
+- `PATCH /users/me/avatar` — upload/update avatar
 
 ### Code Duplication
 
@@ -187,6 +197,14 @@ Manages `token` (synced to localStorage via `utils/storage.ts`), `currentUser`, 
 | `SMTP_HOST` / `SMTP_PORT` | `localhost` / `1025` | Mailpit in dev |
 | `SMTP_FROM` | `noreply@campus-bbs.local` | Email sender |
 | `EMAIL_VERIFY_TOKEN_EXPIRE_MINUTES` | `1440` (24h) | Verification link TTL |
+| `S3_ENDPOINT_URL` | `http://localhost:3900` | S3-compatible storage endpoint |
+| `S3_ACCESS_KEY_ID` | (Garage-generated) | S3 access key |
+| `S3_SECRET_ACCESS_KEY` | (Garage-generated) | S3 secret key |
+| `S3_BUCKET_NAME` | `bbs-media` | S3 bucket name |
+| `S3_REGION` | `garage` | S3 region |
+| `UPLOAD_MAX_SIZE_MB` | `5` | Max upload size in MB |
+| `UPLOAD_MAX_PER_POST` | `20` | Max images per post |
+| `UPLOAD_ALLOWED_MIME_TYPES` | `image/jpeg,image/png,image/gif,image/webp` | Allowed MIME types |
 
 ## Test Infrastructure
 
@@ -198,6 +216,40 @@ Pattern (repeated in each test file — not centralized in conftest.py):
 - `app.dependency_overrides[get_db]` — injects test DB session
 - `_make_mock_email_service()` — creates an `EmailService` with `send_verification_email` mocked (but real JWT token generation), injected via `app.dependency_overrides[get_email_service]`
 - `test_auth.py` and `test_users.py` use synchronous `TestClient`; `test_admin.py` uses `AsyncClient` + `pytest.mark.asyncio`
+
+## Media Storage Architecture
+
+### Backend Storage Abstraction
+
+- `storage/base.py` — `StorageBackend` ABC with `put()`, `get()`, `delete()`, `url_for()` methods
+- `storage/s3.py` — `S3StorageBackend` — boto3-based S3 implementation, lazy bucket creation
+- `storage/memory.py` — `InMemoryStorageBackend` — dict-based impl for tests
+- `storage/factory.py` — `get_storage_backend()` — lru_cache singleton, reads S3 settings from config
+
+### Upload Flow
+
+1. Client `POST /media/upload` with multipart file
+2. `MediaService.upload()` validates MIME type, file size, computes SHA256
+3. Dedup: if same user uploaded same SHA256 before, returns existing `MediaAsset`
+4. Stores file bytes to S3 via `StorageBackend.put()`
+5. Creates `MediaAsset` row in DB (stores URL as `/api/v1/media/{id}`)
+6. Returns `MediaUploadResponse` with id, url, file_name, mime_type, file_size
+
+### Download Flow
+
+- `GET /api/v1/media/{id}` — proxy endpoint, streams raw binary from S3 (NOT ApiResponse-wrapped)
+- `GET /api/v1/media/{id}/info` — returns metadata (ApiResponse-wrapped)
+
+### Avatar Flow
+
+- `PATCH /users/me/avatar` — uploads avatar, updates `user.avatar_media_id`
+
+### Docker Infrastructure
+
+- Garage (S3-compatible) runs on ports 3900-3903 in docker-compose
+- `garage.toml` config at repo root (mounted as volume)
+- `make init-garage` — creates bucket, key, layout (run once after first deploy)
+- Garage binary inside container is `/garage` (not `garage`)
 
 ## Database Design
 

@@ -11,7 +11,7 @@ on:
         default: false
 
 env:
-  COMPOSE_SERVICES: postgres redis backend frontend
+  COMPOSE_SERVICES: postgres redis backend frontend garage
 
 jobs:
   deploy:

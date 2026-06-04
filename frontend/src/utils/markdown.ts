@@ -1,5 +1,7 @@
 import MarkdownIt from 'markdown-it'
 import DOMPurify from 'dompurify'
+import mk from 'markdown-it-katex'
+import ins from 'markdown-it-ins'
 
 const md = new MarkdownIt({
   html: false,
@@ -7,6 +9,9 @@ const md = new MarkdownIt({
   typographer: true,
   breaks: true,
 }).enable('strikethrough')
+
+md.use(mk, { throwOnError: false })
+md.use(ins)
 
 const defaultLinkRender =
   md.renderer.rules.link_open ??
@@ -29,6 +34,7 @@ const ALLOWED_TAGS = [
   'u',
   'del',
   's',
+  'ins',
   'sup',
   'sub',
   'h1',
@@ -51,9 +57,50 @@ const ALLOWED_TAGS = [
   'tr',
   'th',
   'td',
+  // KaTeX HTML
+  'span',
+  // KaTeX MathML
+  'math',
+  'semantics',
+  'mrow',
+  'annotation',
+  'msup',
+  'mi',
+  'mn',
+  'mo',
+  'mtext',
+  'mspace',
+  'mstyle',
+  'mpadded',
+  'mphantom',
+  'menclose',
+  'mfenced',
+  'mfrac',
+  'mprescripts',
+  'none',
+  'msub',
+  'msubsup',
+  'mtable',
+  'mtr',
+  'mtd',
+  'mlabeledtr',
+  'mth',
+  'mover',
+  'munder',
+  'munderover',
 ]
 
-const ALLOWED_ATTR = ['href', 'src', 'alt', 'title', 'target', 'rel', 'class']
+const ALLOWED_ATTR = [
+  'href',
+  'src',
+  'alt',
+  'title',
+  'target',
+  'rel',
+  'class',
+  'style',
+  'aria-hidden',
+]
 
 export function renderMarkdown(text: string): string {
   const html = md.render(text ?? '')
