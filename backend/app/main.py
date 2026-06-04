@@ -21,6 +21,7 @@ from app.routers import auth
 from app.routers import boards
 from app.routers import comments
 from app.routers import likes
+from app.routers import media
 from app.routers import notifications
 from app.routers import posts
 from app.routers import users
@@ -56,6 +57,7 @@ app.include_router(comments.router, prefix=settings.API_PREFIX)
 app.include_router(likes.router, prefix=settings.API_PREFIX)
 app.include_router(notifications.router, prefix=settings.API_PREFIX)
 app.include_router(admin.router, prefix=settings.API_PREFIX)
+app.include_router(media.router, prefix=settings.API_PREFIX)
 
 
 @app.get("/health")

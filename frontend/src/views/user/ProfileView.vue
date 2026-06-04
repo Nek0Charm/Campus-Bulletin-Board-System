@@ -12,7 +12,18 @@
         <!-- Profile card -->
         <div class="profile-card">
           <div class="profile-avatar-section">
-            <UserAvatar :name="user.nickname || user.username" :size="80" />
+            <div class="avatar-upload-wrapper" @click="triggerAvatarUpload">
+              <img v-if="user.avatar_url" :src="user.avatar_url" alt="头像" class="avatar-img" />
+              <UserAvatar v-else :name="user.nickname || user.username" :size="80" />
+              <div class="avatar-overlay">更换头像</div>
+            </div>
+            <input
+              ref="avatarInput"
+              type="file"
+              accept="image/jpeg,image/png,image/gif,image/webp"
+              style="display: none"
+              @change="handleAvatarChange"
+            />
             <h2>{{ user.nickname || user.username }}</h2>
             <p class="profile-username">@{{ user.username }}</p>
             <el-tag :type="user.role === 'admin' ? 'danger' : 'info'" size="small">
@@ -103,6 +114,7 @@ import { useAuthStore } from '@/stores/auth'
 import { usersAPI } from '@/api/users'
 import { postsAPI } from '@/api/posts'
 import { authAPI } from '@/api/auth'
+import { uploadAvatar } from '@/api/media'
 import { validatePassword } from '@/utils/validation'
 import UserAvatar from '@/components/common/UserAvatar.vue'
 import LoadingSkeleton from '@/components/common/LoadingSkeleton.vue'
@@ -133,6 +145,34 @@ const passwordForm = reactive({
 })
 
 const pwErrors = reactive({ old: '', new: '', confirm: '' })
+
+const avatarInput = ref<HTMLInputElement | null>(null)
+const uploadingAvatar = ref(false)
+
+function triggerAvatarUpload() {
+  avatarInput.value?.click()
+}
+
+async function handleAvatarChange(event: Event) {
+  const target = event.target as HTMLInputElement
+  const file = target.files?.[0]
+  if (!file) return
+  if (file.size > 5 * 1024 * 1024) {
+    ElMessage.error('图片大小不能超过 5MB')
+    return
+  }
+  uploadingAvatar.value = true
+  try {
+    const res = await uploadAvatar(file)
+    if (user.value) user.value.avatar_url = res.avatar_url
+    ElMessage.success('头像更新成功')
+  } catch {
+    ElMessage.error('头像上传失败')
+  } finally {
+    uploadingAvatar.value = false
+    target.value = ''
+  }
+}
 
 async function loadStats() {
   if (!user.value?.id) return
@@ -259,6 +299,38 @@ onMounted(() => {
   font-size: var(--font-size-xl);
   font-weight: 600;
   color: var(--color-text-primary);
+}
+
+.avatar-upload-wrapper {
+  position: relative;
+  cursor: pointer;
+  border-radius: 50%;
+  overflow: hidden;
+}
+
+.avatar-upload-wrapper:hover .avatar-overlay {
+  opacity: 1;
+}
+
+.avatar-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.5);
+  color: #fff;
+  font-size: var(--font-size-xs);
+  opacity: 0;
+  transition: opacity 0.2s;
+  border-radius: 50%;
+}
+
+.avatar-img {
+  width: 80px;
+  height: 80px;
+  object-fit: cover;
+  border-radius: 50%;
 }
 
 .profile-username {

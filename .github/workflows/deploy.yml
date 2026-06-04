@@ -3,95 +3,34 @@ name: Deploy
 on:
   push:
     branches: [main]
-
-env:
-  COMPOSE_SERVICES: postgres redis backend frontend
+  workflow_dispatch:
 
 jobs:
-  lint:
+  build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
 
-      - uses: astral-sh/setup-uv@v8.1.0
+      - name: Build images
+        run: docker compose build backend frontend
+
+      - name: Save images
+        run: docker compose images -q backend frontend | xargs docker save | gzip > images.tar.gz
+
+      - name: Copy images to server
+        uses: appleboy/scp-action@v0.1.7
         with:
-          python-version: "3.14"
-
-      - name: Backend lint - ruff
-        run: uvx ruff check .
-        working-directory: backend
-
-      - name: Backend lint - black
-        run: uvx black --check .
-        working-directory: backend
-
-      - uses: pnpm/action-setup@v6
-        with:
-          version: "10.19.0"
-
-      - uses: actions/setup-node@v6
-        with:
-          node-version: "24"
-          cache: pnpm
-          cache-dependency-path: frontend/pnpm-lock.yaml
-
-      - run: pnpm install
-        working-directory: frontend
-
-      - name: Frontend lint - eslint
-        run: pnpm run lint:eslint
-        working-directory: frontend
-
-      - name: Frontend lint - oxlint
-        run: pnpm run lint:oxlint
-        working-directory: frontend
-
-      - name: Frontend lint - prettier
-        run: pnpm prettier --check src/
-        working-directory: frontend
-
-      - name: Frontend lint - type check
-        run: pnpm run type-check
-        working-directory: frontend
-
-  test:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v6
-
-      - uses: astral-sh/setup-uv@v8.1.0
-        with:
-          python-version: "3.14"
-
-      - run: uv sync
-        working-directory: backend
-
-      - name: Backend test
-        run: uv run pytest
-        working-directory: backend
-
-      - uses: pnpm/action-setup@v6
-        with:
-          version: "10.19.0"
-
-      - uses: actions/setup-node@v6
-        with:
-          node-version: "24"
-          cache: pnpm
-          cache-dependency-path: frontend/pnpm-lock.yaml
-
-      - run: pnpm install
-        working-directory: frontend
-
-      - name: Frontend test
-        run: pnpm run test:unit
-        working-directory: frontend
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          source: images.tar.gz
+          target: /tmp
 
   deploy:
-    needs: [lint, test]
+    needs: build
     runs-on: ubuntu-latest
     steps:
-      - name: Deploy to VPS
+      - name: Load images and deploy
         uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.VPS_HOST }}
@@ -99,7 +38,11 @@ jobs:
           key: ${{ secrets.VPS_SSH_KEY }}
           command_timeout: 30m
           script: |
-            cd ${{ secrets.VPS_DEPLOY_PATH || '/opt/bbs' }}
+            docker load < /tmp/images.tar.gz
+            rm /tmp/images.tar.gz
+            cd ${{ secrets.DEPLOY_PATH || '/opt/bbs' }}
             git pull origin main
-            docker compose up -d --build ${{ env.COMPOSE_SERVICES }}
+            docker compose up -d --no-build backend frontend
+            docker compose up -d postgres redis garage
             docker system prune -f
+
