@@ -45,3 +45,4 @@ jobs:
             docker compose up -d --no-build backend frontend
             docker compose up -d postgres redis garage
             docker system prune -f
+
