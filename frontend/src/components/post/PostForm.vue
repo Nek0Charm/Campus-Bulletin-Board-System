@@ -18,6 +18,7 @@
           placeholder="请输入帖子内容（支持 Markdown 语法）..."
           :toolbars-exclude="['save', 'htmlPreview', 'pageFullscreen', 'fullscreen']"
           :markdown-it-config="configureMd"
+          :on-upload-img="onUploadImg"
           style="min-height: 420px"
         />
       </el-form-item>
@@ -36,6 +37,7 @@ import { reactive, ref, defineAsyncComponent } from 'vue'
 import { ElMessage } from 'element-plus'
 import 'md-editor-v3/lib/style.css'
 import BoardSelector from '@/components/board/BoardSelector.vue'
+import { uploadImage } from '@/api/media'
 import type { PostCreate, PostUpdate } from '@/types/post'
 import type { Component } from 'vue'
 import type MarkdownIt from 'markdown-it'
@@ -71,6 +73,19 @@ const form = reactive<PostCreate>({
 })
 
 const submitting = ref(false)
+
+async function onUploadImg(files: File[], callback: (urls: string[]) => void) {
+  const urls: string[] = []
+  for (const file of files) {
+    try {
+      const res = await uploadImage(file, 'post')
+      urls.push(`/api/v1/media/${res.id}`)
+    } catch {
+      ElMessage.error(`图片上传失败: ${file.name}`)
+    }
+  }
+  callback(urls)
+}
 
 function handleSubmit() {
   if (!form.board_id) {

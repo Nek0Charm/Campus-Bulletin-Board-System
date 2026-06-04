@@ -1,3 +1,5 @@
+from functools import lru_cache
+
 from app.services.auth_service import AuthService
 from app.services.user_service import UserService
 from app.services.post_service import PostService
@@ -6,6 +8,8 @@ from app.services.email_service import EmailService
 from app.services.notification_service import NotificationService
 from app.services.like_service import LikeService
 from app.services.comment_service import CommentService
+from app.services.media_service import MediaService
+from app.storage.factory import get_storage_backend
 
 
 def get_auth_service() -> AuthService:
@@ -40,6 +44,12 @@ def get_comment_service() -> CommentService:
     return CommentService()
 
 
+@lru_cache
+def get_media_service() -> MediaService:
+    storage = get_storage_backend()
+    return MediaService(storage=storage)
+
+
 __all__ = [
     "get_auth_service",
     "get_user_service",
@@ -49,4 +59,5 @@ __all__ = [
     "get_notification_service",
     "get_like_service",
     "get_comment_service",
+    "get_media_service",
 ]
