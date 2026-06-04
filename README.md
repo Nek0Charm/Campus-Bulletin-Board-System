@@ -9,37 +9,20 @@
 | 前端 | Vue 3 + TypeScript + Element Plus + Pinia + Vite，pnpm |
 | 后端 | Python >=3.14、FastAPI、SQLAlchemy、Pydantic、PyJWT、pwdlib |
 | 数据与缓存 | PostgreSQL、Redis |
-| 对象存储 | Garage（S3 兼容，开发环境） |
 | 邮件 | Mailpit（开发环境 SMTP 拦截 + Web 界面） |
 | 工程与质量 | Docker Compose、uv、black、ruff、pytest、Husky |
 
 ## 快速开始
 
-### 1. 配置环境变量
-
-复制 `.env` 中的模板值，或根据实际情况修改。首次启动前需生成 Garage RPC 密钥：
-
-```bash
-echo "GARAGE_RPC_SECRET=$(openssl rand -hex 32)" >> .env
-```
-
-### 2. 启动依赖服务（PostgreSQL + Redis + Mailpit + Garage）
+### 1. 启动依赖服务（PostgreSQL + Redis + Mailpit）
 
 ```bash
 make deps-up
-make init-garage   # 首次启动后运行，初始化 S3 bucket 和密钥
-```
-
-运行 `make init-garage` 后，将输出的 Key ID 和 Secret key 填入 `.env`：
-
-```
-S3_ACCESS_KEY_ID=GK...
-S3_SECRET_ACCESS_KEY=GS...
 ```
 
 Mailpit Web 界面：`http://localhost:8025`（查看开发环境发送的验证邮件）。
 
-### 3. 安装后端依赖并启动
+### 2. 安装后端依赖并启动
 
 ```bash
 cd backend
@@ -50,7 +33,7 @@ make backend
 
 后端 API 文档：`http://localhost:8000/docs`
 
-### 4. 安装前端依赖并启动
+### 3. 安装前端依赖并启动
 
 ```bash
 cd frontend
@@ -61,7 +44,7 @@ make frontend
 
 前端页面：`http://localhost:5173`
 
-### 5. （可选）安装 Git hooks
+### 4. （可选）安装 Git hooks
 
 ```bash
 pnpm install
@@ -75,7 +58,6 @@ make dev                 # 启动依赖服务，并提示前后端启动命令
 make deps-down           # 停止依赖服务
 make deps-logs           # 查看依赖服务日志
 make deps-reset-db       # 重置数据库（清空所有数据）
-make init-garage         # 初始化 Garage S3 存储（首次启动后运行）
 
 make format              # 格式化前后端代码
 make lint                # 静态检查前后端代码
@@ -106,7 +88,6 @@ cd frontend && pnpm run build      # 类型检查 + 生产构建
 
 - PostgreSQL: `localhost:5432`，数据库 `bbs`，用户 `bbs_user`，密码 `bbs_password`
 - Redis: `localhost:6379`
-- Garage S3: `localhost:3900`（API），密钥见 `.env`
 - SMTP: `localhost:1025`（Mailpit，Web 界面 `localhost:8025`）
 
 ## 项目结构
@@ -120,9 +101,8 @@ bbs/
 │   │   ├── main.py            # FastAPI 入口、路由注册
 │   │   ├── models/            # SQLAlchemy ORM 模型
 │   │   ├── schemas/           # Pydantic 请求/响应 Schema
-│   │   ├── routers/           # API 路由（auth, users, posts, boards, comments, likes, notifications, admin, media）
+│   │   ├── routers/           # API 路由（auth, users, posts, boards, comments, likes, notifications, admin）
 │   │   ├── services/          # 业务逻辑层
-│   │   ├── storage/           # S3 对象存储抽象（base/s3/memory/factory）
 │   │   ├── deps/              # FastAPI 依赖注入（auth, db, services）
 │   │   └── utils/             # 工具（密码哈希, Redis）
 │   ├── migrations/            # Alembic 数据库迁移
@@ -137,7 +117,6 @@ bbs/
 │       ├── types/             # TypeScript 类型定义
 │       └── utils/             # 工具函数
 ├── docs/                      # 设计文档
-├── garage.toml                # Garage S3 配置
 └── docker-compose.yml
 ```
 
