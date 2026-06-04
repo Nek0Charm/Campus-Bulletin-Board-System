@@ -1,8 +1,6 @@
 from fastapi import APIRouter
 from fastapi import Depends
-from fastapi import HTTPException
 from fastapi import Query
-from fastapi import UploadFile
 from sqlalchemy.orm import Session
 
 from app.deps import get_current_user
@@ -10,7 +8,6 @@ from app.deps import get_db
 from app.deps import get_user_service
 from app.deps import require_admin
 from app.models import User
-from app.schemas.media import AvatarUploadResponse
 from app.schemas.response import ApiResponse
 from app.schemas.response import PaginatedData
 from app.schemas.response import PaginatedResponse
@@ -21,8 +18,6 @@ from app.schemas.user import UpdateUserStatusRequest
 from app.schemas.user import UserProfileData
 from app.schemas.user import UserPublicData
 from app.services import UserService
-from app.deps.services import get_media_service
-from app.services.media_service import MediaService
 
 router = APIRouter(prefix="/users", tags=["users"])
 
@@ -85,27 +80,3 @@ def update_user_status(
     service: UserService = Depends(get_user_service),
 ):
     return ApiResponse[AdminUserData](data=service.update_status(db, id, payload))
-
-
-@router.patch("/me/avatar", response_model=ApiResponse[AvatarUploadResponse])
-async def upload_avatar(
-    file: UploadFile,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
-    service: MediaService = Depends(get_media_service),
-):
-    if not file.content_type:
-        raise HTTPException(status_code=400, detail="Missing content type")
-
-    file_data = await file.read()
-    avatar_url = service.update_avatar(
-        db,
-        file_data=file_data,
-        file_name=file.filename or "avatar",
-        mime_type=file.content_type,
-        file_size=len(file_data),
-        user_id=current_user.id,
-    )
-    return ApiResponse[AvatarUploadResponse](
-        data=AvatarUploadResponse(avatar_url=avatar_url)
-    )

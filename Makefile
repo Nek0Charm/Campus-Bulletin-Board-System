@@ -6,7 +6,7 @@ FRONTEND_DIR ?= frontend
 BACKEND_DEV_CMD ?= uv run uvicorn app.main:app --reload
 FRONTEND_DEV_CMD ?= pnpm run dev
 
-.PHONY: help deps-up deps-down deps-logs deps-ps deps-reset-db backend frontend dev format format-backend format-frontend lint lint-backend lint-frontend migration-new migrate migrate-rollback migrate-history init-garage
+.PHONY: help deps-up deps-down deps-logs deps-ps deps-reset-db backend frontend dev format format-backend format-frontend lint lint-backend lint-frontend migration-new migrate migrate-rollback migrate-history
 
 help:
 	@echo "可用命令："
@@ -27,21 +27,9 @@ help:
 	@echo "  make migrate                      # 执行所有待处理的迁移"
 	@echo "  make migrate-rollback             # 回滚最近一次迁移"
 	@echo "  make migrate-history              # 查看迁移历史"
-	@echo "  make init-garage                  # 初始化 Garage S3 存储（首次启动后运行）"
 
 deps-up:
-	@$(COMPOSE) up -d postgres redis mailpit garage
-
-init-garage:
-	@echo "初始化 Garage S3 存储..."
-	@docker exec bbs-garage /garage layout assign -z dc1 -c 1G $$(docker exec bbs-garage /garage node id 2>/dev/null | awk '{print $$1}') 2>/dev/null || true
-	@docker exec bbs-garage /garage layout apply --version 1 2>/dev/null || true
-	@docker exec bbs-garage /garage key create bbs 2>/dev/null || true
-	@docker exec bbs-garage /garage bucket create bbs-media 2>/dev/null || true
-	@docker exec bbs-garage /garage bucket allow --read --write bbs-media --key bbs 2>/dev/null || true
-	@echo "Garage 初始化完成！请将输出的 Key ID 和 Secret key 写入 .env 文件："
-	@echo "  S3_ACCESS_KEY_ID=<Key ID>"
-	@echo "  S3_SECRET_ACCESS_KEY=<Secret key>"
+	@$(COMPOSE) up -d postgres redis mailpit
 
 deps-down:
 	@$(COMPOSE) down

@@ -1,11 +1,7 @@
 <template>
   <div class="comment-item" :style="{ marginLeft: depth > 0 ? '24px' : '0' }">
     <div class="comment-main">
-      <UserAvatar
-        :src="comment.author?.avatar_url"
-        :name="comment.author?.nickname || comment.author?.username"
-        :size="28"
-      />
+      <UserAvatar :name="comment.author?.nickname || comment.author?.username" :size="28" />
       <div class="comment-body">
         <div class="comment-header">
           <span class="comment-author">{{
