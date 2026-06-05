@@ -15,7 +15,7 @@ jobs:
         run: docker compose build backend frontend
 
       - name: Save images
-        run: docker compose images -q backend frontend | xargs docker save | gzip > images.tar.gz
+        run: docker save bbs-backend:latest bbs-frontend:latest | gzip > images.tar.gz
 
       - name: Copy images to server
         uses: appleboy/scp-action@v0.1.7
@@ -25,6 +25,7 @@ jobs:
           key: ${{ secrets.VPS_SSH_KEY }}
           source: images.tar.gz
           target: /tmp
+          command_timeout: 60m
 
   deploy:
     needs: build
