@@ -37,6 +37,7 @@ services:
       - bbs-network
 
   backend:
+    image: bbs-backend:latest
     build: ./backend
     container_name: bbs-backend
     restart: unless-stopped
@@ -69,6 +70,7 @@ services:
       - bbs-network
 
   frontend:
+    image: bbs-frontend:latest
     build: ./frontend
     container_name: bbs-frontend
     restart: unless-stopped
