@@ -9,7 +9,9 @@ if TYPE_CHECKING:
 from uuid import UUID
 
 from sqlalchemy import BigInteger, String, Text, Boolean, ForeignKey, DateTime
+from sqlalchemy.dialects.postgresql import TSVECTOR
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.types import TypeDecorator
 
 from app.models.base import Base, IDMixin, TimestampMixin
 
@@ -20,11 +22,23 @@ class PostStatus(str, enum.Enum):
     DELETED = "deleted"
 
 
+class SearchVectorType(TypeDecorator):
+    impl = Text
+    cache_ok = True
+
+    def load_dialect_impl(self, dialect):
+        if dialect.name == "postgresql":
+            return dialect.type_descriptor(TSVECTOR())
+        return dialect.type_descriptor(Text())
+
+
 class Post(Base, IDMixin, TimestampMixin):
     __tablename__ = "posts"
 
     title: Mapped[str] = mapped_column(String(255), nullable=False)
     content: Mapped[str] = mapped_column(Text, nullable=False)
+    search_document: Mapped[str] = mapped_column(Text, default="", nullable=False)
+    search_vector: Mapped[str | None] = mapped_column(SearchVectorType(), nullable=True)
 
     author_id: Mapped[UUID] = mapped_column(ForeignKey("users.id"), nullable=False)
     board_id: Mapped[UUID] = mapped_column(ForeignKey("boards.id"), nullable=False)

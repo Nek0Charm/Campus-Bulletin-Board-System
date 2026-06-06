@@ -9,6 +9,7 @@ from app.services.notification_service import NotificationService
 from app.services.like_service import LikeService
 from app.services.comment_service import CommentService
 from app.services.media_service import MediaService
+from app.services.search_service import SearchService
 from app.storage.factory import get_storage_backend
 
 
@@ -22,6 +23,10 @@ def get_user_service() -> UserService:
 
 def get_post_service() -> PostService:
     return PostService()
+
+
+def get_search_service() -> SearchService:
+    return SearchService()
 
 
 def get_board_service() -> BoardService:
@@ -54,6 +59,7 @@ __all__ = [
     "get_auth_service",
     "get_user_service",
     "get_post_service",
+    "get_search_service",
     "get_board_service",
     "get_email_service",
     "get_notification_service",
