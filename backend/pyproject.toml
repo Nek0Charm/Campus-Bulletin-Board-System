@@ -8,6 +8,7 @@ dependencies = [
     "boto3>=1.37.0",
     "email-validator>=2.2.0",
     "fastapi>=0.135.3",
+    "jieba>=0.42.1",
     "pydantic-settings>=2.7.1",
     "psycopg2-binary>=2.9.11",
     "pwdlib[argon2]>=0.3.0",

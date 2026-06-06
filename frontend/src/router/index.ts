@@ -22,6 +22,12 @@ const routes: RouteRecordRaw[] = [
     meta: { title: '板块帖子' },
   },
   {
+    path: '/search',
+    name: 'Search',
+    component: () => import('@/views/search/SearchView.vue'),
+    meta: { title: '搜索帖子' },
+  },
+  {
     path: '/posts/:id',
     name: 'PostDetail',
     component: () => import('@/views/post/PostDetailView.vue'),
