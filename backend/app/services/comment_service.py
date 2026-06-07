@@ -5,12 +5,20 @@ from uuid import UUID
 from fastapi import HTTPException
 from sqlalchemy.orm import Session, joinedload
 
+from typing import TYPE_CHECKING
+
 from app.models.comment import Comment, CommentStatus
 from app.models.post import Post
 from app.schemas.comment import CommentCreate, CommentUpdate
 
+if TYPE_CHECKING:
+    from app.services.notification_service import NotificationService
+
 
 class CommentService:
+    def __init__(self, notification_service: Optional["NotificationService"] = None):
+        self._notification_service = notification_service
+
     def create(self, db: Session, *, obj_in: CommentCreate, author_id: UUID) -> Comment:
         post = (
             db.query(Post)
@@ -22,6 +30,7 @@ class CommentService:
 
         root_comment_id = None
         parent_comment_id = None
+        parent: Optional[Comment] = None
 
         if obj_in.parent_comment_id:
             parent = (
@@ -62,7 +71,55 @@ class CommentService:
         db.refresh(comment)
         # 补全 author 关系
         db.refresh(comment, attribute_names=["author"])
+        self._create_notification(
+            db, comment=comment, post=post, parent=parent, actor_id=author_id
+        )
         return comment
+
+    def _create_notification(
+        self,
+        db: Session,
+        *,
+        comment: Comment,
+        post: Post,
+        parent: Optional[Comment],
+        actor_id: UUID,
+    ) -> None:
+        """评论/回复成功后生成通知（失败不影响主流程）。"""
+        if self._notification_service is None:
+            return
+
+        actor = comment.author  # 已在 create 中 refresh 加载
+
+        if parent is not None:
+            # 回复评论 → 通知被回复者
+            recipient_id = parent.author_id
+            if actor_id == recipient_id:
+                return
+            self._notification_service.create(
+                db,
+                recipient_id=recipient_id,
+                actor_id=actor_id,
+                type="reply",
+                title="新回复",
+                content=f"{actor.nickname} 回复了你的评论",
+                related_type="comment",
+                related_id=comment.id,
+            )
+        else:
+            # 评论帖子 → 通知帖子作者
+            if actor_id == post.author_id:
+                return
+            self._notification_service.create(
+                db,
+                recipient_id=post.author_id,
+                actor_id=actor_id,
+                type="comment",
+                title="新评论",
+                content=f"{actor.nickname} 评论了你的帖子《{post.title}》",
+                related_type="post",
+                related_id=post.id,
+            )
 
     def get_multi(
         self,

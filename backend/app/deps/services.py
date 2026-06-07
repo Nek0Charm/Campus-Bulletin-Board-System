@@ -42,11 +42,11 @@ def get_notification_service() -> NotificationService:
 
 
 def get_like_service() -> LikeService:
-    return LikeService()
+    return LikeService(notification_service=NotificationService())
 
 
 def get_comment_service() -> CommentService:
-    return CommentService()
+    return CommentService(notification_service=NotificationService())
 
 
 @lru_cache
