@@ -46,7 +46,9 @@ class LikeService:
             db.rollback()
             raise
         db.refresh(post)
-        self._notify_like_post(db, post=post, actor_id=user_id)
+        actor = db.query(User).filter(User.id == user_id).first()
+        if actor:
+            self._notify_like_post(db, post=post, actor=actor)
         return post
 
     def unlike_post(self, db: Session, *, post_id: UUID, user_id: UUID) -> Post:
@@ -104,7 +106,9 @@ class LikeService:
             db.rollback()
             raise
         db.refresh(comment)
-        self._notify_like_comment(db, comment=comment, actor_id=user_id)
+        actor = db.query(User).filter(User.id == user_id).first()
+        if actor:
+            self._notify_like_comment(db, comment=comment, actor=actor)
         return comment
 
     def unlike_comment(
@@ -142,42 +146,42 @@ class LikeService:
     # private helpers
     # ------------------------------------------------------------------
 
-    def _get_actor_nickname(self, db: Session, user_id: UUID) -> str:
-        user = db.query(User).filter(User.id == user_id).first()
-        return user.nickname if user else "有人"
-
-    def _notify_like_post(self, db: Session, *, post: Post, actor_id: UUID) -> None:
+    def _notify_like_post(self, db: Session, *, post: Post, actor: User) -> None:
         if self._notification_service is None:
             return
-        if actor_id == post.author_id:
+        if actor.id == post.author_id:
             return
-        nickname = self._get_actor_nickname(db, actor_id)
-        self._notification_service.create(
-            db,
-            recipient_id=post.author_id,
-            actor_id=actor_id,
-            type="like",
-            title="新点赞",
-            content=f"{nickname} 赞了你的帖子《{post.title}》",
-            related_type="post",
-            related_id=post.id,
-        )
+        try:
+            self._notification_service.create(
+                db,
+                recipient_id=post.author_id,
+                actor_id=actor.id,
+                type="like",
+                title="新点赞",
+                content=f"{actor.nickname} 赞了你的帖子《{post.title}》",
+                related_type="post",
+                related_id=post.id,
+            )
+        except Exception:
+            pass
 
     def _notify_like_comment(
-        self, db: Session, *, comment: Comment, actor_id: UUID
+        self, db: Session, *, comment: Comment, actor: User
     ) -> None:
         if self._notification_service is None:
             return
-        if actor_id == comment.author_id:
+        if actor.id == comment.author_id:
             return
-        nickname = self._get_actor_nickname(db, actor_id)
-        self._notification_service.create(
-            db,
-            recipient_id=comment.author_id,
-            actor_id=actor_id,
-            type="like",
-            title="新点赞",
-            content=f"{nickname} 赞了你的评论",
-            related_type="comment",
-            related_id=comment.id,
-        )
+        try:
+            self._notification_service.create(
+                db,
+                recipient_id=comment.author_id,
+                actor_id=actor.id,
+                type="like",
+                title="新点赞",
+                content=f"{actor.nickname} 赞了你的评论",
+                related_type="comment",
+                related_id=comment.id,
+            )
+        except Exception:
+            pass
