@@ -24,6 +24,15 @@ class AnnouncementService:
             .all()
         )
 
+    def list_all(self, db: Session) -> list[Announcement]:
+        """管理端列表（包含未发布/已过期，按创建时间倒序）。"""
+        return (
+            db.query(Announcement)
+            .filter(Announcement.deleted_at.is_(None))
+            .order_by(Announcement.created_at.desc())
+            .all()
+        )
+
     def get_by_id(self, db: Session, id: UUID) -> Optional[Announcement]:
         return (
             db.query(Announcement)

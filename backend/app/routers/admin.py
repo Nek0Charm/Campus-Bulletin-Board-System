@@ -147,15 +147,7 @@ def admin_list_announcements(
     service: AnnouncementService = Depends(get_announcement_service),
 ):
     """管理端列表（包含未发布/已过期，按创建时间倒序）。"""
-    from app.models.announcement import Announcement
-
-    items = (
-        db.query(Announcement)
-        .filter(Announcement.deleted_at.is_(None))
-        .order_by(Announcement.created_at.desc())
-        .all()
-    )
-    return ApiResponse(data=items)
+    return ApiResponse(data=service.list_all(db))
 
 
 @router.post(

@@ -91,35 +91,39 @@ class CommentService:
 
         actor = comment.author  # 已在 create 中 refresh 加载
 
-        if parent is not None:
-            # 回复评论 → 通知被回复者
-            recipient_id = parent.author_id
-            if actor_id == recipient_id:
-                return
-            self._notification_service.create(
-                db,
-                recipient_id=recipient_id,
-                actor_id=actor_id,
-                type="reply",
-                title="新回复",
-                content=f"{actor.nickname} 回复了你的评论",
-                related_type="comment",
-                related_id=comment.id,
-            )
-        else:
-            # 评论帖子 → 通知帖子作者
-            if actor_id == post.author_id:
-                return
-            self._notification_service.create(
-                db,
-                recipient_id=post.author_id,
-                actor_id=actor_id,
-                type="comment",
-                title="新评论",
-                content=f"{actor.nickname} 评论了你的帖子《{post.title}》",
-                related_type="post",
-                related_id=post.id,
-            )
+        try:
+            if parent is not None:
+                # 回复评论 → 通知被回复者
+                recipient_id = parent.author_id
+                if actor_id == recipient_id:
+                    return
+                self._notification_service.create(
+                    db,
+                    recipient_id=recipient_id,
+                    actor_id=actor_id,
+                    type="reply",
+                    title="新回复",
+                    content=f"{actor.nickname} 回复了你的评论",
+                    related_type="comment",
+                    related_id=comment.id,
+                )
+            else:
+                # 评论帖子 → 通知帖子作者
+                if actor_id == post.author_id:
+                    return
+                self._notification_service.create(
+                    db,
+                    recipient_id=post.author_id,
+                    actor_id=actor_id,
+                    type="comment",
+                    title="新评论",
+                    content=f"{actor.nickname} 评论了你的帖子《{post.title}》",
+                    related_type="post",
+                    related_id=post.id,
+                )
+        except Exception:
+            # 通知发送失败不影响评论创建
+            pass
 
     def get_multi(
         self,
