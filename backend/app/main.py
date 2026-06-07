@@ -21,8 +21,10 @@ from app.routers import auth
 from app.routers import boards
 from app.routers import comments
 from app.routers import likes
+from app.routers import media
 from app.routers import notifications
 from app.routers import posts
+from app.routers import search
 from app.routers import users
 
 settings = get_settings()
@@ -52,10 +54,12 @@ app.include_router(auth.router, prefix=settings.API_PREFIX)
 app.include_router(users.router, prefix=settings.API_PREFIX)
 app.include_router(boards.router, prefix=settings.API_PREFIX)
 app.include_router(posts.router, prefix=settings.API_PREFIX)
+app.include_router(search.router, prefix=settings.API_PREFIX)
 app.include_router(comments.router, prefix=settings.API_PREFIX)
 app.include_router(likes.router, prefix=settings.API_PREFIX)
 app.include_router(notifications.router, prefix=settings.API_PREFIX)
 app.include_router(admin.router, prefix=settings.API_PREFIX)
+app.include_router(media.router, prefix=settings.API_PREFIX)
 
 
 @app.get("/health")

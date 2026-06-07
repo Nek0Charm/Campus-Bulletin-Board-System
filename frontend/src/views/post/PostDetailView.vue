@@ -20,7 +20,11 @@
             <h1>{{ post.title }}</h1>
           </div>
           <div class="post-meta">
-            <UserAvatar :name="post.author?.nickname || post.author?.username" :size="28" />
+            <UserAvatar
+              :src="post.author?.avatar_url"
+              :name="post.author?.nickname || post.author?.username"
+              :size="28"
+            />
             <span class="meta-author">{{ post.author?.nickname || post.author?.username }}</span>
             <span class="meta-time">{{ formatDate(post.created_at) }}</span>
           </div>
