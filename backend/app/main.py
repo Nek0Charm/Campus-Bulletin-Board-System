@@ -23,7 +23,6 @@ from app.routers import comments
 from app.routers import likes
 from app.routers import media
 from app.routers import announcements
-from app.routers import media
 from app.routers import notifications
 from app.routers import posts
 from app.routers import search
