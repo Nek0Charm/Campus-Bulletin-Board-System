@@ -23,6 +23,11 @@ from app.schemas.user import UpdateUserStatusRequest
 from app.schemas.user import UserProfileData
 from app.schemas.user import UserPublicData
 from app.schemas.post import PostCreate, PostUpdate, PostRead, PostListResponse
+from app.schemas.announcement import (
+    AnnouncementCreate,
+    AnnouncementRead,
+    AnnouncementUpdate,
+)
 from app.schemas.board import BoardCreate, BoardRead, BoardUpdate
 from app.schemas.admin import AdminStatsResponse
 from app.schemas.notification import NotificationMarkAllReadResult
@@ -54,6 +59,9 @@ __all__ = [
     "BoardRead",
     "BoardUpdate",
     "AdminStatsResponse",
+    "AnnouncementCreate",
+    "AnnouncementRead",
+    "AnnouncementUpdate",
     "NotificationRead",
     "NotificationUnreadCount",
     "NotificationMarkAllReadResult",

@@ -11,6 +11,7 @@ from app.services.comment_service import CommentService
 from app.services.media_service import MediaService
 from app.services.search_service import SearchService
 from app.storage.factory import get_storage_backend
+from app.services.announcement_service import AnnouncementService
 
 
 def get_auth_service() -> AuthService:
@@ -55,6 +56,10 @@ def get_media_service() -> MediaService:
     return MediaService(storage=storage)
 
 
+def get_announcement_service() -> AnnouncementService:
+    return AnnouncementService()
+
+
 __all__ = [
     "get_auth_service",
     "get_user_service",
@@ -66,4 +71,5 @@ __all__ = [
     "get_like_service",
     "get_comment_service",
     "get_media_service",
+    "get_announcement_service",
 ]
