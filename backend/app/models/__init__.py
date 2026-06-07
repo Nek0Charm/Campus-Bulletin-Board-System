@@ -15,6 +15,7 @@ from app.models.board import Board
 from app.models.comment import Comment
 from app.models.notification import Notification
 from app.models.like import PostLike, CommentLike
+from app.models.media import MediaAsset, PostAttachment
 from app.models.announcement import Announcement
 
 __all__ = [
@@ -28,5 +29,7 @@ __all__ = [
     "Notification",
     "PostLike",
     "CommentLike",
+    "MediaAsset",
+    "PostAttachment",
     "Announcement",
 ]

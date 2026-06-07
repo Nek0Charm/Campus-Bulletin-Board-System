@@ -52,6 +52,24 @@ describe('renderMarkdown', () => {
     const html = renderMarkdown('```python\nprint("hi")\n```')
     expect(html).toContain('class="language-python"')
   })
+
+  it('renders underline with ++text++', () => {
+    const html = renderMarkdown('++underlined++')
+    expect(html).toContain('<ins>underlined</ins>')
+  })
+
+  it('renders inline math with katex', () => {
+    const html = renderMarkdown('inline: $x^2$')
+    expect(html).toContain('katex')
+    expect(html).toContain('x')
+    expect(html).toContain('2')
+  })
+
+  it('renders block math with katex', () => {
+    const html = renderMarkdown('$$\\sum_{i=1}^{n} i$$')
+    expect(html).toContain('katex')
+    expect(html).toContain('katex-display')
+  })
 })
 
 describe('stripMarkdown', () => {

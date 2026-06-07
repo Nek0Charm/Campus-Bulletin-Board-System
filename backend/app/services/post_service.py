@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session, joinedload
 
 from app.models.post import Post, PostStatus
 from app.schemas.post import PostCreate, PostUpdate
+from app.utils.search import build_search_document
 
 
 class PostService:
@@ -13,7 +14,8 @@ class PostService:
         db_obj = Post(
             **obj_in.model_dump(),
             author_id=author_id,
-            published_at=datetime.now(timezone.utc)
+            search_document=build_search_document(obj_in.title, obj_in.content),
+            published_at=datetime.now(timezone.utc),
         )
         db.add(db_obj)
         try:
@@ -62,6 +64,11 @@ class PostService:
         update_data = obj_in.model_dump(exclude_unset=True)
         for field, value in update_data.items():
             setattr(db_obj, field, value)
+
+        if "title" in update_data or "content" in update_data:
+            db_obj.search_document = build_search_document(
+                db_obj.title, db_obj.content
+            )
 
         db_obj.updated_at = datetime.now(timezone.utc)
         try:

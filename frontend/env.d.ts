@@ -13,3 +13,15 @@ interface ImportMetaEnv {
 interface ImportMeta {
   readonly env: ImportMetaEnv
 }
+
+declare module 'markdown-it-katex' {
+  import type MarkdownIt from 'markdown-it'
+  function plugin(md: MarkdownIt, options?: Record<string, unknown>): void
+  export = plugin
+}
+
+declare module 'markdown-it-ins' {
+  import type MarkdownIt from 'markdown-it'
+  function plugin(md: MarkdownIt): void
+  export default plugin
+}

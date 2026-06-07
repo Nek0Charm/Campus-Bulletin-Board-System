@@ -51,6 +51,18 @@ class Settings(BaseSettings):
     SMTP_USE_TLS: bool = False
     EMAIL_VERIFY_TOKEN_EXPIRE_MINUTES: int = 1440  # 24 hours
 
+    # S3-compatible object storage
+    S3_ENDPOINT_URL: str = "http://localhost:3900"
+    S3_ACCESS_KEY_ID: str = ""
+    S3_SECRET_ACCESS_KEY: str = ""
+    S3_BUCKET_NAME: str = "bbs-media"
+    S3_REGION: str = "garage"
+
+    # Upload limits
+    UPLOAD_MAX_SIZE_MB: int = 5
+    UPLOAD_MAX_PER_POST: int = 20
+    UPLOAD_ALLOWED_MIME_TYPES: str = "image/jpeg,image/png,image/gif,image/webp"
+
     model_config = {"env_file": ".env", "env_file_encoding": "utf-8"}
 
 
