@@ -29,8 +29,7 @@ def upgrade() -> None:
         sa.Column("search_vector", postgresql.TSVECTOR(), nullable=True),
     )
 
-    op.execute(
-        """
+    op.execute("""
         CREATE OR REPLACE FUNCTION posts_search_vector_refresh()
         RETURNS trigger AS $$
         BEGIN
@@ -39,22 +38,17 @@ def upgrade() -> None:
             RETURN NEW;
         END
         $$ LANGUAGE plpgsql;
-        """
-    )
-    op.execute(
-        """
+        """)
+    op.execute("""
         CREATE TRIGGER trg_posts_search_vector_refresh
         BEFORE INSERT OR UPDATE OF search_document ON posts
         FOR EACH ROW EXECUTE FUNCTION posts_search_vector_refresh();
-        """
-    )
-    op.execute(
-        """
+        """)
+    op.execute("""
         UPDATE posts
         SET search_document =
             COALESCE(title, '') || ' ' || COALESCE(content, '')
-        """
-    )
+        """)
 
     op.create_index(
         "ix_posts_search_vector",
@@ -78,4 +72,3 @@ def downgrade() -> None:
     op.execute("DROP FUNCTION IF EXISTS posts_search_vector_refresh")
     op.drop_column("posts", "search_vector")
     op.drop_column("posts", "search_document")
-

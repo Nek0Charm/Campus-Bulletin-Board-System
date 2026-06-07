@@ -19,4 +19,3 @@ export const searchAPI = {
     return httpClient.get('/api/v1/search/posts', { params })
   },
 }
-
