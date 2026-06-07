@@ -66,9 +66,7 @@ class PostService:
             setattr(db_obj, field, value)
 
         if "title" in update_data or "content" in update_data:
-            db_obj.search_document = build_search_document(
-                db_obj.title, db_obj.content
-            )
+            db_obj.search_document = build_search_document(db_obj.title, db_obj.content)
 
         db_obj.updated_at = datetime.now(timezone.utc)
         try:

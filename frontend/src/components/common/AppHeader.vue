@@ -61,14 +61,7 @@
 
 <script setup lang="ts">
 import { ref, watch } from 'vue'
-import {
-  Bell,
-  ChatDotRound,
-  Search,
-  Setting,
-  SwitchButton,
-  User,
-} from '@element-plus/icons-vue'
+import { Bell, ChatDotRound, Search, Setting, SwitchButton, User } from '@element-plus/icons-vue'
 import { useAuthStore } from '@/stores/auth'
 import { useRoute, useRouter } from 'vue-router'
 import NotificationBell from '@/components/notification/NotificationBell.vue'
