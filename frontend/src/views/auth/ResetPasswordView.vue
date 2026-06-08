@@ -76,8 +76,14 @@ async function handleSubmit() {
     ElMessage.success('密码修改成功，请重新登录')
     await authStore.logout()
     router.push('/login')
-  } catch {
-    ElMessage.error('密码修改失败')
+  } catch (err: unknown) {
+    const e = err as { response?: { data?: { detail?: string } } }
+    const detail: string = e.response?.data?.detail || ''
+    if (detail) {
+      errors.new = detail
+    } else {
+      ElMessage.error('密码修改失败')
+    }
   } finally {
     submitting.value = false
   }

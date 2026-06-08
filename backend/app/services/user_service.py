@@ -21,6 +21,7 @@ class UserService:
             avatar_url=user.avatar_url,
             role=user.role,
             status=user.status,
+            muted_until=user.muted_until.isoformat() if user.muted_until else None,
             created_at=user.created_at.isoformat(),
             updated_at=user.updated_at.isoformat(),
         )
@@ -83,6 +84,21 @@ class UserService:
             for u in users
         ]
         return items, total
+
+    def get_admin_user_data(self, user: User) -> AdminUserData:
+        return AdminUserData(
+            id=str(user.id),
+            username=user.username,
+            email=user.email,
+            nickname=user.nickname,
+            avatar_url=user.avatar_url,
+            role=user.role,
+            status=user.status,
+            last_login_at=(
+                user.last_login_at.isoformat() if user.last_login_at else None
+            ),
+            created_at=user.created_at.isoformat(),
+        )
 
     def update_status(
         self, db: Session, user_id: str, payload: UpdateUserStatusRequest

@@ -65,7 +65,12 @@ def upgrade() -> None:
         sa.PrimaryKeyConstraint("id"),
         sa.UniqueConstraint("comment_id", "user_id", name="uq_comment_likes"),
     )
-    op.add_column("posts", sa.Column("like_count", sa.BigInteger(), nullable=False))
+    op.add_column(
+        "posts",
+        sa.Column(
+            "like_count", sa.BigInteger(), nullable=False, server_default=sa.text("0")
+        ),
+    )
     # ### end Alembic commands ###
 
 

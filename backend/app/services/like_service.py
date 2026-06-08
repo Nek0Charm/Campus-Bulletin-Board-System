@@ -142,6 +142,31 @@ class LikeService:
         db.refresh(comment)
         return comment
 
+    def get_liked_comment_ids_for_post(
+        self, db: Session, *, post_id: UUID, user_id: UUID
+    ) -> list[UUID]:
+        """Return comment IDs the user has liked within a given post."""
+        rows = (
+            db.query(CommentLike.comment_id)
+            .join(Comment, Comment.id == CommentLike.comment_id)
+            .filter(
+                Comment.post_id == post_id,
+                CommentLike.user_id == user_id,
+                Comment.deleted_at.is_(None),
+            )
+            .all()
+        )
+        return [row[0] for row in rows]
+
+    def is_post_liked(self, db: Session, *, post_id: UUID, user_id: UUID) -> bool:
+        """Check if a user has liked a post."""
+        return (
+            db.query(PostLike)
+            .filter(PostLike.post_id == post_id, PostLike.user_id == user_id)
+            .first()
+            is not None
+        )
+
     # ------------------------------------------------------------------
     # private helpers
     # ------------------------------------------------------------------

@@ -9,6 +9,7 @@ export interface User {
   avatar_url?: string
   role: UserRole
   status: UserStatus
+  muted_until?: string | null
   last_login_at?: string
   created_at: string
   updated_at: string
@@ -51,4 +52,8 @@ export interface VerifyEmailData {
 
 export interface ResendVerifyRequest {
   email: string
+}
+
+export interface MuteUserRequest {
+  duration_minutes: number
 }

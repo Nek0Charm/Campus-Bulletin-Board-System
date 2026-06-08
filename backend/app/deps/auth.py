@@ -64,3 +64,45 @@ def require_admin(current_user: User = Depends(get_current_user)) -> User:
     if current_user.role != "admin":
         raise HTTPException(status_code=403, detail="Admin required")
     return current_user
+
+
+def check_not_muted(current_user: User) -> None:
+    """Raise 403 if user is currently muted."""
+    if current_user.muted_until is None:
+        return
+    expired = current_user.muted_until
+    if expired.tzinfo is None:
+        expired = expired.replace(tzinfo=timezone.utc)
+    if expired > datetime.now(timezone.utc):
+        raise HTTPException(
+            status_code=403,
+            detail=f"You are muted until {expired.isoformat()}",
+        )
+
+
+def check_can_moderate_post(db: Session, current_user: User, post: object) -> None:
+    """Raise 403 if user cannot moderate this post.
+    Admins can always moderate. Board masters can moderate posts in their boards."""
+    if current_user.role == "admin":
+        return
+    # Lazy import to avoid circular dependency
+    from app.services.board_master_service import BoardMasterService
+
+    bm_service = BoardMasterService()
+    if bm_service.is_board_master(db, board_id=post.board_id, user_id=current_user.id):
+        return
+    raise HTTPException(status_code=403, detail="Admin or board master required")
+
+
+def check_can_moderate_board(db: Session, current_user: User, board_id: UUID) -> None:
+    """Raise 403 if user cannot moderate this board.
+    Admins can always moderate. Board masters of this specific board can moderate."""
+    if current_user.role == "admin":
+        return
+    # Lazy import to avoid circular dependency
+    from app.services.board_master_service import BoardMasterService
+
+    bm_service = BoardMasterService()
+    if bm_service.is_board_master(db, board_id=board_id, user_id=current_user.id):
+        return
+    raise HTTPException(status_code=403, detail="Admin or board master required")

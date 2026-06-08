@@ -12,6 +12,10 @@ export const useAuthStore = defineStore('auth', () => {
 
   const isAuthenticated = computed(() => !!token.value)
   const isAdmin = computed(() => currentUser.value?.role === 'admin')
+  const isMuted = computed(() => {
+    if (!currentUser.value?.muted_until) return false
+    return new Date(currentUser.value.muted_until) > new Date()
+  })
 
   async function login(payload: LoginRequest) {
     loading.value = true
@@ -21,8 +25,13 @@ export const useAuthStore = defineStore('auth', () => {
       token.value = data.access_token
       await fetchProfile()
       return true
-    } catch {
-      return false
+    } catch (err) {
+      // Clean up any partially-set state on failure
+      if (token.value) {
+        removeToken()
+        token.value = null
+      }
+      throw err
     } finally {
       loading.value = false
     }
@@ -78,6 +87,7 @@ export const useAuthStore = defineStore('auth', () => {
     loading,
     isAuthenticated,
     isAdmin,
+    isMuted,
     login,
     register,
     logout,

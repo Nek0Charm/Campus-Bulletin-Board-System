@@ -9,6 +9,7 @@ from app.services.notification_service import NotificationService
 from app.services.like_service import LikeService
 from app.services.comment_service import CommentService
 from app.services.media_service import MediaService
+from app.services.board_master_service import BoardMasterService
 from app.services.search_service import SearchService
 from app.storage.factory import get_storage_backend
 from app.services.announcement_service import AnnouncementService
@@ -56,6 +57,10 @@ def get_media_service() -> MediaService:
     return MediaService(storage=storage)
 
 
+def get_board_master_service() -> BoardMasterService:
+    return BoardMasterService()
+
+
 def get_announcement_service() -> AnnouncementService:
     return AnnouncementService()
 
@@ -71,5 +76,6 @@ __all__ = [
     "get_like_service",
     "get_comment_service",
     "get_media_service",
+    "get_board_master_service",
     "get_announcement_service",
 ]
