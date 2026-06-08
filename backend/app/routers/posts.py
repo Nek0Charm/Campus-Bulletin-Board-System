@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 
 from app.deps.db import get_db
 from app.deps.services import get_post_service
-from app.deps.auth import get_current_user
+from app.deps.auth import get_current_user, check_not_muted, check_can_moderate_post
 from app.models.user import User
 from app.schemas.response import (
     ApiResponse,
@@ -33,6 +33,7 @@ def create_post(
     service: PostService = Depends(get_post_service),
 ):
     """发帖：自动填充作者 ID"""
+    check_not_muted(current_user)
     post = service.create(db, obj_in=payload, author_id=current_user.id)
     return ApiResponse(data=post)
 
@@ -100,12 +101,12 @@ def delete_post(
     current_user: User = Depends(get_current_user),
     service: PostService = Depends(get_post_service),
 ):
-    """软删除帖子：仅限作者或管理员"""
+    """软删除帖子：仅限作者、管理员或版主"""
     post = service.get_by_id(db, id)
     if not post:
         raise HTTPException(status_code=404, detail="Post not found")
     if post.author_id != current_user.id and current_user.role != "admin":
-        raise HTTPException(status_code=403, detail="Permission denied")
+        check_can_moderate_post(db, current_user, post)
 
     service.remove(db, db_obj=post)
     return ApiResponse(message="Post deleted")
@@ -119,12 +120,11 @@ def pin_post(
     db: Session = Depends(get_db),
     service: PostService = Depends(get_post_service),
 ):
-    """置顶/取消置顶：仅管理员"""
-    if current_user.role != "admin":
-        raise HTTPException(status_code=403, detail="Admin only")
+    """置顶/取消置顶：管理员或版主"""
     post = service.get_by_id(db, id)
     if not post:
         raise HTTPException(status_code=404, detail="Post not found")
+    check_can_moderate_post(db, current_user, post)
     return ApiResponse(
         data=service.update_special_status(
             db, db_obj=post, field="is_pinned", val=is_pinned
@@ -140,12 +140,11 @@ def feature_post(
     db: Session = Depends(get_db),
     service: PostService = Depends(get_post_service),
 ):
-    """加精/取消加精：仅管理员"""
-    if current_user.role != "admin":
-        raise HTTPException(status_code=403, detail="Admin only")
+    """加精/取消加精：管理员或版主"""
     post = service.get_by_id(db, id)
     if not post:
         raise HTTPException(status_code=404, detail="Post not found")
+    check_can_moderate_post(db, current_user, post)
     return ApiResponse(
         data=service.update_special_status(
             db, db_obj=post, field="is_featured", val=is_featured

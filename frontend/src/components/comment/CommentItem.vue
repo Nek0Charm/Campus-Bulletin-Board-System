@@ -17,7 +17,7 @@
         <div class="comment-actions">
           <span class="action-btn" @click="emit('toggle-like', comment.id)">
             <el-icon :size="14" :color="liked ? '#f56c6c' : undefined">
-              <StarFilled v-if="liked" /><Star v-else />
+              <ThumbsUp :filled="liked" :size="14" />
             </el-icon>
             {{ comment.like_count }}
           </span>
@@ -51,7 +51,8 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { Star, StarFilled, ChatDotRound, Delete } from '@element-plus/icons-vue'
+import { ChatDotRound, Delete } from '@element-plus/icons-vue'
+import ThumbsUp from '@/components/common/ThumbsUp.vue'
 import { useAuthStore } from '@/stores/auth'
 import UserAvatar from '@/components/common/UserAvatar.vue'
 import { renderMarkdown } from '@/utils/markdown'

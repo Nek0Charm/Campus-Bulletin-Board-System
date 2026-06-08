@@ -21,3 +21,18 @@ export interface BoardUpdate {
   description?: string
   sort_order?: number
 }
+
+export interface BoardMasterUserInfo {
+  id: string
+  username: string
+  nickname?: string
+  avatar_url?: string
+}
+
+export interface BoardMasterInfo {
+  id: string
+  board_id: string
+  user_id: string
+  user: BoardMasterUserInfo
+  created_at: string
+}

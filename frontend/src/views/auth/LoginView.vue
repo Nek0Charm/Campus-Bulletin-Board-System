@@ -155,6 +155,8 @@ async function handleLogin() {
       lastLoginAccount.value = loginForm.account
       resendEmail.value = loginForm.account.includes('@') ? loginForm.account : ''
       resendDialogVisible.value = true
+    } else if (detail.includes('banned') || detail.includes('inactive')) {
+      ElMessage.error('账号已被封禁，无法登录')
     } else {
       ElMessage.error('账号或密码错误')
     }

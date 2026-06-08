@@ -59,6 +59,7 @@ declare module 'vue' {
     PostStatusTag: typeof import('./src/components/post/PostStatusTag.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
+    ThumbsUp: typeof import('./src/components/common/ThumbsUp.vue')['default']
     UserAvatar: typeof import('./src/components/common/UserAvatar.vue')['default']
   }
 }
