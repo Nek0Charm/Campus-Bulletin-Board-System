@@ -24,7 +24,7 @@
     </div>
     <div class="post-stats">
       <span class="stat-item">
-        <el-icon :size="14"><Star /></el-icon>
+        <el-icon :size="14"><ThumbsUp /></el-icon>
         {{ post.like_count }}
       </span>
       <span class="stat-item">
@@ -37,7 +37,8 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { Star, ChatDotRound } from '@element-plus/icons-vue'
+import { ChatDotRound } from '@element-plus/icons-vue'
+import ThumbsUp from '@/components/common/ThumbsUp.vue'
 import PostStatusTag from './PostStatusTag.vue'
 import UserAvatar from '@/components/common/UserAvatar.vue'
 import { formatTimeAgo } from '@/utils/format'

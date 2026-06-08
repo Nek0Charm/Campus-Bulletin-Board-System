@@ -2,6 +2,10 @@ from pydantic import BaseModel
 from pydantic import Field
 
 
+class MuteUserRequest(BaseModel):
+    duration_minutes: int = Field(gt=0, le=43200)  # max 30 days
+
+
 class UpdateProfileRequest(BaseModel):
     nickname: str | None = Field(default=None, min_length=1, max_length=64)
     avatar_url: str | None = Field(default=None, max_length=1024)
@@ -15,6 +19,7 @@ class UserProfileData(BaseModel):
     avatar_url: str | None = None
     role: str
     status: str
+    muted_until: str | None = None
     created_at: str
     updated_at: str
 

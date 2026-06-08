@@ -57,6 +57,7 @@ export const usePostStore = defineStore('posts', () => {
   async function deletePost(id: string) {
     await postsAPI.deletePost(id)
     postList.value = postList.value.filter((p) => p.id !== id)
+    if (pagination.total > 0) pagination.total--
     if (currentPost.value?.id === id) currentPost.value = null
   }
 
@@ -65,6 +66,14 @@ export const usePostStore = defineStore('posts', () => {
     if (post) post.like_count = Math.max(0, post.like_count + delta)
     if (currentPost.value?.id === postId) {
       currentPost.value.like_count = Math.max(0, currentPost.value.like_count + delta)
+    }
+  }
+
+  function updateCommentCount(postId: string, delta: number) {
+    const post = postList.value.find((p) => p.id === postId)
+    if (post) post.comment_count = Math.max(0, post.comment_count + delta)
+    if (currentPost.value?.id === postId) {
+      currentPost.value.comment_count = Math.max(0, currentPost.value.comment_count + delta)
     }
   }
 
@@ -79,5 +88,6 @@ export const usePostStore = defineStore('posts', () => {
     updatePost,
     deletePost,
     updateLikeCount,
+    updateCommentCount,
   }
 })

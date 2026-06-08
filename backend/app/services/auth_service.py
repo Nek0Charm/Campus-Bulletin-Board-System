@@ -135,6 +135,10 @@ class AuthService:
     ) -> ResetPasswordData:
         if not verify_password(payload.old_password, user.password_hash):
             raise HTTPException(status_code=401, detail="Old password is incorrect")
+        if verify_password(payload.new_password, user.password_hash):
+            raise HTTPException(
+                status_code=422, detail="New password must differ from old password"
+            )
         user.password_hash = hash_password(payload.new_password)
         db.add(user)
         try:
