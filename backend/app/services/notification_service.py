@@ -11,6 +11,30 @@ from app.models.notification import Notification
 
 
 class NotificationService:
+    def find_similar(
+        self,
+        db: Session,
+        *,
+        recipient_id: UUID,
+        actor_id: UUID | None = None,
+        type: str,
+        related_type: str | None = None,
+        related_id: UUID | None = None,
+    ) -> Notification | None:
+        """查找已有的同类通知（用于去重）。"""
+        return (
+            db.query(Notification)
+            .filter(
+                Notification.recipient_id == recipient_id,
+                Notification.actor_id == actor_id,
+                Notification.type == type,
+                Notification.related_type == related_type,
+                Notification.related_id == related_id,
+                Notification.deleted_at.is_(None),
+            )
+            .first()
+        )
+
     def create(
         self,
         db: Session,

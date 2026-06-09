@@ -176,6 +176,17 @@ class LikeService:
             return
         if actor.id == post.author_id:
             return
+        # 去重：如果已有同一人对同一帖子的点赞通知，不再重复创建
+        existing = self._notification_service.find_similar(
+            db,
+            recipient_id=post.author_id,
+            actor_id=actor.id,
+            type="like",
+            related_type="post",
+            related_id=post.id,
+        )
+        if existing:
+            return
         try:
             self._notification_service.create(
                 db,
@@ -196,6 +207,17 @@ class LikeService:
         if self._notification_service is None:
             return
         if actor.id == comment.author_id:
+            return
+        # 去重：如果已有同一人对同一评论的点赞通知，不再重复创建
+        existing = self._notification_service.find_similar(
+            db,
+            recipient_id=comment.author_id,
+            actor_id=actor.id,
+            type="like",
+            related_type="comment",
+            related_id=comment.id,
+        )
+        if existing:
             return
         try:
             self._notification_service.create(
