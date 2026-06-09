@@ -11,7 +11,7 @@
     </div>
     <template #footer>
       <el-button @click="visible = false">取消</el-button>
-      <el-button type="primary" :loading="exporting" @click="handleConfirm">确认裁切</el-button>
+      <el-button type="primary" :loading="exporting" @click="handleConfirm">确认</el-button>
     </template>
   </el-dialog>
 </template>
@@ -102,12 +102,12 @@ onBeforeUnmount(destroyCropper)
 <style scoped>
 .crop-container {
   width: 100%;
-  max-height: 360px;
-  overflow: hidden;
+  height: 400px;
 }
 
 .crop-img {
   display: block;
   max-width: 100%;
+  max-height: 100%;
 }
 </style>
