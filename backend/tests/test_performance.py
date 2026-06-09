@@ -8,7 +8,6 @@
 import time
 from datetime import datetime, timezone
 from unittest.mock import Mock
-from uuid import UUID
 
 import pytest
 from fastapi.testclient import TestClient
