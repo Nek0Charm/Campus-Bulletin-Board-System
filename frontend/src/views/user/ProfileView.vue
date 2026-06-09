@@ -20,9 +20,14 @@
             <input
               ref="avatarInput"
               type="file"
-              accept="image/jpeg,image/png,image/gif,image/webp"
+              accept="image/jpeg,image/png,image/webp"
               style="display: none"
               @change="handleAvatarChange"
+            />
+            <AvatarCropDialog
+              v-model="showCropDialog"
+              :image-src="cropImageSrc"
+              @confirm="handleCropConfirm"
             />
             <h2>{{ user.nickname || user.username }}</h2>
             <p class="profile-username">@{{ user.username }}</p>
@@ -116,6 +121,7 @@ import { authAPI } from '@/api/auth'
 import { uploadAvatar } from '@/api/media'
 import { validatePassword } from '@/utils/validation'
 import UserAvatar from '@/components/common/UserAvatar.vue'
+import AvatarCropDialog from '@/components/common/AvatarCropDialog.vue'
 import LoadingSkeleton from '@/components/common/LoadingSkeleton.vue'
 import ErrorState from '@/components/common/ErrorState.vue'
 
@@ -147,21 +153,31 @@ const pwErrors = reactive({ old: '', new: '', confirm: '' })
 
 const avatarInput = ref<HTMLInputElement | null>(null)
 const uploadingAvatar = ref(false)
+const showCropDialog = ref(false)
+const cropImageSrc = ref('')
 
 function triggerAvatarUpload() {
   avatarInput.value?.click()
 }
 
-async function handleAvatarChange(event: Event) {
+function handleAvatarChange(event: Event) {
   const target = event.target as HTMLInputElement
   const file = target.files?.[0]
   if (!file) return
-  if (file.size > 5 * 1024 * 1024) {
-    ElMessage.error('图片大小不能超过 5MB')
+  if (file.size > 10 * 1024 * 1024) {
+    ElMessage.error('图片大小不能超过 10MB')
+    target.value = ''
     return
   }
+  cropImageSrc.value = URL.createObjectURL(file)
+  showCropDialog.value = true
+  target.value = ''
+}
+
+async function handleCropConfirm(blob: Blob) {
   uploadingAvatar.value = true
   try {
+    const file = new File([blob], 'avatar.jpg', { type: 'image/jpeg' })
     const res = await uploadAvatar(file)
     if (user.value) user.value.avatar_url = res.avatar_url
     ElMessage.success('头像更新成功')
@@ -169,7 +185,8 @@ async function handleAvatarChange(event: Event) {
     ElMessage.error('头像上传失败')
   } finally {
     uploadingAvatar.value = false
-    target.value = ''
+    URL.revokeObjectURL(cropImageSrc.value)
+    cropImageSrc.value = ''
   }
 }
 
