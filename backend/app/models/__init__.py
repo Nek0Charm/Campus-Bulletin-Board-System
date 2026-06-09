@@ -15,6 +15,8 @@ from app.models.board import Board
 from app.models.comment import Comment
 from app.models.notification import Notification
 from app.models.like import PostLike, CommentLike
+from app.models.report import Report
+from app.models.moderation_log import ModerationLog
 
 __all__ = [
     "Base",
@@ -27,4 +29,6 @@ __all__ = [
     "Notification",
     "PostLike",
     "CommentLike",
+    "Report",
+    "ModerationLog",
 ]

@@ -23,7 +23,9 @@ from app.routers import comments
 from app.routers import likes
 from app.routers import notifications
 from app.routers import posts
+from app.routers import reports
 from app.routers import users
+from app.utils.rate_limit import RateLimitMiddleware
 
 settings = get_settings()
 
@@ -47,6 +49,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+app.add_middleware(RateLimitMiddleware)
 
 app.include_router(auth.router, prefix=settings.API_PREFIX)
 app.include_router(users.router, prefix=settings.API_PREFIX)
@@ -55,6 +58,7 @@ app.include_router(posts.router, prefix=settings.API_PREFIX)
 app.include_router(comments.router, prefix=settings.API_PREFIX)
 app.include_router(likes.router, prefix=settings.API_PREFIX)
 app.include_router(notifications.router, prefix=settings.API_PREFIX)
+app.include_router(reports.router, prefix=settings.API_PREFIX)
 app.include_router(admin.router, prefix=settings.API_PREFIX)
 
 

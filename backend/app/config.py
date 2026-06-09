@@ -20,6 +20,17 @@ class Settings(BaseSettings):
     REDIS_PORT: int = 6379
     REDIS_DB: int = 0
 
+    # Rate limit
+    RATE_LIMIT_ENABLED: bool = True
+    RATE_LIMIT_AUTH_LIMIT: int = 5
+    RATE_LIMIT_AUTH_WINDOW_SECONDS: int = 60
+    RATE_LIMIT_CONTENT_LIMIT: int = 10
+    RATE_LIMIT_CONTENT_WINDOW_SECONDS: int = 60
+    RATE_LIMIT_LIKE_LIMIT: int = 30
+    RATE_LIMIT_LIKE_WINDOW_SECONDS: int = 60
+    RATE_LIMIT_PUBLIC_LIMIT: int = 60
+    RATE_LIMIT_PUBLIC_WINDOW_SECONDS: int = 60
+
     # JWT
     # 规范地讲，密钥应该存储在.env文件中。
     JWT_SECRET: str = "dev-secret-change-me-in-production-min-32-bytes"

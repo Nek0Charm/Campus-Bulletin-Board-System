@@ -28,6 +28,10 @@ from app.schemas.admin import AdminStatsResponse
 from app.schemas.notification import NotificationMarkAllReadResult
 from app.schemas.notification import NotificationRead
 from app.schemas.notification import NotificationUnreadCount
+from app.schemas.report import ModerationLogRead
+from app.schemas.report import ReportCreate
+from app.schemas.report import ReportRead
+from app.schemas.report import ReportResolveRequest
 
 __all__ = [
     "RegisterRequest",
@@ -57,4 +61,8 @@ __all__ = [
     "NotificationRead",
     "NotificationUnreadCount",
     "NotificationMarkAllReadResult",
+    "ReportCreate",
+    "ReportRead",
+    "ReportResolveRequest",
+    "ModerationLogRead",
 ]
