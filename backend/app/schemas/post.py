@@ -52,6 +52,14 @@ class PostRead(PostBase):
     model_config = ConfigDict(from_attributes=True)
 
 
+class PinToggleRequest(BaseModel):
+    is_pinned: bool
+
+
+class FeatureToggleRequest(BaseModel):
+    is_featured: bool
+
+
 class PostListResponse(BaseModel):
     items: List[PostRead]
     total: int

@@ -23,7 +23,13 @@ from app.schemas.response import (
     PaginatedData,
     PaginationInfo,
 )
-from app.schemas.post import PostCreate, PostUpdate, PostRead
+from app.schemas.post import (
+    PostCreate,
+    PostUpdate,
+    PostRead,
+    PinToggleRequest,
+    FeatureToggleRequest,
+)
 from app.services.post_service import PostService
 
 router = APIRouter(prefix="/posts", tags=["Posts"])
@@ -126,7 +132,7 @@ def delete_post(
 @router.patch("/{id}/pin", response_model=ApiResponse[PostRead])
 def pin_post(
     id: UUID,
-    is_pinned: bool = True,
+    body: PinToggleRequest,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
     service: PostService = Depends(get_post_service),
@@ -138,7 +144,7 @@ def pin_post(
     check_can_moderate_post(db, current_user, post)
     return ApiResponse(
         data=service.update_special_status(
-            db, db_obj=post, field="is_pinned", val=is_pinned
+            db, db_obj=post, field="is_pinned", val=body.is_pinned
         )
     )
 
@@ -146,7 +152,7 @@ def pin_post(
 @router.patch("/{id}/feature", response_model=ApiResponse[PostRead])
 def feature_post(
     id: UUID,
-    is_featured: bool = True,
+    body: FeatureToggleRequest,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
     service: PostService = Depends(get_post_service),
@@ -158,6 +164,6 @@ def feature_post(
     check_can_moderate_post(db, current_user, post)
     return ApiResponse(
         data=service.update_special_status(
-            db, db_obj=post, field="is_featured", val=is_featured
+            db, db_obj=post, field="is_featured", val=body.is_featured
         )
     )

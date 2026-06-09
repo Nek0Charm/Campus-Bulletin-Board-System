@@ -244,7 +244,7 @@ async def test_list_posts_pinned_first(client: AsyncClient, db_session):
         POSTS_LIST, json={**POST_PAYLOAD, "title": "Pinned", "board_id": str(board.id)}
     )
     pinned_id = resp.json()["data"]["id"]
-    await admin_ac.patch(f"{POSTS_URL}/{pinned_id}/pin", params={"is_pinned": True})
+    await admin_ac.patch(f"{POSTS_URL}/{pinned_id}/pin", json={"is_pinned": True})
 
     resp = await client.get(POSTS_LIST)
     items = resp.json()["data"]["items"]
@@ -403,9 +403,7 @@ async def test_pin_post_admin_can_pin(client: AsyncClient, db_session):
     )
     post_id = resp.json()["data"]["id"]
 
-    resp = await ac_admin.patch(
-        f"{POSTS_URL}/{post_id}/pin", params={"is_pinned": True}
-    )
+    resp = await ac_admin.patch(f"{POSTS_URL}/{post_id}/pin", json={"is_pinned": True})
     assert resp.status_code == status.HTTP_200_OK
     assert resp.json()["data"]["is_pinned"] is True
 
@@ -419,11 +417,9 @@ async def test_unpin_post_admin_can_unpin(client: AsyncClient, db_session):
         POSTS_LIST, json={**POST_PAYLOAD, "board_id": str(board.id)}
     )
     post_id = resp.json()["data"]["id"]
-    await ac_admin.patch(f"{POSTS_URL}/{post_id}/pin", params={"is_pinned": True})
+    await ac_admin.patch(f"{POSTS_URL}/{post_id}/pin", json={"is_pinned": True})
 
-    resp = await ac_admin.patch(
-        f"{POSTS_URL}/{post_id}/pin", params={"is_pinned": False}
-    )
+    resp = await ac_admin.patch(f"{POSTS_URL}/{post_id}/pin", json={"is_pinned": False})
     assert resp.status_code == status.HTTP_200_OK
     assert resp.json()["data"]["is_pinned"] is False
 
@@ -436,7 +432,7 @@ async def test_pin_post_non_admin_gets_403(client: AsyncClient, db_session):
     )
     post_id = resp.json()["data"]["id"]
 
-    resp = await ac_normal.patch(f"{POSTS_URL}/{post_id}/pin")
+    resp = await ac_normal.patch(f"{POSTS_URL}/{post_id}/pin", json={"is_pinned": True})
     assert resp.status_code == status.HTTP_403_FORBIDDEN
 
 
@@ -446,7 +442,7 @@ async def test_pin_post_requires_auth(client: AsyncClient, db_session):
     resp = await ac.post(POSTS_LIST, json={**POST_PAYLOAD, "board_id": str(board.id)})
     post_id = resp.json()["data"]["id"]
 
-    resp = await client.patch(f"{POSTS_URL}/{post_id}/pin")
+    resp = await client.patch(f"{POSTS_URL}/{post_id}/pin", json={"is_pinned": True})
     assert resp.status_code == status.HTTP_401_UNAUTHORIZED
 
 
@@ -456,7 +452,9 @@ async def test_pin_post_not_found(client: AsyncClient, db_session):
         client, db_session, "pin_nf", "admin"
     )
 
-    resp = await ac_admin.patch(f"{POSTS_URL}/{uuid.uuid4()}/pin")
+    resp = await ac_admin.patch(
+        f"{POSTS_URL}/{uuid.uuid4()}/pin", json={"is_pinned": True}
+    )
     assert resp.status_code == status.HTTP_404_NOT_FOUND
 
 
@@ -474,7 +472,7 @@ async def test_feature_post_admin_can_feature(client: AsyncClient, db_session):
     post_id = resp.json()["data"]["id"]
 
     resp = await ac_admin.patch(
-        f"{POSTS_URL}/{post_id}/feature", params={"is_featured": True}
+        f"{POSTS_URL}/{post_id}/feature", json={"is_featured": True}
     )
     assert resp.status_code == status.HTTP_200_OK
     assert resp.json()["data"]["is_featured"] is True
@@ -489,10 +487,10 @@ async def test_unfeature_post_admin_can_unfeature(client: AsyncClient, db_sessio
         POSTS_LIST, json={**POST_PAYLOAD, "board_id": str(board.id)}
     )
     post_id = resp.json()["data"]["id"]
-    await ac_admin.patch(f"{POSTS_URL}/{post_id}/feature", params={"is_featured": True})
+    await ac_admin.patch(f"{POSTS_URL}/{post_id}/feature", json={"is_featured": True})
 
     resp = await ac_admin.patch(
-        f"{POSTS_URL}/{post_id}/feature", params={"is_featured": False}
+        f"{POSTS_URL}/{post_id}/feature", json={"is_featured": False}
     )
     assert resp.status_code == status.HTTP_200_OK
     assert resp.json()["data"]["is_featured"] is False
@@ -506,7 +504,9 @@ async def test_feature_post_non_admin_gets_403(client: AsyncClient, db_session):
     )
     post_id = resp.json()["data"]["id"]
 
-    resp = await ac_normal.patch(f"{POSTS_URL}/{post_id}/feature")
+    resp = await ac_normal.patch(
+        f"{POSTS_URL}/{post_id}/feature", json={"is_featured": True}
+    )
     assert resp.status_code == status.HTTP_403_FORBIDDEN
 
 
@@ -516,7 +516,9 @@ async def test_feature_post_requires_auth(client: AsyncClient, db_session):
     resp = await ac.post(POSTS_LIST, json={**POST_PAYLOAD, "board_id": str(board.id)})
     post_id = resp.json()["data"]["id"]
 
-    resp = await client.patch(f"{POSTS_URL}/{post_id}/feature")
+    resp = await client.patch(
+        f"{POSTS_URL}/{post_id}/feature", json={"is_featured": True}
+    )
     assert resp.status_code == status.HTTP_401_UNAUTHORIZED
 
 
