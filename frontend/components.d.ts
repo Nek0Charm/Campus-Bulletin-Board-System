@@ -15,6 +15,7 @@ declare module 'vue' {
     AdminStatsCard: typeof import('./src/components/admin/AdminStatsCard.vue')['default']
     AppFooter: typeof import('./src/components/common/AppFooter.vue')['default']
     AppHeader: typeof import('./src/components/common/AppHeader.vue')['default']
+    AvatarCropDialog: typeof import('./src/components/common/AvatarCropDialog.vue')['default']
     BoardCard: typeof import('./src/components/board/BoardCard.vue')['default']
     BoardSelector: typeof import('./src/components/board/BoardSelector.vue')['default']
     CommentForm: typeof import('./src/components/comment/CommentForm.vue')['default']

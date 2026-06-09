@@ -11,6 +11,9 @@
           <span class="comment-author">{{
             comment.author?.nickname || comment.author?.username
           }}</span>
+          <span v-if="parentAuthorName" class="reply-target">
+            回复 <span class="reply-target-name">@{{ parentAuthorName }}</span>
+          </span>
           <span class="comment-time">{{ formatTimeAgo(comment.created_at) }}</span>
         </div>
         <div class="comment-content markdown-body" v-html="renderMarkdown(comment.content)" />
@@ -22,7 +25,6 @@
             {{ comment.like_count }}
           </span>
           <span
-            v-if="depth === 0"
             class="action-btn"
             @click="emit('reply', comment.id, comment.author?.nickname || comment.author?.username)"
           >
@@ -39,6 +41,7 @@
             :comment="child"
             :depth="depth + 1"
             :liked-set="likedSet"
+            :parent-author-name="replyAuthorMap[child.parent_comment_id ?? '']"
             @reply="(id: string, name: string) => emit('reply', id, name)"
             @toggle-like="(id: string) => emit('toggle-like', id)"
             @delete="(id: string) => emit('delete', id)"
@@ -64,10 +67,12 @@ const props = withDefaults(
     comment: CommentRead
     depth?: number
     likedSet?: Set<string>
+    parentAuthorName?: string
   }>(),
   {
     depth: 0,
     likedSet: () => new Set(),
+    parentAuthorName: undefined,
   },
 )
 
@@ -83,6 +88,17 @@ const liked = computed(() => props.likedSet.has(props.comment.id))
 const canDelete = computed(
   () => authStore.currentUser?.id === props.comment.author?.id || authStore.isAdmin,
 )
+
+// Build a map of reply id -> author name for all children, so nested replies can show @mention
+const replyAuthorMap = computed<Record<string, string>>(() => {
+  const map: Record<string, string> = {}
+  // Include the root comment itself
+  map[props.comment.id] = props.comment.author?.nickname || props.comment.author?.username || ''
+  for (const r of props.comment.replies ?? []) {
+    map[r.id] = r.author?.nickname || r.author?.username || ''
+  }
+  return map
+})
 </script>
 
 <style scoped>
@@ -188,5 +204,14 @@ const canDelete = computed(
 
 .delete-btn:hover {
   color: var(--color-danger);
+}
+
+.reply-target {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+}
+
+.reply-target-name {
+  color: var(--color-primary);
 }
 </style>
