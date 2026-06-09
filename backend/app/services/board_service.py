@@ -10,24 +10,27 @@ from app.schemas.board import BoardCreate, BoardUpdate
 
 class BoardService:
     def get_all(self, db: Session) -> List[Board]:
-        return (
+        boards = (
             db.query(Board)
             .filter(Board.deleted_at.is_(None))
             .order_by(Board.sort_order, Board.created_at)
             .all()
         )
+        return boards
 
     def get_by_id(self, db: Session, id: UUID) -> Optional[Board]:
-        return (
+        board = (
             db.query(Board).filter(Board.id == id, Board.deleted_at.is_(None)).first()
         )
+        return board
 
     def get_by_slug(self, db: Session, slug: str) -> Optional[Board]:
-        return (
+        board = (
             db.query(Board)
             .filter(Board.slug == slug, Board.deleted_at.is_(None))
             .first()
         )
+        return board
 
     def slug_exists(
         self, db: Session, slug: str, *, exclude_id: UUID | None = None

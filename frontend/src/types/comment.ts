@@ -15,6 +15,7 @@ export interface CommentRead {
   status: CommentStatus
   like_count: number
   reply_count: number
+  is_liked?: boolean
   created_at: string
   replies?: CommentRead[]
 }

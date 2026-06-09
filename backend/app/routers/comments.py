@@ -4,10 +4,17 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
-from app.deps.auth import get_current_user
+from app.deps.auth import (
+    get_current_user,
+    get_optional_current_user,
+    check_not_muted,
+    check_can_moderate_post,
+)
 from app.deps.db import get_db
-from app.deps.services import get_comment_service
+from app.deps.services import get_comment_service, get_like_service
 from app.models.user import User
+from app.models.post import Post
+from app.services.like_service import LikeService
 from app.schemas.comment import (
     CommentCreate,
     CommentRead,
@@ -34,6 +41,7 @@ def create_comment(
     current_user: User = Depends(get_current_user),
     service: CommentService = Depends(get_comment_service),
 ):
+    check_not_muted(current_user)
     comment = service.create(db, obj_in=payload, author_id=current_user.id)
     return ApiResponse(data=comment)
 
@@ -44,16 +52,28 @@ def list_comments(
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
     db: Session = Depends(get_db),
+    current_user: User | None = Depends(get_optional_current_user),
     service: CommentService = Depends(get_comment_service),
+    like_service: LikeService = Depends(get_like_service),
 ):
     roots, total = service.get_multi(
         db, post_id=post_id, page=page, page_size=page_size
     )
+    liked_comment_ids = set()
+    if current_user:
+        liked_comment_ids = set(
+            like_service.get_liked_comment_ids_for_post(
+                db, post_id=post_id, user_id=current_user.id
+            )
+        )
     items: List[CommentWithReplies] = []
     for root in roots:
         replies = getattr(root, "_replies", [])
         item = CommentWithReplies.model_validate(root)
+        setattr(item, "is_liked", root.id in liked_comment_ids)
         item.replies = [CommentRead.model_validate(r) for r in replies]
+        for reply_item in item.replies:
+            setattr(reply_item, "is_liked", reply_item.id in liked_comment_ids)
         items.append(item)
     return PaginatedResponse(
         data=PaginatedData(
@@ -95,6 +115,10 @@ def delete_comment(
     if not comment:
         raise HTTPException(status_code=404, detail="Comment not found")
     if comment.author_id != current_user.id and current_user.role != "admin":
-        raise HTTPException(status_code=403, detail="Permission denied")
+        post = db.query(Post).filter(Post.id == comment.post_id).first()
+        if post:
+            check_can_moderate_post(db, current_user, post)
+        else:
+            raise HTTPException(status_code=403, detail="Permission denied")
     service.remove(db, db_obj=comment)
     return ApiResponse(message="Comment deleted")

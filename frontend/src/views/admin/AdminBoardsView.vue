@@ -18,10 +18,13 @@
           </template>
         </el-table-column>
         <el-table-column prop="sort_order" label="排序" width="70" />
-        <el-table-column label="操作" width="200">
+        <el-table-column label="操作" min-width="320">
           <template #default="{ row }">
             <el-button size="small" @click="openEditDialog(row)">编辑</el-button>
             <el-button size="small" type="danger" @click="handleDelete(row)">删除</el-button>
+            <el-button size="small" type="warning" @click="openMastersDialog(row)"
+              >管理版主</el-button
+            >
           </template>
         </el-table-column>
       </el-table>
@@ -54,6 +57,69 @@
         </el-button>
       </template>
     </el-dialog>
+
+    <!-- Board Masters Dialog -->
+    <el-dialog
+      v-model="mastersDialogVisible"
+      :title="`管理版主 — ${mastersTargetBoard?.name || ''}`"
+      width="520px"
+    >
+      <LoadingSkeleton v-if="mastersLoading" type="table-row" :count="3" />
+      <div v-else>
+        <p v-if="!boardMasters.length" style="color: var(--color-text-secondary)">暂无版主</p>
+        <el-table v-else :data="boardMasters" size="small">
+          <el-table-column label="用户名" prop="user.username" />
+          <el-table-column label="昵称">
+            <template #default="{ row }">
+              {{ row.user.nickname || '-' }}
+            </template>
+          </el-table-column>
+          <el-table-column label="操作" width="80">
+            <template #default="{ row }">
+              <el-button size="small" type="danger" @click="handleRemoveMaster(row.user_id)">
+                移除
+              </el-button>
+            </template>
+          </el-table-column>
+        </el-table>
+
+        <el-divider />
+        <div class="add-master-row">
+          <el-select
+            v-model="selectedUserId"
+            filterable
+            remote
+            reserve-keyword
+            :remote-method="searchUsers"
+            :loading="searchingUsers"
+            placeholder="搜索用户名或邮箱"
+            style="flex: 1"
+            clearable
+          >
+            <el-option
+              v-for="u in searchedUsers"
+              :key="u.id"
+              :label="`${u.username}${u.nickname ? ' (' + u.nickname + ')' : ''} — ${u.email}`"
+              :value="u.id"
+            >
+              <div class="user-option">
+                <span class="user-option-name">{{ u.username }}</span>
+                <span v-if="u.nickname" class="user-option-nick">({{ u.nickname }})</span>
+                <span class="user-option-email">{{ u.email }}</span>
+              </div>
+            </el-option>
+          </el-select>
+          <el-button
+            type="primary"
+            :loading="addingMaster"
+            :disabled="!selectedUserId"
+            @click="handleAddMaster"
+          >
+            添加
+          </el-button>
+        </div>
+      </div>
+    </el-dialog>
   </div>
 </template>
 
@@ -61,11 +127,13 @@
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { boardsAPI } from '@/api/boards'
+import { adminAPI } from '@/api/admin'
 
 import LoadingSkeleton from '@/components/common/LoadingSkeleton.vue'
 import ErrorState from '@/components/common/ErrorState.vue'
 import EmptyState from '@/components/common/EmptyState.vue'
-import type { Board } from '@/types/board'
+import type { Board, BoardMasterInfo } from '@/types/board'
+import type { User } from '@/types/user'
 
 const boards = ref<Board[]>([])
 const loading = ref(false)
@@ -157,6 +225,84 @@ async function handleDelete(board: Board) {
   }
 }
 
+// Board Master Management
+const mastersDialogVisible = ref(false)
+const mastersTargetBoard = ref<Board | null>(null)
+const boardMasters = ref<BoardMasterInfo[]>([])
+const mastersLoading = ref(false)
+const selectedUserId = ref<string | null>(null)
+const searchedUsers = ref<User[]>([])
+const searchingUsers = ref(false)
+const addingMaster = ref(false)
+
+async function openMastersDialog(board: Board) {
+  mastersTargetBoard.value = board
+  selectedUserId.value = null
+  searchedUsers.value = []
+  mastersDialogVisible.value = true
+  await fetchBoardMasters()
+}
+
+async function fetchBoardMasters() {
+  if (!mastersTargetBoard.value) return
+  mastersLoading.value = true
+  try {
+    boardMasters.value = await adminAPI.listBoardMasters(mastersTargetBoard.value.id)
+  } catch {
+    ElMessage.error('加载版主列表失败')
+  } finally {
+    mastersLoading.value = false
+  }
+}
+
+async function searchUsers(query: string) {
+  if (!query || query.length < 1) {
+    searchedUsers.value = []
+    return
+  }
+  searchingUsers.value = true
+  try {
+    const result = await adminAPI.listUsers({ search: query, page_size: 20 })
+    // Exclude users who are already board masters
+    const existingIds = new Set(boardMasters.value.map((bm) => bm.user_id))
+    searchedUsers.value = result.items.filter((u) => !existingIds.has(u.id))
+  } catch {
+    searchedUsers.value = []
+  } finally {
+    searchingUsers.value = false
+  }
+}
+
+async function handleAddMaster() {
+  if (!mastersTargetBoard.value || !selectedUserId.value) {
+    ElMessage.warning('请选择用户')
+    return
+  }
+  addingMaster.value = true
+  try {
+    await adminAPI.addBoardMaster(mastersTargetBoard.value.id, selectedUserId.value)
+    ElMessage.success('已添加版主')
+    selectedUserId.value = null
+    searchedUsers.value = []
+    await fetchBoardMasters()
+  } catch {
+    ElMessage.error('添加失败')
+  } finally {
+    addingMaster.value = false
+  }
+}
+
+async function handleRemoveMaster(userId: string) {
+  if (!mastersTargetBoard.value) return
+  try {
+    await adminAPI.removeBoardMaster(mastersTargetBoard.value.id, userId)
+    ElMessage.success('已移除版主')
+    boardMasters.value = boardMasters.value.filter((bm) => bm.user_id !== userId)
+  } catch {
+    ElMessage.error('移除失败')
+  }
+}
+
 onMounted(() => fetchBoards())
 </script>
 
@@ -177,5 +323,32 @@ onMounted(() => fetchBoards())
 
 .page-toolbar h1 {
   margin-bottom: 0;
+}
+
+.add-master-row {
+  display: flex;
+  gap: var(--spacing-sm);
+  align-items: center;
+}
+
+.user-option {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.user-option-name {
+  font-weight: 500;
+}
+
+.user-option-nick {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-xs);
+}
+
+.user-option-email {
+  color: var(--color-text-placeholder);
+  font-size: var(--font-size-xs);
+  margin-left: auto;
 }
 </style>

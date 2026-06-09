@@ -4,8 +4,10 @@ from uuid import UUID
 from sqlalchemy import desc
 from sqlalchemy.orm import Session, joinedload
 
+from app.models.board import Board
 from app.models.post import Post, PostStatus
 from app.schemas.post import PostCreate, PostUpdate
+from app.utils.search import build_search_document
 
 
 class PostService:
@@ -13,9 +15,13 @@ class PostService:
         db_obj = Post(
             **obj_in.model_dump(),
             author_id=author_id,
-            published_at=datetime.now(timezone.utc)
+            search_document=build_search_document(obj_in.title, obj_in.content),
+            published_at=datetime.now(timezone.utc),
         )
         db.add(db_obj)
+        board = db.query(Board).filter(Board.id == obj_in.board_id).first()
+        if board:
+            board.post_count = Board.post_count + 1
         try:
             db.commit()
         except Exception:
@@ -63,6 +69,9 @@ class PostService:
         for field, value in update_data.items():
             setattr(db_obj, field, value)
 
+        if "title" in update_data or "content" in update_data:
+            db_obj.search_document = build_search_document(db_obj.title, db_obj.content)
+
         db_obj.updated_at = datetime.now(timezone.utc)
         try:
             db.commit()
@@ -87,6 +96,9 @@ class PostService:
     def remove(self, db: Session, *, db_obj: Post) -> Post:
         db_obj.deleted_at = datetime.now(timezone.utc)
         db_obj.status = PostStatus.DELETED
+        board = db.query(Board).filter(Board.id == db_obj.board_id).first()
+        if board and board.post_count > 0:
+            board.post_count = Board.post_count - 1
         try:
             db.commit()
         except Exception:

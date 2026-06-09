@@ -2,8 +2,9 @@ from typing import TYPE_CHECKING, Optional
 
 if TYPE_CHECKING:
     from app.models.post import Post
+    from app.models.board_master import BoardMaster
 
-from sqlalchemy import Index, String, Integer, text
+from sqlalchemy import BigInteger, Index, String, Integer, text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base, IDMixin, TimestampMixin
@@ -35,4 +36,9 @@ class Board(Base, IDMixin, TimestampMixin):
 
     sort_order: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
 
+    post_count: Mapped[int] = mapped_column(BigInteger, default=0, nullable=False)
+
     posts: Mapped[list["Post"]] = relationship("Post", back_populates="board")
+    board_masters: Mapped[list["BoardMaster"]] = relationship(
+        "BoardMaster", back_populates="board"
+    )

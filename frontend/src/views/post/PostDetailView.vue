@@ -30,18 +30,18 @@
           </div>
         </div>
 
-        <!-- Author/Admin actions -->
-        <div class="post-actions" v-if="canEdit">
+        <!-- Author/Admin/BoardMaster actions -->
+        <div class="post-actions" v-if="canEdit || canDelete || authStore.isAdmin || canModerate">
           <el-button v-if="isAuthor" size="small" @click="$router.push(`/posts/${post.id}/edit`)">
             <el-icon><Edit /></el-icon>编辑
           </el-button>
-          <el-button v-if="isAuthor" size="small" type="danger" @click="confirmDelete">
+          <el-button v-if="canDelete" size="small" type="danger" @click="confirmDelete">
             <el-icon><Delete /></el-icon>删除
           </el-button>
-          <el-button v-if="authStore.isAdmin" size="small" @click="togglePin">
+          <el-button v-if="authStore.isAdmin || canModerate" size="small" @click="togglePin">
             {{ post.is_pinned ? '取消置顶' : '置顶' }}
           </el-button>
-          <el-button v-if="authStore.isAdmin" size="small" @click="toggleFeature">
+          <el-button v-if="authStore.isAdmin || canModerate" size="small" @click="toggleFeature">
             {{ post.is_featured ? '取消加精' : '加精' }}
           </el-button>
         </div>
@@ -56,7 +56,7 @@
         <!-- Interaction bar -->
         <div class="interaction-bar">
           <el-button :type="liked ? 'danger' : 'default'" @click="handleLike">
-            <el-icon><StarFilled v-if="liked" /><Star v-else /></el-icon>
+            <el-icon><ThumbsUp :filled="liked" :size="16" /></el-icon>
             {{ post.like_count }}
           </el-button>
           <span class="interaction-stat">
@@ -82,11 +82,18 @@
         <!-- Comment Form -->
         <div class="comment-input-area">
           <template v-if="authStore.isAuthenticated">
-            <CommentForm
-              :reply-to="replyTo"
-              :on-submit="handleCommentSubmit"
-              @cancel="cancelReply"
-            />
+            <template v-if="authStore.isMuted">
+              <el-alert type="warning" :closable="false" show-icon>
+                您已被禁言，暂时无法评论
+              </el-alert>
+            </template>
+            <template v-else>
+              <CommentForm
+                :reply-to="replyTo"
+                :on-submit="handleCommentSubmit"
+                @cancel="cancelReply"
+              />
+            </template>
           </template>
           <div v-else class="login-prompt">
             <el-alert type="info" :closable="false" show-icon>
@@ -103,13 +110,15 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Edit, Delete, Star, StarFilled, ChatDotRound } from '@element-plus/icons-vue'
+import { Edit, Delete, ChatDotRound } from '@element-plus/icons-vue'
+import ThumbsUp from '@/components/common/ThumbsUp.vue'
 import { renderMarkdown } from '@/utils/markdown'
 import { usePostStore } from '@/stores/posts'
 import { useAuthStore } from '@/stores/auth'
 import { postsAPI } from '@/api/posts'
 import { likesAPI } from '@/api/likes'
 import { commentsAPI } from '@/api/comments'
+import { boardsAPI } from '@/api/boards'
 import PostStatusTag from '@/components/post/PostStatusTag.vue'
 import UserAvatar from '@/components/common/UserAvatar.vue'
 import CommentTree from '@/components/comment/CommentTree.vue'
@@ -134,7 +143,9 @@ const post = computed(() => postStore.currentPost)
 const isAuthor = computed(() => {
   return authStore.currentUser?.id && post.value?.author?.id === authStore.currentUser.id
 })
+const canModerate = ref(false)
 const canEdit = computed(() => isAuthor.value || authStore.isAdmin)
+const canDelete = computed(() => isAuthor.value || authStore.isAdmin || canModerate.value)
 
 const backRoute = computed(() => {
   if (post.value?.board_id) return { name: 'Home' }
@@ -146,6 +157,17 @@ async function loadPost() {
   error.value = null
   try {
     await postStore.fetchPostById(route.params.id as string)
+    if (post.value?.is_liked !== undefined) {
+      liked.value = post.value.is_liked
+    }
+    if (post.value?.board_id && authStore.currentUser?.id) {
+      try {
+        const masters = await boardsAPI.getBoardMasters(post.value.board_id)
+        canModerate.value = masters.some((m) => m.user_id === authStore.currentUser!.id)
+      } catch {
+        canModerate.value = false
+      }
+    }
   } catch {
     error.value = '加载帖子失败'
   } finally {
@@ -172,8 +194,14 @@ async function handleLike() {
     const status = (err as { response?: { status?: number } })?.response?.status
     if (status === 409) {
       liked.value = true
-    } else if (status === 404 && !liked.value) {
+      if (!post.value?.is_liked) {
+        postStore.updateLikeCount(post.value!.id, 1)
+      }
+    } else if (status === 404) {
       liked.value = false
+      if (post.value?.is_liked) {
+        postStore.updateLikeCount(post.value!.id, -1)
+      }
     } else {
       ElMessage.error('操作失败')
     }
@@ -219,8 +247,18 @@ const replyToCommentId = ref<string | null>(null)
 async function loadComments() {
   commentsLoading.value = true
   try {
-    const data = await commentsAPI.getComments(route.params.id as string)
-    comments.value = data.items
+    const commentData = await commentsAPI.getComments(route.params.id as string)
+    comments.value = commentData.items
+    const likedIds = new Set<string>()
+    for (const root of commentData.items) {
+      if (root.is_liked) likedIds.add(root.id)
+      if (root.replies) {
+        for (const reply of root.replies) {
+          if (reply.is_liked) likedIds.add(reply.id)
+        }
+      }
+    }
+    likedComments.value = likedIds
   } catch {
     /* silent */
   } finally {
@@ -247,6 +285,7 @@ async function handleCommentSubmit(content: string) {
     ElMessage.success('评论成功')
     replyTo.value = ''
     replyToCommentId.value = null
+    postStore.updateCommentCount(post.value!.id, 1)
     await loadComments()
   } catch {
     ElMessage.error('评论失败')
@@ -262,23 +301,50 @@ async function handleCommentDelete(commentId: string) {
     })
     await commentsAPI.deleteComment(commentId)
     ElMessage.success('已删除')
+    postStore.updateCommentCount(post.value!.id, -1)
     await loadComments()
   } catch {
     /* canceled */
   }
 }
 
+function updateCommentLikeCount(
+  commentList: CommentRead[],
+  commentId: string,
+  delta: number,
+): boolean {
+  for (const c of commentList) {
+    if (c.id === commentId) {
+      c.like_count = Math.max(0, c.like_count + delta)
+      return true
+    }
+    if (c.replies?.length && updateCommentLikeCount(c.replies, commentId, delta)) {
+      return true
+    }
+  }
+  return false
+}
+
 async function handleCommentLike(commentId: string) {
   try {
     if (likedComments.value.has(commentId)) {
       await likesAPI.unlikeComment(commentId)
-      likedComments.value.delete(commentId)
+      likedComments.value = new Set([...likedComments.value].filter((id) => id !== commentId))
+      updateCommentLikeCount(comments.value, commentId, -1)
     } else {
       await likesAPI.likeComment(commentId)
-      likedComments.value.add(commentId)
+      likedComments.value = new Set([...likedComments.value, commentId])
+      updateCommentLikeCount(comments.value, commentId, 1)
     }
-  } catch {
-    ElMessage.error('操作失败')
+  } catch (err: unknown) {
+    const status = (err as { response?: { status?: number } })?.response?.status
+    if (status === 409) {
+      likedComments.value = new Set([...likedComments.value, commentId])
+    } else if (status === 404) {
+      likedComments.value = new Set([...likedComments.value].filter((id) => id !== commentId))
+    } else {
+      ElMessage.error('操作失败')
+    }
   }
 }
 onMounted(() => {

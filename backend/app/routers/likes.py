@@ -1,16 +1,36 @@
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.orm import Session
 
 from app.deps.auth import get_current_user
 from app.deps.db import get_db
 from app.deps.services import get_like_service
 from app.models.user import User
+from app.schemas.like import PostLikeStatus
 from app.schemas.response import ApiResponse
 from app.services.like_service import LikeService
 
 router = APIRouter(prefix="/likes", tags=["likes"])
+
+
+@router.get("/my-status", response_model=ApiResponse[PostLikeStatus])
+def get_my_like_status(
+    post_id: UUID = Query(...),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+    service: LikeService = Depends(get_like_service),
+):
+    is_liked = service.is_post_liked(db, post_id=post_id, user_id=current_user.id)
+    comment_ids = service.get_liked_comment_ids_for_post(
+        db, post_id=post_id, user_id=current_user.id
+    )
+    return ApiResponse(
+        data=PostLikeStatus(
+            is_liked=is_liked,
+            liked_comment_ids=comment_ids,
+        )
+    )
 
 
 @router.post(

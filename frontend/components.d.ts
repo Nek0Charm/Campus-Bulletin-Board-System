@@ -25,6 +25,7 @@ declare module 'vue' {
     ElBreadcrumb: typeof import('element-plus/es')['ElBreadcrumb']
     ElBreadcrumbItem: typeof import('element-plus/es')['ElBreadcrumbItem']
     ElButton: typeof import('element-plus/es')['ElButton']
+    ElDatePicker: typeof import('element-plus/es')['ElDatePicker']
     ElDialog: typeof import('element-plus/es')['ElDialog']
     ElDivider: typeof import('element-plus/es')['ElDivider']
     ElDropdown: typeof import('element-plus/es')['ElDropdown']
@@ -58,6 +59,7 @@ declare module 'vue' {
     PostStatusTag: typeof import('./src/components/post/PostStatusTag.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
+    ThumbsUp: typeof import('./src/components/common/ThumbsUp.vue')['default']
     UserAvatar: typeof import('./src/components/common/UserAvatar.vue')['default']
   }
 }

@@ -5,7 +5,7 @@ from uuid import UUID
 
 from sqlalchemy import asc
 from sqlalchemy import desc
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 
 from app.models.notification import Notification
 
@@ -50,9 +50,13 @@ class NotificationService:
         page_size: int = 20,
         unread_only: bool = False,
     ) -> tuple[list[Notification], int]:
-        query = db.query(Notification).filter(
-            Notification.recipient_id == user_id,
-            Notification.deleted_at.is_(None),
+        query = (
+            db.query(Notification)
+            .options(joinedload(Notification.actor))
+            .filter(
+                Notification.recipient_id == user_id,
+                Notification.deleted_at.is_(None),
+            )
         )
         if unread_only:
             query = query.filter(Notification.is_read.is_(False))

@@ -1,17 +1,23 @@
 from typing import List
 from uuid import UUID
-from datetime import datetime, date
+from datetime import datetime, date, timedelta, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 
 from app.deps.db import get_db
-from app.deps.services import get_user_service, get_board_service
+from app.deps.services import (
+    get_user_service,
+    get_board_service,
+    get_board_master_service,
+    get_announcement_service,
+)
 from app.deps.auth import require_admin
 from app.models.user import User
 from app.models.post import Post
 from app.models.comment import Comment
+from app.models.board import Board
 
 from app.schemas.response import (
     ApiResponse,
@@ -19,11 +25,19 @@ from app.schemas.response import (
     PaginatedData,
     PaginationInfo,
 )
-from app.schemas.user import AdminUserData, UpdateUserStatusRequest
+from app.schemas.user import AdminUserData, UpdateUserStatusRequest, MuteUserRequest
 from app.schemas.admin import AdminStatsResponse
 from app.schemas.board import BoardCreate, BoardUpdate, BoardRead
+from app.schemas.board_master import BoardMasterRead, AddBoardMasterRequest
+from app.schemas.announcement import (
+    AnnouncementCreate,
+    AnnouncementUpdate,
+    AnnouncementRead,
+)
 from app.services.user_service import UserService
 from app.services.board_service import BoardService
+from app.services.board_master_service import BoardMasterService
+from app.services.announcement_service import AnnouncementService
 
 router = APIRouter(
     prefix="/admin",
@@ -126,3 +140,193 @@ def admin_delete_board(
     if not board:
         raise HTTPException(status_code=404, detail="Board not found")
     service.remove(db, db_obj=board)
+
+
+# ── Board Master Management ──
+
+
+@router.get(
+    "/boards/{board_id}/masters",
+    response_model=ApiResponse[List[BoardMasterRead]],
+)
+def admin_list_board_masters(
+    board_id: UUID,
+    db: Session = Depends(get_db),
+    service: BoardMasterService = Depends(get_board_master_service),
+):
+    """列出板块的版主（仅管理员）"""
+    board = (
+        db.query(Board).filter(Board.id == board_id, Board.deleted_at.is_(None)).first()
+    )
+    if not board:
+        raise HTTPException(status_code=404, detail="Board not found")
+    return ApiResponse(data=service.list_for_board(db, board_id))
+
+
+@router.post(
+    "/boards/{board_id}/masters",
+    response_model=ApiResponse[BoardMasterRead],
+    status_code=status.HTTP_201_CREATED,
+)
+def admin_add_board_master(
+    board_id: UUID,
+    payload: AddBoardMasterRequest,
+    db: Session = Depends(get_db),
+    service: BoardMasterService = Depends(get_board_master_service),
+):
+    """添加版主（仅管理员）"""
+    board = (
+        db.query(Board).filter(Board.id == board_id, Board.deleted_at.is_(None)).first()
+    )
+    if not board:
+        raise HTTPException(status_code=404, detail="Board not found")
+    user = (
+        db.query(User)
+        .filter(User.id == payload.user_id, User.deleted_at.is_(None))
+        .first()
+    )
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    result = service.add(db, board_id=board_id, user_id=payload.user_id)
+    db.refresh(result, attribute_names=["user"])
+    return ApiResponse(data=result)
+
+
+@router.delete(
+    "/boards/{board_id}/masters/{user_id}",
+    response_model=ApiResponse,
+)
+def admin_remove_board_master(
+    board_id: UUID,
+    user_id: UUID,
+    db: Session = Depends(get_db),
+    service: BoardMasterService = Depends(get_board_master_service),
+):
+    """移除版主（仅管理员）"""
+    service.remove(db, board_id=board_id, user_id=user_id)
+    return ApiResponse(message="Board master removed")
+
+
+# ── Mute / Unmute ──
+
+
+@router.post("/users/{id}/mute", response_model=ApiResponse[AdminUserData])
+def admin_mute_user(
+    id: str,
+    payload: MuteUserRequest,
+    db: Session = Depends(get_db),
+    service: UserService = Depends(get_user_service),
+):
+    """禁言用户（仅管理员）"""
+    try:
+        uid = UUID(id)
+    except ValueError:
+        raise HTTPException(status_code=404, detail="User not found")
+    user = db.query(User).filter(User.id == uid, User.deleted_at.is_(None)).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    user.muted_until = datetime.now(timezone.utc) + timedelta(
+        minutes=payload.duration_minutes
+    )
+    db.commit()
+    db.refresh(user)
+    return ApiResponse(data=service.get_admin_user_data(user))
+
+
+@router.delete("/users/{id}/mute", response_model=ApiResponse)
+def admin_unmute_user(
+    id: str,
+    db: Session = Depends(get_db),
+):
+    """解除禁言（仅管理员）"""
+    try:
+        uid = UUID(id)
+    except ValueError:
+        raise HTTPException(status_code=404, detail="User not found")
+    user = db.query(User).filter(User.id == uid, User.deleted_at.is_(None)).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    user.muted_until = None
+    db.commit()
+    return ApiResponse(message="User unmuted")
+
+
+@router.patch("/users/{id}/verify-email", response_model=ApiResponse[AdminUserData])
+def admin_verify_user_email(
+    id: str,
+    db: Session = Depends(get_db),
+    service: UserService = Depends(get_user_service),
+):
+    """管理员手动激活用户邮箱（仅管理员）"""
+    try:
+        uid = UUID(id)
+    except ValueError:
+        raise HTTPException(status_code=404, detail="User not found")
+    user = db.query(User).filter(User.id == uid, User.deleted_at.is_(None)).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    if user.email_verified:
+        raise HTTPException(status_code=400, detail="Email already verified")
+    user.email_verified = True
+    if user.status == "inactive":
+        user.status = "active"
+    try:
+        db.commit()
+    except Exception:
+        db.rollback()
+        raise
+    db.refresh(user)
+    return ApiResponse(data=service.get_admin_user_data(user))
+
+
+# ---------- announcements ----------
+
+
+@router.get("/announcements", response_model=ApiResponse[list[AnnouncementRead]])
+def admin_list_announcements(
+    db: Session = Depends(get_db),
+    service: AnnouncementService = Depends(get_announcement_service),
+):
+    """管理端列表（包含未发布/已过期，按创建时间倒序）。"""
+    return ApiResponse(data=service.list_all(db))
+
+
+@router.post(
+    "/announcements",
+    response_model=ApiResponse[AnnouncementRead],
+    status_code=status.HTTP_201_CREATED,
+)
+def admin_create_announcement(
+    payload: AnnouncementCreate,
+    current_user: User = Depends(require_admin),
+    db: Session = Depends(get_db),
+    service: AnnouncementService = Depends(get_announcement_service),
+):
+    return ApiResponse(
+        data=service.create(db, obj_in=payload, admin_id=current_user.id)
+    )
+
+
+@router.patch("/announcements/{id}", response_model=ApiResponse[AnnouncementRead])
+def admin_edit_announcement(
+    id: UUID,
+    payload: AnnouncementUpdate,
+    db: Session = Depends(get_db),
+    service: AnnouncementService = Depends(get_announcement_service),
+):
+    announcement = service.get_by_id(db, id)
+    if not announcement:
+        raise HTTPException(status_code=404, detail="Announcement not found")
+    return ApiResponse(data=service.update(db, db_obj=announcement, obj_in=payload))
+
+
+@router.delete("/announcements/{id}", status_code=status.HTTP_204_NO_CONTENT)
+def admin_delete_announcement(
+    id: UUID,
+    db: Session = Depends(get_db),
+    service: AnnouncementService = Depends(get_announcement_service),
+):
+    announcement = service.get_by_id(db, id)
+    if not announcement:
+        raise HTTPException(status_code=404, detail="Announcement not found")
+    service.remove(db, db_obj=announcement)

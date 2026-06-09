@@ -1,12 +1,23 @@
 from datetime import datetime
 from uuid import UUID
+from typing import Optional
 
 from pydantic import BaseModel
 from pydantic import ConfigDict
 
 
+class NotificationActor(BaseModel):
+    id: UUID
+    username: str
+    nickname: Optional[str] = None
+    avatar_url: Optional[str] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
 class NotificationRead(BaseModel):
     id: UUID
+    actor: Optional[NotificationActor] = None
     type: str
     title: str
     content: str

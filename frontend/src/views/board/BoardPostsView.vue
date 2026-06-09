@@ -9,8 +9,25 @@
 
       <!-- Board Info -->
       <div class="board-info">
-        <h1>{{ boardName }}</h1>
+        <h1>
+          {{ boardName }}
+          <el-tag v-if="isBoardMasterHere" type="warning" size="small" class="bm-badge"
+            >版主</el-tag
+          >
+        </h1>
         <p v-if="boardDesc">{{ boardDesc }}</p>
+        <!-- Board Masters -->
+        <div v-if="boardMasters.length" class="board-masters">
+          <span class="masters-label">版主：</span>
+          <span v-for="bm in boardMasters" :key="bm.id" class="master-item">
+            <UserAvatar
+              :src="bm.user.avatar_url"
+              :name="bm.user.nickname || bm.user.username"
+              :size="18"
+            />
+            <span class="master-name">{{ bm.user.nickname || bm.user.username }}</span>
+          </span>
+        </div>
       </div>
 
       <!-- Toolbar -->
@@ -20,11 +37,7 @@
             <el-radio-button value="created_at">最新发布</el-radio-button>
           </el-radio-group>
         </div>
-        <el-button
-          v-if="authStore.isAuthenticated"
-          type="primary"
-          @click="$router.push('/posts/new')"
-        >
+        <el-button v-if="authStore.isAuthenticated" type="primary" @click="goToCreatePost">
           + 发帖
         </el-button>
       </div>
@@ -37,7 +50,7 @@
         title="暂无帖子"
         description="该板块下还没有帖子"
         :action-text="authStore.isAuthenticated ? '去发帖' : undefined"
-        @action="$router.push('/posts/new')"
+        @action="goToCreatePost"
       />
       <div v-else>
         <PostListItem
@@ -63,7 +76,7 @@
       type="primary"
       circle
       size="large"
-      @click="$router.push('/posts/new')"
+      @click="goToCreatePost"
     >
       <el-icon :size="24"><Plus /></el-icon>
     </el-button>
@@ -71,17 +84,20 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { Plus } from '@element-plus/icons-vue'
 import { usePostStore } from '@/stores/posts'
 import { useBoardStore } from '@/stores/boards'
 import { useAuthStore } from '@/stores/auth'
+import { boardsAPI } from '@/api/boards'
 import PostListItem from '@/components/post/PostListItem.vue'
 import PaginationBar from '@/components/common/PaginationBar.vue'
 import LoadingSkeleton from '@/components/common/LoadingSkeleton.vue'
 import ErrorState from '@/components/common/ErrorState.vue'
 import EmptyState from '@/components/common/EmptyState.vue'
+import UserAvatar from '@/components/common/UserAvatar.vue'
+import type { BoardMasterInfo } from '@/types/board'
 
 const route = useRoute()
 const router = useRouter()
@@ -95,6 +111,13 @@ const sortBy = ref('created_at')
 const slug = route.params.slug as string
 const boardName = ref(slug || '')
 const boardDesc = ref('')
+const boardId = ref<string | null>(null)
+const boardMasters = ref<BoardMasterInfo[]>([])
+
+const isBoardMasterHere = computed(() => {
+  if (!authStore.currentUser?.id) return false
+  return boardMasters.value.some((bm) => bm.user_id === authStore.currentUser!.id)
+})
 
 async function fetchPosts(page = 1, pageSize = 20) {
   loading.value = true
@@ -110,8 +133,12 @@ async function fetchPosts(page = 1, pageSize = 20) {
     }
     boardName.value = board.name
     boardDesc.value = board.description || ''
+    boardId.value = board.id
 
-    await postStore.fetchPosts({ board_id: board.id, page, page_size: pageSize })
+    await Promise.all([
+      postStore.fetchPosts({ board_id: board.id, page, page_size: pageSize }),
+      fetchBoardMasters(board.id),
+    ])
   } catch {
     error.value = '加载帖子失败'
   } finally {
@@ -121,6 +148,21 @@ async function fetchPosts(page = 1, pageSize = 20) {
 
 function goToPost(postId: string) {
   router.push(`/posts/${postId}`)
+}
+
+function goToCreatePost() {
+  router.push({
+    path: '/posts/new',
+    query: boardId.value ? { board_id: boardId.value } : undefined,
+  })
+}
+
+async function fetchBoardMasters(id: string) {
+  try {
+    boardMasters.value = await boardsAPI.getBoardMasters(id)
+  } catch {
+    boardMasters.value = []
+  }
 }
 
 onMounted(() => {
@@ -152,6 +194,35 @@ onMounted(() => {
 
 .board-info p {
   font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+}
+
+.bm-badge {
+  vertical-align: middle;
+}
+
+.board-masters {
+  margin-top: var(--spacing-sm);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  flex-wrap: wrap;
+}
+
+.masters-label {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+}
+
+.master-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-regular);
+}
+
+.master-name {
   color: var(--color-text-secondary);
 }
 

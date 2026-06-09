@@ -6,6 +6,20 @@
         <span class="logo-text">校园论坛</span>
       </router-link>
     </div>
+    <div class="header-center">
+      <el-input
+        v-model="searchKeyword"
+        class="header-search"
+        size="small"
+        clearable
+        placeholder="搜索帖子"
+        @keyup.enter="handleSearch"
+      >
+        <template #prefix>
+          <el-icon><Search /></el-icon>
+        </template>
+      </el-input>
+    </div>
     <div class="header-right">
       <template v-if="authStore.isAuthenticated">
         <NotificationBell />
@@ -46,19 +60,44 @@
 </template>
 
 <script setup lang="ts">
-import { ChatDotRound, User, Bell, Setting, SwitchButton } from '@element-plus/icons-vue'
+import { ref, watch } from 'vue'
+import { Bell, ChatDotRound, Search, Setting, SwitchButton, User } from '@element-plus/icons-vue'
 import { useAuthStore } from '@/stores/auth'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import NotificationBell from '@/components/notification/NotificationBell.vue'
 import UserAvatar from '@/components/common/UserAvatar.vue'
 
 const authStore = useAuthStore()
 const router = useRouter()
+const route = useRoute()
+const searchKeyword = ref('')
 
 async function handleLogout() {
   await authStore.logout()
   router.push('/')
 }
+
+function routeQueryValue(value: unknown): string {
+  if (Array.isArray(value)) return String(value[0] || '')
+  return value ? String(value) : ''
+}
+
+function handleSearch() {
+  const q = searchKeyword.value.trim()
+  if (!q) {
+    router.push({ name: 'Search' })
+    return
+  }
+  router.push({ name: 'Search', query: { q } })
+}
+
+watch(
+  () => route.query.q,
+  (q) => {
+    searchKeyword.value = routeQueryValue(q)
+  },
+  { immediate: true },
+)
 </script>
 
 <style scoped>
@@ -79,6 +118,7 @@ async function handleLogout() {
 .header-left {
   display: flex;
   align-items: center;
+  flex: 0 0 auto;
 }
 
 .logo {
@@ -99,6 +139,20 @@ async function handleLogout() {
   display: flex;
   align-items: center;
   gap: var(--spacing-md);
+  flex: 0 0 auto;
+}
+
+.header-center {
+  flex: 1;
+  min-width: 120px;
+  display: flex;
+  justify-content: center;
+  padding: 0 var(--spacing-lg);
+}
+
+.header-search {
+  width: 100%;
+  max-width: 360px;
 }
 
 .user-dropdown {
@@ -120,6 +174,12 @@ async function handleLogout() {
 @media (max-width: 767px) {
   .app-header {
     padding: 0 var(--spacing-md);
+  }
+  .header-center {
+    padding: 0 var(--spacing-sm);
+  }
+  .header-search {
+    max-width: 220px;
   }
   .logo-text {
     display: none;

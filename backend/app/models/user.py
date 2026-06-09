@@ -3,6 +3,7 @@ from typing import TYPE_CHECKING, Optional
 
 if TYPE_CHECKING:
     from app.models.post import Post
+    from app.models.board_master import BoardMaster
 
 from sqlalchemy import Boolean
 from sqlalchemy import CheckConstraint
@@ -50,4 +51,8 @@ class User(Base, IDMixin, TimestampMixin):
     status: Mapped[str] = mapped_column(String(20), nullable=False, default="active")
     email_verified: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     last_login_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
+    muted_until: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
     posts: Mapped[list["Post"]] = relationship("Post", back_populates="author")
+    board_masters: Mapped[list["BoardMaster"]] = relationship(
+        "BoardMaster", back_populates="user"
+    )
