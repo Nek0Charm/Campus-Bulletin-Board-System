@@ -18,6 +18,7 @@ from app.schemas.response import PaginationInfo
 from app.schemas.user import AdminUserData
 from app.schemas.user import UpdateProfileRequest
 from app.schemas.user import UpdateUserStatusRequest
+from app.schemas.user import UserStats
 from app.schemas.user import UserProfileData
 from app.schemas.user import UserPublicData
 from app.services import UserService
@@ -33,6 +34,15 @@ def get_current_user_profile(
     service: UserService = Depends(get_user_service),
 ):
     return ApiResponse[UserProfileData](data=service.get_profile(current_user))
+
+
+@router.get("/me/stats", response_model=ApiResponse[UserStats])
+def get_current_user_stats(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+    service: UserService = Depends(get_user_service),
+):
+    return ApiResponse[UserStats](data=service.get_stats(db, current_user.id))
 
 
 @router.patch("/me", response_model=ApiResponse[UserProfileData])

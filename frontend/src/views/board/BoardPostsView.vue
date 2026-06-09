@@ -37,11 +37,7 @@
             <el-radio-button value="created_at">最新发布</el-radio-button>
           </el-radio-group>
         </div>
-        <el-button
-          v-if="authStore.isAuthenticated"
-          type="primary"
-          @click="$router.push('/posts/new')"
-        >
+        <el-button v-if="authStore.isAuthenticated" type="primary" @click="goToCreatePost">
           + 发帖
         </el-button>
       </div>
@@ -54,7 +50,7 @@
         title="暂无帖子"
         description="该板块下还没有帖子"
         :action-text="authStore.isAuthenticated ? '去发帖' : undefined"
-        @action="$router.push('/posts/new')"
+        @action="goToCreatePost"
       />
       <div v-else>
         <PostListItem
@@ -80,7 +76,7 @@
       type="primary"
       circle
       size="large"
-      @click="$router.push('/posts/new')"
+      @click="goToCreatePost"
     >
       <el-icon :size="24"><Plus /></el-icon>
     </el-button>
@@ -152,6 +148,13 @@ async function fetchPosts(page = 1, pageSize = 20) {
 
 function goToPost(postId: string) {
   router.push(`/posts/${postId}`)
+}
+
+function goToCreatePost() {
+  router.push({
+    path: '/posts/new',
+    query: boardId.value ? { board_id: boardId.value } : undefined,
+  })
 }
 
 async function fetchBoardMasters(id: string) {

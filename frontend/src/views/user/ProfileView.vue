@@ -112,7 +112,6 @@ import { ref, reactive, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { useAuthStore } from '@/stores/auth'
 import { usersAPI } from '@/api/users'
-import { postsAPI } from '@/api/posts'
 import { authAPI } from '@/api/auth'
 import { uploadAvatar } from '@/api/media'
 import { validatePassword } from '@/utils/validation'
@@ -177,8 +176,10 @@ async function handleAvatarChange(event: Event) {
 async function loadStats() {
   if (!user.value?.id) return
   try {
-    const data = await postsAPI.getPosts({ author_id: user.value.id, page_size: 1 })
-    userStats.post_count = data.pagination.total
+    const data = await usersAPI.getUserStats()
+    userStats.post_count = data.post_count
+    userStats.comment_count = data.comment_count
+    userStats.like_count = data.like_count
   } catch {
     /* silent */
   }
@@ -230,6 +231,10 @@ async function handleChangePassword() {
     pwErrors.confirm = '两次输入的密码不一致'
     return
   }
+  if (passwordForm.new_password === passwordForm.old_password) {
+    pwErrors.new = '新密码不能与旧密码相同'
+    return
+  }
 
   changingPw.value = true
   try {
@@ -240,8 +245,14 @@ async function handleChangePassword() {
     ElMessage.success('密码修改成功，请重新登录')
     showPasswordDialog.value = false
     await authStore.logout()
-  } catch {
-    ElMessage.error('密码修改失败')
+  } catch (err: unknown) {
+    const e = err as { response?: { data?: { detail?: string } } }
+    const detail: string = e.response?.data?.detail || ''
+    if (detail) {
+      pwErrors.new = detail
+    } else {
+      ElMessage.error('密码修改失败')
+    }
   } finally {
     changingPw.value = false
   }

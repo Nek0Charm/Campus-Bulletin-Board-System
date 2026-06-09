@@ -37,7 +37,14 @@
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="260">
+        <el-table-column label="邮箱" width="100">
+          <template #default="{ row }">
+            <el-tag :type="row.email_verified ? 'success' : 'warning'" size="small">
+              {{ row.email_verified ? '已验证' : '未验证' }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column label="操作" width="320">
           <template #default="{ row }">
             <el-button
               v-if="row.status === 'active'"
@@ -54,6 +61,14 @@
               @click="handleActivate(row.id)"
             >
               解封
+            </el-button>
+            <el-button
+              v-if="!row.email_verified"
+              size="small"
+              type="success"
+              @click="handleVerifyEmail(row.id)"
+            >
+              激活
             </el-button>
             <template v-if="isUserMuted(row)">
               <el-button size="small" type="info" @click="handleUnmute(row)"> 解除禁言 </el-button>
@@ -169,6 +184,23 @@ async function handleActivate(userId: string) {
   ElMessage.success('已解封')
   const u = users.value.find((u) => u.id === userId)
   if (u) u.status = 'active'
+}
+
+async function handleVerifyEmail(userId: string) {
+  try {
+    await ElMessageBox.confirm('确定手动激活该用户的邮箱？激活后用户即可正常登录。', '确认激活', {
+      type: 'info',
+    })
+    await adminAPI.verifyUserEmail(userId)
+    ElMessage.success('已激活')
+    const u = users.value.find((u) => u.id === userId)
+    if (u) {
+      u.email_verified = true
+      if (u.status === 'inactive') u.status = 'active'
+    }
+  } catch {
+    /* canceled */
+  }
 }
 
 function isUserMuted(user: User): boolean {

@@ -8,8 +8,8 @@ export const useBoardStore = defineStore('boards', () => {
   const loading = ref(false)
   const error = ref<string | null>(null)
 
-  async function fetchBoards() {
-    if (boards.value.length > 0) return
+  async function fetchBoards(force = false) {
+    if (!force && boards.value.length > 0) return
     loading.value = true
     error.value = null
     try {

@@ -1,12 +1,16 @@
 from uuid import UUID
 
 from fastapi import HTTPException
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
+from app.models.comment import Comment
+from app.models.post import Post
 from app.models.user import User
 from app.schemas.user import AdminUserData
 from app.schemas.user import UserProfileData
 from app.schemas.user import UserPublicData
+from app.schemas.user import UserStats
 from app.schemas.user import UpdateProfileRequest
 from app.schemas.user import UpdateUserStatusRequest
 
@@ -24,6 +28,37 @@ class UserService:
             muted_until=user.muted_until.isoformat() if user.muted_until else None,
             created_at=user.created_at.isoformat(),
             updated_at=user.updated_at.isoformat(),
+        )
+
+    def get_stats(self, db: Session, user_id: UUID) -> UserStats:
+        post_count = (
+            db.query(func.count(Post.id))
+            .filter(Post.author_id == user_id, Post.deleted_at.is_(None))
+            .scalar()
+            or 0
+        )
+        comment_count = (
+            db.query(func.count(Comment.id))
+            .filter(Comment.author_id == user_id, Comment.deleted_at.is_(None))
+            .scalar()
+            or 0
+        )
+        post_like_count = (
+            db.query(func.coalesce(func.sum(Post.like_count), 0))
+            .filter(Post.author_id == user_id, Post.deleted_at.is_(None))
+            .scalar()
+            or 0
+        )
+        comment_like_count = (
+            db.query(func.coalesce(func.sum(Comment.like_count), 0))
+            .filter(Comment.author_id == user_id, Comment.deleted_at.is_(None))
+            .scalar()
+            or 0
+        )
+        return UserStats(
+            post_count=post_count,
+            comment_count=comment_count,
+            like_count=int(post_like_count) + int(comment_like_count),
         )
 
     def update_profile(
@@ -78,6 +113,7 @@ class UserService:
                 avatar_url=u.avatar_url,
                 role=u.role,
                 status=u.status,
+                email_verified=u.email_verified,
                 last_login_at=u.last_login_at.isoformat() if u.last_login_at else None,
                 created_at=u.created_at.isoformat(),
             )
@@ -94,6 +130,7 @@ class UserService:
             avatar_url=user.avatar_url,
             role=user.role,
             status=user.status,
+            email_verified=user.email_verified,
             last_login_at=(
                 user.last_login_at.isoformat() if user.last_login_at else None
             ),
@@ -126,6 +163,7 @@ class UserService:
             avatar_url=user.avatar_url,
             role=user.role,
             status=user.status,
+            email_verified=user.email_verified,
             last_login_at=(
                 user.last_login_at.isoformat() if user.last_login_at else None
             ),

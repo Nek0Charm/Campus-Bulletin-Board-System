@@ -157,7 +157,9 @@ async function loadPost() {
   error.value = null
   try {
     await postStore.fetchPostById(route.params.id as string)
-    // Check if current user is a board master of this post's board
+    if (post.value?.is_liked !== undefined) {
+      liked.value = post.value.is_liked
+    }
     if (post.value?.board_id && authStore.currentUser?.id) {
       try {
         const masters = await boardsAPI.getBoardMasters(post.value.board_id)
@@ -192,8 +194,14 @@ async function handleLike() {
     const status = (err as { response?: { status?: number } })?.response?.status
     if (status === 409) {
       liked.value = true
-    } else if (status === 404 && !liked.value) {
+      if (!post.value?.is_liked) {
+        postStore.updateLikeCount(post.value!.id, 1)
+      }
+    } else if (status === 404) {
       liked.value = false
+      if (post.value?.is_liked) {
+        postStore.updateLikeCount(post.value!.id, -1)
+      }
     } else {
       ElMessage.error('操作失败')
     }
@@ -239,17 +247,18 @@ const replyToCommentId = ref<string | null>(null)
 async function loadComments() {
   commentsLoading.value = true
   try {
-    const [commentData, likeStatus] = await Promise.all([
-      commentsAPI.getComments(route.params.id as string),
-      authStore.isAuthenticated
-        ? likesAPI.getMyLikeStatus(route.params.id as string).catch(() => null)
-        : Promise.resolve(null),
-    ])
+    const commentData = await commentsAPI.getComments(route.params.id as string)
     comments.value = commentData.items
-    if (likeStatus) {
-      liked.value = likeStatus.is_liked
-      likedComments.value = new Set(likeStatus.liked_comment_ids)
+    const likedIds = new Set<string>()
+    for (const root of commentData.items) {
+      if (root.is_liked) likedIds.add(root.id)
+      if (root.replies) {
+        for (const reply of root.replies) {
+          if (reply.is_liked) likedIds.add(reply.id)
+        }
+      }
     }
+    likedComments.value = likedIds
   } catch {
     /* silent */
   } finally {
@@ -320,15 +329,22 @@ async function handleCommentLike(commentId: string) {
   try {
     if (likedComments.value.has(commentId)) {
       await likesAPI.unlikeComment(commentId)
-      likedComments.value.delete(commentId)
+      likedComments.value = new Set([...likedComments.value].filter((id) => id !== commentId))
       updateCommentLikeCount(comments.value, commentId, -1)
     } else {
       await likesAPI.likeComment(commentId)
-      likedComments.value.add(commentId)
+      likedComments.value = new Set([...likedComments.value, commentId])
       updateCommentLikeCount(comments.value, commentId, 1)
     }
-  } catch {
-    ElMessage.error('操作失败')
+  } catch (err: unknown) {
+    const status = (err as { response?: { status?: number } })?.response?.status
+    if (status === 409) {
+      likedComments.value = new Set([...likedComments.value, commentId])
+    } else if (status === 404) {
+      likedComments.value = new Set([...likedComments.value].filter((id) => id !== commentId))
+    } else {
+      ElMessage.error('操作失败')
+    }
   }
 }
 onMounted(() => {

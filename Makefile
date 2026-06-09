@@ -13,7 +13,7 @@ help:
 	@echo "  make deps-up                      # 启动 PostgreSQL 和 Redis"
 	@echo "  make deps-down                    # 停止并清理依赖服务"
 	@echo "  make deps-logs                    # 查看依赖服务日志"
-	@echo "  make deps-reset-db                # 重置 PostgreSQL 数据卷并重建数据库服务"
+	@echo "  make deps-reset-db                # 重置 PostgreSQL 和 Garage 数据卷并重建服务"
 	@echo "  make backend                      # 启动后端（默认: uv run uvicorn app.main:app --reload）"
 	@echo "  make frontend                     # 启动前端（默认: pnpm run dev）"
 	@echo "  make dev                          # 先启动依赖服务，再给出前后端启动提示"
@@ -50,11 +50,21 @@ init-garage:
 	@echo "初始化 Garage S3 存储..."
 	@docker exec bbs-garage /garage layout assign -z dc1 -c 1G $$(docker exec bbs-garage /garage node id 2>/dev/null | awk '{print $$1}') 2>/dev/null || true
 	@docker exec bbs-garage /garage layout apply --version 1 2>/dev/null || true
-	@docker exec bbs-garage /garage key create bbs 2>/dev/null || true
-	@docker exec bbs-garage /garage bucket create bbs-media 2>/dev/null || true
+	@if docker exec bbs-garage /garage key info bbs 2>/dev/null | grep -q 'Key name'; then \
+		echo "Key 'bbs' 已存在，跳过创建"; \
+	else \
+		docker exec bbs-garage /garage key create bbs; \
+		echo "已创建 Key 'bbs'"; \
+	fi
+	@if docker exec bbs-garage /garage bucket info bbs-media 2>/dev/null | grep -q 'Global aliases'; then \
+		echo "Bucket 'bbs-media' 已存在，跳过创建"; \
+	else \
+		docker exec bbs-garage /garage bucket create bbs-media; \
+		echo "已创建 Bucket 'bbs-media'"; \
+	fi
 	@docker exec bbs-garage /garage bucket allow --read --write bbs-media --key bbs 2>/dev/null || true
-	@KEY_ID=$$(docker exec bbs-garage /garage key info bbs 2>/dev/null | grep 'Key ID' | awk '{print $$3}') && \
-	SECRET_KEY=$$(docker exec bbs-garage /garage key info bbs 2>/dev/null | grep 'Secret key' | awk '{print $$3}') && \
+	@KEY_ID=$$(docker exec bbs-garage /garage key info bbs --show-secret 2>/dev/null | grep 'Key ID' | awk '{print $$3}') && \
+	SECRET_KEY=$$(docker exec bbs-garage /garage key info bbs --show-secret 2>/dev/null | grep 'Secret key' | awk '{print $$3}') && \
 	if [ -f .env ]; then \
 		sed -i "/^S3_ACCESS_KEY_ID=/c\S3_ACCESS_KEY_ID=$$KEY_ID" .env 2>/dev/null || echo "S3_ACCESS_KEY_ID=$$KEY_ID" >> .env; \
 		sed -i "/^S3_SECRET_ACCESS_KEY=/c\S3_SECRET_ACCESS_KEY=$$SECRET_KEY" .env 2>/dev/null || echo "S3_SECRET_ACCESS_KEY=$$SECRET_KEY" >> .env; \
@@ -73,10 +83,10 @@ deps-ps:
 	@$(COMPOSE) ps
 
 deps-reset-db:
-	@$(COMPOSE) down postgres
-	@docker volume rm bbs_postgres_data
-	@$(COMPOSE) up -d postgres
-	@$(COMPOSE) ps postgres
+	@$(COMPOSE) down postgres garage
+	@docker volume rm bbs_postgres_data bbs_garage_data bbs_garage_meta
+	@$(COMPOSE) up -d postgres garage
+	@$(COMPOSE) ps postgres garage
 
 backend:
 	@cd $(BACKEND_DIR) && $(BACKEND_DEV_CMD)

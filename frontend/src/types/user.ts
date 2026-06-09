@@ -9,6 +9,7 @@ export interface User {
   avatar_url?: string
   role: UserRole
   status: UserStatus
+  email_verified?: boolean
   muted_until?: string | null
   last_login_at?: string
   created_at: string

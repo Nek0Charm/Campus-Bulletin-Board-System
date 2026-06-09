@@ -45,6 +45,11 @@ const initialData = computed(() => {
       board_id: post.board_id,
     }
   }
+  if (!isEdit.value && route.query.board_id) {
+    return {
+      board_id: route.query.board_id as string,
+    }
+  }
   return undefined
 })
 

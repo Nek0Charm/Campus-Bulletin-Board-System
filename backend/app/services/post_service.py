@@ -4,6 +4,7 @@ from uuid import UUID
 from sqlalchemy import desc
 from sqlalchemy.orm import Session, joinedload
 
+from app.models.board import Board
 from app.models.post import Post, PostStatus
 from app.schemas.post import PostCreate, PostUpdate
 from app.utils.search import build_search_document
@@ -18,6 +19,9 @@ class PostService:
             published_at=datetime.now(timezone.utc),
         )
         db.add(db_obj)
+        board = db.query(Board).filter(Board.id == obj_in.board_id).first()
+        if board:
+            board.post_count = Board.post_count + 1
         try:
             db.commit()
         except Exception:
@@ -92,6 +96,9 @@ class PostService:
     def remove(self, db: Session, *, db_obj: Post) -> Post:
         db_obj.deleted_at = datetime.now(timezone.utc)
         db_obj.status = PostStatus.DELETED
+        board = db.query(Board).filter(Board.id == db_obj.board_id).first()
+        if board and board.post_count > 0:
+            board.post_count = Board.post_count - 1
         try:
             db.commit()
         except Exception:
