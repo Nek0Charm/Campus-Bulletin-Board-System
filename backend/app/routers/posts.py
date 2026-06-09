@@ -8,9 +8,15 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
 from app.deps.db import get_db
-from app.deps.services import get_post_service
-from app.deps.auth import get_current_user, check_not_muted, check_can_moderate_post
+from app.deps.services import get_post_service, get_like_service
+from app.deps.auth import (
+    get_current_user,
+    get_optional_current_user,
+    check_not_muted,
+    check_can_moderate_post,
+)
 from app.models.user import User
+from app.services.like_service import LikeService
 from app.schemas.response import (
     ApiResponse,
     PaginatedResponse,
@@ -68,11 +74,16 @@ def list_posts(
 def get_post(
     id: UUID,
     db: Session = Depends(get_db),
+    current_user: User | None = Depends(get_optional_current_user),
     service: PostService = Depends(get_post_service),
+    like_service: LikeService = Depends(get_like_service),
 ):
     post = service.get_by_id(db, id)
     if not post:
         raise HTTPException(status_code=404, detail="Post not found")
+    if current_user:
+        is_liked = like_service.is_post_liked(db, post_id=id, user_id=current_user.id)
+        setattr(post, "is_liked", is_liked)
     return ApiResponse(data=post)
 
 

@@ -44,5 +44,12 @@ class AdminUserData(BaseModel):
     avatar_url: str | None = None
     role: str
     status: str
+    email_verified: bool = False
     last_login_at: str | None = None
     created_at: str
+
+
+class UserStats(BaseModel):
+    post_count: int = 0
+    comment_count: int = 0
+    like_count: int = 0

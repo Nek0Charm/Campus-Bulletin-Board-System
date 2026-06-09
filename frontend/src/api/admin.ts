@@ -52,4 +52,8 @@ export const adminAPI = {
   unmuteUser(userId: string): Promise<void> {
     return httpClient.delete(`/api/v1/admin/users/${userId}/mute`)
   },
+
+  verifyUserEmail(userId: string): Promise<User> {
+    return httpClient.patch(`/api/v1/admin/users/${userId}/verify-email`)
+  },
 }

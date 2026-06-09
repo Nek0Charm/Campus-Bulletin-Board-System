@@ -66,6 +66,10 @@ async function handleSubmit() {
     errors.confirm = '两次输入的密码不一致'
     return
   }
+  if (form.new_password === form.old_password) {
+    errors.new = '新密码不能与旧密码相同'
+    return
+  }
 
   submitting.value = true
   try {

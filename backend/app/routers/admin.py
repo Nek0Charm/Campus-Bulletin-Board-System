@@ -251,6 +251,34 @@ def admin_unmute_user(
     return ApiResponse(message="User unmuted")
 
 
+@router.patch("/users/{id}/verify-email", response_model=ApiResponse[AdminUserData])
+def admin_verify_user_email(
+    id: str,
+    db: Session = Depends(get_db),
+    service: UserService = Depends(get_user_service),
+):
+    """管理员手动激活用户邮箱（仅管理员）"""
+    try:
+        uid = UUID(id)
+    except ValueError:
+        raise HTTPException(status_code=404, detail="User not found")
+    user = db.query(User).filter(User.id == uid, User.deleted_at.is_(None)).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    if user.email_verified:
+        raise HTTPException(status_code=400, detail="Email already verified")
+    user.email_verified = True
+    if user.status == "inactive":
+        user.status = "active"
+    try:
+        db.commit()
+    except Exception:
+        db.rollback()
+        raise
+    db.refresh(user)
+    return ApiResponse(data=service.get_admin_user_data(user))
+
+
 # ---------- announcements ----------
 
 

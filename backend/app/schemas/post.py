@@ -45,6 +45,7 @@ class PostRead(PostBase):
     published_at: Optional[datetime] = None
     like_count: int = 0
     comment_count: int = 0
+    is_liked: Optional[bool] = None
     created_at: datetime
     updated_at: Optional[datetime] = None
 

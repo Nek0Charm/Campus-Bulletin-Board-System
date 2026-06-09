@@ -17,7 +17,7 @@ class BoardRead(BaseModel):
     slug: str
     description: str | None = None
     sort_order: int
-    post_count: int = 0
+    post_count: int
     created_at: datetime
     updated_at: datetime
 

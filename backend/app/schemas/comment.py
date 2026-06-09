@@ -27,6 +27,7 @@ class CommentRead(BaseModel):
     root_comment_id: Optional[UUID] = None
     like_count: int
     reply_count: int
+    is_liked: Optional[bool] = None
     created_at: datetime
     updated_at: datetime
 
