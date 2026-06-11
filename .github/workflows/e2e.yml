@@ -73,20 +73,21 @@ jobs:
           uv run python << 'PYEOF'
           from app.database import SessionLocal
           from app.utils.security import hash_password
+          import uuid as _uuid
           import sqlalchemy as sa
           from datetime import datetime, timezone
 
           db = SessionLocal()
           try:
               now = datetime.now(timezone.utc)
-              result = db.execute(
+              uid = str(_uuid.uuid4())
+              db.execute(
                   sa.text(
                       "INSERT INTO users (id, username, email, hashed_password, nickname, role, status, email_verified, created_at, updated_at) "
-                      "VALUES (:id, :username, :email, :hashed_password, :nickname, :role, :status, :email_verified, :created_at, :updated_at) "
-                      "RETURNING id"
+                      "VALUES (:id, :username, :email, :hashed_password, :nickname, :role, :status, :email_verified, :created_at, :updated_at)"
                   ),
                   {
-                      "id": sa.text("gen_random_uuid()"),
+                      "id": uid,
                       "username": "admin_ci",
                       "email": "admin_ci@e2e.local",
                       "hashed_password": hash_password("Admin1234!"),
@@ -99,7 +100,6 @@ jobs:
                   },
               )
               db.commit()
-              uid = result.scalar()
               print(f"Created admin user: {uid}")
           finally:
               db.close()
