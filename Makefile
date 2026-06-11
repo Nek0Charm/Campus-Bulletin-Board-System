@@ -6,7 +6,7 @@ FRONTEND_DIR ?= frontend
 BACKEND_DEV_CMD ?= uv run uvicorn app.main:app --reload
 FRONTEND_DEV_CMD ?= pnpm run dev
 
-.PHONY: help deps-up deps-down deps-logs deps-ps deps-reset-db backend frontend dev format format-backend format-frontend lint lint-backend lint-frontend migration-new migrate migrate-rollback migrate-history init-garage setup-env
+.PHONY: help deps-up deps-down deps-logs deps-ps deps-reset-db backend frontend dev format format-backend format-frontend lint lint-backend lint-frontend migration-new migrate migrate-rollback migrate-history init-garage setup-env test-e2e test-e2e-headed
 
 help:
 	@echo "可用命令："
@@ -28,6 +28,8 @@ help:
 	@echo "  make migrate-rollback             # 回滚最近一次迁移"
 	@echo "  make migrate-history              # 查看迁移历史"
 	@echo "  make init-garage                  # 初始化 Garage S3 存储（首次启动后运行）"
+	@echo "  make test-e2e                     # 运行 Playwright e2e 测试（需要后端和前端已启动）"
+	@echo "  make test-e2e-headed              # 运行 Playwright e2e 测试（有头模式）"
 
 setup-env:
 	@if [ ! -f .env ]; then cp .env.example .env; echo "已创建 .env"; fi
@@ -126,3 +128,9 @@ migrate-rollback:
 
 migrate-history:
 	@cd $(BACKEND_DIR) && uv run alembic history
+
+test-e2e:
+	@cd $(FRONTEND_DIR) && NO_PROXY=localhost,127.0.0.1 no_proxy=localhost,127.0.0.1 pnpm run test:e2e
+
+test-e2e-headed:
+	@cd $(FRONTEND_DIR) && NO_PROXY=localhost,127.0.0.1 no_proxy=localhost,127.0.0.1 pnpm run test:e2e:headed
