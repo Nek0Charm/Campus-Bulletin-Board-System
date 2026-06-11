@@ -18,6 +18,9 @@
 			"prettier --write",
 			"eslint --fix --cache"
 		],
+		"frontend/e2e/**/*.ts": [
+			"prettier --write"
+		],
 		"frontend/**/*.{json,css,md}": [
 			"prettier --write"
 		]
