@@ -38,7 +38,7 @@ class AuthorInfo(BaseModel):
 class PostRead(PostBase):
     id: UUID
     author_id: UUID
-    author: AuthorInfo
+    author: Optional[AuthorInfo] = None
     is_pinned: bool
     is_featured: bool
     status: str = "normal"
