@@ -14,6 +14,9 @@ class Settings(BaseSettings):
 
     # PostgreSQL
     DATABASE_URL: str = "postgresql+psycopg2://bbs_user:bbs_password@localhost:5432/bbs"
+    DB_POOL_SIZE: int = 20
+    DB_MAX_OVERFLOW: int = 30
+    DB_POOL_RECYCLE: int = 1800
 
     # Redis
     REDIS_HOST: str = "localhost"
@@ -62,6 +65,9 @@ class Settings(BaseSettings):
     UPLOAD_MAX_SIZE_MB: int = 5
     UPLOAD_MAX_PER_POST: int = 20
     UPLOAD_ALLOWED_MIME_TYPES: str = "image/jpeg,image/png,image/gif,image/webp"
+
+    # Uvicorn
+    UVICORN_WORKERS: int = 4
 
     model_config = {"env_file": ".env", "env_file_encoding": "utf-8"}
 
