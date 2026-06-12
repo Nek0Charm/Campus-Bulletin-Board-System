@@ -85,9 +85,12 @@
               :comments="comments"
               :total-count="post.comment_count"
               :liked-set="likedComments"
+              :has-more="commentsHasMore"
+              :loading-more="commentsLoadingMore"
               @reply="handleReply"
               @toggle-like="handleCommentLike"
               @delete="handleCommentDelete"
+              @load-more="handleLoadMoreComments"
             />
           </div>
         </div>
@@ -270,16 +273,34 @@ async function confirmDelete() {
 // Comments
 const comments = ref<CommentRead[]>([])
 const commentsLoading = ref(false)
+const commentsLoadingMore = ref(false)
+const commentsPage = ref(1)
+const commentsTotalPages = ref(1)
 const likedComments = ref(new Set<string>())
 const replyTo = ref('')
 const replyToCommentId = ref<string | null>(null)
 
-async function loadComments() {
-  commentsLoading.value = true
+const commentsHasMore = computed(() => commentsPage.value < commentsTotalPages.value)
+
+async function loadComments(page = 1) {
+  if (page === 1) {
+    commentsLoading.value = true
+  } else {
+    commentsLoadingMore.value = true
+  }
   try {
-    const commentData = await commentsAPI.getComments(route.params.id as string)
-    comments.value = commentData.items
-    const likedIds = new Set<string>()
+    const commentData = await commentsAPI.getComments(route.params.id as string, {
+      page,
+      page_size: 20,
+    })
+    if (page === 1) {
+      comments.value = commentData.items
+    } else {
+      comments.value = [...comments.value, ...commentData.items]
+    }
+    commentsPage.value = commentData.pagination.page
+    commentsTotalPages.value = commentData.pagination.total_pages
+    const likedIds = new Set(likedComments.value)
     for (const root of commentData.items) {
       if (root.is_liked) likedIds.add(root.id)
       if (root.replies) {
@@ -293,7 +314,12 @@ async function loadComments() {
     /* silent */
   } finally {
     commentsLoading.value = false
+    commentsLoadingMore.value = false
   }
+}
+
+async function handleLoadMoreComments() {
+  await loadComments(commentsPage.value + 1)
 }
 
 function handleReply(commentId: string, authorName: string) {

@@ -15,6 +15,10 @@
           <el-icon><Grid /></el-icon>
           <span>板块管理</span>
         </el-menu-item>
+        <el-menu-item index="/admin/announcements">
+          <el-icon><Bell /></el-icon>
+          <span>公告管理</span>
+        </el-menu-item>
       </el-menu>
       <div class="sidebar-footer">
         <el-button text @click="toggleCollapse">
@@ -34,7 +38,7 @@
 
 <script setup lang="ts">
 import { useRoute } from 'vue-router'
-import { DataAnalysis, User, Grid, Fold, Expand, HomeFilled } from '@element-plus/icons-vue'
+import { DataAnalysis, User, Grid, Bell, Fold, Expand, HomeFilled } from '@element-plus/icons-vue'
 import { useUIStore } from '@/stores/ui'
 
 const route = useRoute()

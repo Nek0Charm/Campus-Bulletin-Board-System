@@ -122,6 +122,14 @@
   text-decoration: underline;
 }
 
+.markdown-body ins {
+  text-decoration: underline;
+}
+
+.markdown-body u {
+  text-decoration: underline;
+}
+
 /* Comment-specific overrides */
 .comment-content.markdown-body p {
   margin-bottom: 0.4em;

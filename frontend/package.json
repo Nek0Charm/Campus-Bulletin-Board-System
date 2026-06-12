@@ -25,10 +25,13 @@
     "cropperjs": "^1.6.2",
     "dompurify": "^3.4.5",
     "element-plus": "^2.14.0",
+    "highlight.js": "^11.11.1",
     "katex": "^0.17.0",
     "markdown-it": "^14.2.0",
     "markdown-it-ins": "^4.0.0",
     "markdown-it-katex": "^2.0.3",
+    "markdown-it-sub": "^2.0.0",
+    "markdown-it-sup": "^2.0.0",
     "md-editor-v3": "^6.5.1",
     "pinia": "^3.0.4",
     "vue": "^3.5.32",
@@ -65,6 +68,11 @@
     "vite-plugin-vue-devtools": "^8.1.1",
     "vitest": "^4.1.4",
     "vue-tsc": "^3.2.6"
+  },
+  "pnpm": {
+    "overrides": {
+      "markdown-it-katex>katex": "$katex"
+    }
   },
   "packageManager": "pnpm@10.19.0",
   "engines": {

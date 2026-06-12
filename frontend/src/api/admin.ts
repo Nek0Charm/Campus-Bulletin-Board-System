@@ -2,6 +2,7 @@ import httpClient from './client'
 import type { User } from '@/types/user'
 import type { PaginatedData } from '@/types/api'
 import type { BoardMasterInfo } from '@/types/board'
+import type { AnnouncementRead } from '@/types/announcement'
 
 export interface AdminStats {
   total_users: number
@@ -55,5 +56,37 @@ export const adminAPI = {
 
   verifyUserEmail(userId: string): Promise<User> {
     return httpClient.patch(`/api/v1/admin/users/${userId}/verify-email`)
+  },
+
+  // Announcement management
+  listAnnouncements(): Promise<AnnouncementRead[]> {
+    return httpClient.get('/api/v1/admin/announcements')
+  },
+
+  createAnnouncement(payload: {
+    title: string
+    content: string
+    is_published: boolean
+    starts_at?: string | null
+    ends_at?: string | null
+  }): Promise<AnnouncementRead> {
+    return httpClient.post('/api/v1/admin/announcements', payload)
+  },
+
+  updateAnnouncement(
+    id: string,
+    payload: {
+      title?: string
+      content?: string
+      is_published?: boolean
+      starts_at?: string | null
+      ends_at?: string | null
+    },
+  ): Promise<AnnouncementRead> {
+    return httpClient.patch(`/api/v1/admin/announcements/${id}`, payload)
+  },
+
+  deleteAnnouncement(id: string): Promise<void> {
+    return httpClient.delete(`/api/v1/admin/announcements/${id}`)
   },
 }

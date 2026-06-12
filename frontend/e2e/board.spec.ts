@@ -3,10 +3,15 @@ import { test, expect } from '@playwright/test'
 const API_BASE = process.env.E2E_API_BASE || 'http://localhost:8000/api/v1'
 
 test.describe('Board - Home Page', () => {
-  test('displays board list on home page', async ({ page }) => {
+  test('displays board section and latest posts on home page', async ({ page }) => {
     await page.goto('/')
-    await expect(page.getByRole('heading', { name: '校园论坛' })).toBeVisible({ timeout: 10000 })
-    await expect(page.getByText('板块列表')).toBeVisible({ timeout: 5000 })
+    await expect(page.getByRole('heading', { name: '热门板块' })).toBeVisible({ timeout: 10000 })
+    await expect(page.getByRole('heading', { name: '最新帖子' })).toBeVisible({ timeout: 5000 })
+  })
+
+  test('can navigate to boards list page', async ({ page }) => {
+    await page.goto('/boards')
+    await expect(page.getByRole('heading', { name: '版面列表' })).toBeVisible({ timeout: 10000 })
   })
 
   test('shows board cards when boards exist', async ({ page }) => {
@@ -20,7 +25,7 @@ test.describe('Board - Home Page', () => {
     }
 
     await page.goto('/')
-    // Board cards should be visible
+    // Board cards should be visible in the 热门板块 section
     await expect(page.locator('.board-card').first()).toBeVisible({ timeout: 5000 })
   })
 })
@@ -39,7 +44,8 @@ test.describe('Board - Board Posts', () => {
     const boardSlug = boards[0].slug
     await page.goto(`/boards/${boardSlug}`)
 
-    await expect(page.locator('.board-info h1').first()).toBeVisible({ timeout: 10000 })
+    // Breadcrumb should show the board name
+    await expect(page.locator('.el-breadcrumb__inner').last()).toBeVisible({ timeout: 10000 })
   })
 
   test('board page shows post list or empty state', async ({ page }) => {

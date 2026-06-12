@@ -7,6 +7,7 @@ import router from './router'
 import './styles/variables.css'
 import './styles/transitions.css'
 import 'katex/dist/katex.min.css'
+import 'highlight.js/styles/github.min.css'
 
 const app = createApp(App)
 
