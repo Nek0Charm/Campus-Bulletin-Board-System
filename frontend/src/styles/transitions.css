@@ -1,31 +1,47 @@
-.page-enter-active,
-.page-leave-active {
-  transition: opacity 0.2s ease;
-}
-.page-enter-from,
-.page-leave-to {
-  opacity: 0;
+/* Unified transition styles — Minimalist Flat Design */
+
+/* ── Page-level route transitions ── */
+.page-fade-enter-active,
+.page-fade-leave-active {
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s ease;
 }
 
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity 0.3s ease;
-}
-.fade-enter-from,
-.fade-leave-to {
+.page-fade-enter-from {
   opacity: 0;
+  transform: translateY(6px);
 }
 
-.list-enter-active,
-.list-leave-active {
-  transition: all 0.3s ease;
-}
-.list-enter-from,
-.list-leave-to {
+.page-fade-leave-to {
   opacity: 0;
-  transform: translateY(8px);
+  transform: translateY(-4px);
 }
 
-.list-move {
-  transition: transform 0.3s ease;
+/* ── List item staggered transitions (TransitionGroup) ── */
+.list-item-enter-active {
+  transition:
+    opacity 0.3s ease,
+    transform 0.3s ease;
+}
+
+.list-item-leave-active {
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s ease;
+  position: absolute;
+}
+
+.list-item-enter-from {
+  opacity: 0;
+  transform: translateY(10px);
+}
+
+.list-item-leave-to {
+  opacity: 0;
+  transform: translateX(16px);
+}
+
+.list-item-move {
+  transition: transform 0.25s ease;
 }

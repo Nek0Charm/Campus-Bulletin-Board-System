@@ -5,6 +5,20 @@
         <el-icon :size="24"><ChatDotRound /></el-icon>
         <span class="logo-text">校园论坛</span>
       </router-link>
+      <nav class="header-nav">
+        <router-link to="/boards" class="nav-link" active-class="nav-link--active">
+          <el-icon :size="16"><Grid /></el-icon>
+          <span>版面列表</span>
+        </router-link>
+        <router-link to="/latest" class="nav-link" active-class="nav-link--active">
+          <el-icon :size="16"><Clock /></el-icon>
+          <span>新帖</span>
+        </router-link>
+        <router-link to="/featured" class="nav-link" active-class="nav-link--active">
+          <el-icon :size="16"><Star /></el-icon>
+          <span>精选</span>
+        </router-link>
+      </nav>
     </div>
     <div class="header-center">
       <el-input
@@ -53,7 +67,7 @@
         </el-dropdown>
       </template>
       <template v-else>
-        <el-button @click="$router.push('/login')">登录</el-button>
+        <el-button class="btn-login" @click="$router.push('/login')">登录</el-button>
       </template>
     </div>
   </header>
@@ -61,7 +75,17 @@
 
 <script setup lang="ts">
 import { ref, watch } from 'vue'
-import { Bell, ChatDotRound, Search, Setting, SwitchButton, User } from '@element-plus/icons-vue'
+import {
+  Bell,
+  ChatDotRound,
+  Clock,
+  Grid,
+  Search,
+  Setting,
+  Star,
+  SwitchButton,
+  User,
+} from '@element-plus/icons-vue'
 import { useAuthStore } from '@/stores/auth'
 import { useRoute, useRouter } from 'vue-router'
 import NotificationBell from '@/components/notification/NotificationBell.vue'
@@ -111,13 +135,14 @@ watch(
   height: var(--header-height);
   padding: 0 var(--spacing-lg);
   background: var(--color-bg-card);
-  border-bottom: 1px solid var(--color-border-light);
-  box-shadow: var(--shadow-sm);
+  border-bottom: 1px solid var(--color-border-list);
+  box-shadow: none;
 }
 
 .header-left {
   display: flex;
   align-items: center;
+  gap: var(--spacing-lg);
   flex: 0 0 auto;
 }
 
@@ -129,11 +154,68 @@ watch(
   font-size: var(--font-size-lg);
   font-weight: 700;
   text-decoration: none;
+  transition: opacity var(--transition-fast);
+}
+
+.logo:hover {
+  opacity: 0.85;
 }
 
 .logo-text {
   white-space: nowrap;
 }
+
+/* ── Nav links (minimalist text links) ── */
+
+.header-nav {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+.nav-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  font-size: var(--font-size-base);
+  color: var(--color-text-secondary);
+  text-decoration: none;
+  border-radius: var(--radius-md);
+  transition:
+    color var(--transition-fast),
+    background var(--transition-fast);
+  white-space: nowrap;
+}
+
+.nav-link:hover {
+  color: var(--color-primary);
+  background: rgba(64, 158, 255, 0.06);
+}
+
+.nav-link--active {
+  color: var(--color-primary);
+  font-weight: 600;
+}
+
+/* ── Login button ── */
+
+.btn-login {
+  border: 1px solid var(--color-border);
+  background: transparent;
+  color: var(--color-text-regular);
+  font-weight: 500;
+  transition:
+    color var(--transition-fast),
+    border-color var(--transition-fast);
+}
+
+.btn-login:hover {
+  color: var(--color-primary);
+  border-color: var(--color-primary);
+}
+
+/* ── Center ── */
 
 .header-right {
   display: flex;
@@ -171,21 +253,35 @@ watch(
   white-space: nowrap;
 }
 
+/* ── Responsive ── */
+
 @media (max-width: 767px) {
   .app-header {
     padding: 0 var(--spacing-md);
+  }
+  .header-left {
+    gap: var(--spacing-sm);
   }
   .header-center {
     padding: 0 var(--spacing-sm);
   }
   .header-search {
-    max-width: 220px;
+    max-width: 180px;
+  }
+  .header-right {
+    gap: var(--spacing-sm);
   }
   .logo-text {
     display: none;
   }
   .username {
     display: none;
+  }
+  .nav-link span {
+    display: none;
+  }
+  .nav-link {
+    padding: var(--spacing-xs);
   }
 }
 </style>

@@ -1,0 +1,144 @@
+name: E2E
+
+on:
+  push:
+    branches: [develop, main, "feat/**", "fix/**"]
+  pull_request:
+    branches: [develop, main]
+
+jobs:
+  e2e-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Create .env for docker compose
+        run: |
+          cat > .env << 'EOF'
+          GARAGE_RPC_SECRET=ci-dummy-value-not-used
+          POSTGRES_USER=bbs_user
+          POSTGRES_PASSWORD=bbs_password
+          EOF
+
+      - name: Start service dependencies
+        run: |
+          docker compose up -d --quiet-pull postgres redis mailpit
+          # Wait for postgres
+          for i in $(seq 1 30); do
+            if docker compose exec -T postgres pg_isready -U bbs_user -d bbs > /dev/null 2>&1; then
+              echo "Postgres ready"
+              break
+            fi
+            sleep 2
+          done
+          # Wait for redis
+          for i in $(seq 1 30); do
+            if docker compose exec -T redis redis-cli ping | grep -q PONG; then
+              echo "Redis ready"
+              break
+            fi
+            sleep 2
+          done
+
+      - uses: astral-sh/setup-uv@v8.1.0
+        with:
+          python-version: "3.14"
+
+      - name: Install backend & run migrations
+        working-directory: backend
+        run: |
+          uv sync
+          uv run alembic upgrade head
+
+      - name: Start backend
+        working-directory: backend
+        run: |
+          nohup uv run uvicorn app.main:app --host 0.0.0.0 --port 8000 > /tmp/backend.log 2>&1 &
+          echo "Waiting for backend..."
+          for i in $(seq 1 30); do
+            if curl -s http://localhost:8000/health > /dev/null 2>&1; then
+              echo "Backend ready"
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "Backend failed to start. Log:"
+          cat /tmp/backend.log
+          exit 1
+
+      - name: Create admin user for e2e tests
+        working-directory: backend
+        run: |
+          uv run python << 'PYEOF'
+          from app.database import SessionLocal
+          from app.utils.security import hash_password
+          import uuid as _uuid
+          import sqlalchemy as sa
+          from datetime import datetime, timezone
+
+          db = SessionLocal()
+          try:
+              now = datetime.now(timezone.utc)
+              uid = str(_uuid.uuid4())
+              db.execute(
+                  sa.text(
+                      "INSERT INTO users (id, username, email, password_hash, nickname, role, status, email_verified, created_at, updated_at) "
+                      "VALUES (:id, :username, :email, :password_hash, :nickname, :role, :status, :email_verified, :created_at, :updated_at)"
+                  ),
+                  {
+                      "id": uid,
+                      "username": "admin_ci",
+                      "email": "admin_ci@e2e.local",
+                      "password_hash": hash_password("Admin1234!"),
+                      "nickname": "Admin CI",
+                      "role": "admin",
+                      "status": "active",
+                      "email_verified": True,
+                      "created_at": now,
+                      "updated_at": now,
+                  },
+              )
+              db.commit()
+              print(f"Created admin user: {uid}")
+          finally:
+              db.close()
+          PYEOF
+
+          # Get admin token
+          ADMIN_TOKEN=$(curl -s -X POST http://localhost:8000/api/v1/auth/login \
+            -H "Content-Type: application/json" \
+            -d '{"account":"admin_ci","password":"Admin1234!"}' | python -c "import sys,json; print(json.load(sys.stdin)['data']['access_token'])")
+          echo "E2E_ADMIN_TOKEN=$ADMIN_TOKEN" >> "$GITHUB_ENV"
+
+      - uses: pnpm/action-setup@v6
+        with:
+          version: "10.19.0"
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
+
+      - name: Install frontend & Playwright
+        working-directory: frontend
+        run: |
+          pnpm install
+          pnpm exec playwright install --with-deps chromium
+
+      - name: Run e2e tests
+        working-directory: frontend
+        run: pnpm run test:e2e
+        env:
+          E2E_API_BASE: http://localhost:8000/api/v1
+          E2E_MAILPIT_API: http://localhost:8025/api/v1
+          CI: "true"
+
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v5
+        with:
+          name: playwright-report
+          path: frontend/playwright-report/
+          retention-days: 7

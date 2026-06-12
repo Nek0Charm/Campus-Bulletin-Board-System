@@ -1,22 +1,21 @@
 <template>
   <div class="notifications-page">
     <div class="content-container">
-      <el-breadcrumb separator=">">
-        <el-breadcrumb-item :to="{ name: 'Home' }">首页</el-breadcrumb-item>
-        <el-breadcrumb-item>通知</el-breadcrumb-item>
-      </el-breadcrumb>
-
-      <div class="page-header">
-        <h1>通知</h1>
-        <el-button
-          v-if="store.notifications.length && store.unreadCount > 0"
-          text
-          type="primary"
-          @click="handleMarkAllRead"
-        >
-          全部标为已读
-        </el-button>
-      </div>
+      <PageHeader
+        title="通知"
+        :breadcrumbs="[{ label: '首页', to: { name: 'Home' } }, { label: '通知' }]"
+      >
+        <template #actions>
+          <el-button
+            v-if="store.notifications.length && store.unreadCount > 0"
+            text
+            type="primary"
+            @click="handleMarkAllRead"
+          >
+            全部标为已读
+          </el-button>
+        </template>
+      </PageHeader>
 
       <LoadingSkeleton v-if="store.loading" type="list-item" :count="5" />
       <EmptyState
@@ -25,27 +24,29 @@
         description="当有人回复或点赞你的内容时，会在这里显示"
       />
       <div v-else class="notification-list">
-        <div
-          v-for="item in store.notifications"
-          :key="item.id"
-          class="notification-item"
-          :class="{ unread: !item.is_read }"
-          @click="handleClick(item)"
-        >
-          <div class="notif-left">
-            <span v-if="!item.is_read" class="unread-dot" />
-            <div class="notif-body">
-              <p class="notif-title">
-                <span v-if="item.actor" class="actor-name">{{
-                  item.actor.nickname || item.actor.username
-                }}</span>
-                {{ typeLabel(item.type) }}
-              </p>
-              <p class="notif-content">{{ item.content }}</p>
-              <p class="notif-time">{{ formatTimeAgo(item.created_at) }}</p>
+        <TransitionGroup name="list-item" tag="div">
+          <div
+            v-for="item in store.notifications"
+            :key="item.id"
+            class="notification-item"
+            :class="{ unread: !item.is_read }"
+            @click="handleClick(item)"
+          >
+            <div class="notif-left">
+              <span v-if="!item.is_read" class="unread-dot" />
+              <div class="notif-body">
+                <p class="notif-title">
+                  <span v-if="item.actor" class="actor-name">{{
+                    item.actor.nickname || item.actor.username
+                  }}</span>
+                  {{ typeLabel(item.type) }}
+                </p>
+                <p class="notif-content">{{ item.content }}</p>
+                <p class="notif-time">{{ formatTimeAgo(item.created_at) }}</p>
+              </div>
             </div>
           </div>
-        </div>
+        </TransitionGroup>
       </div>
 
       <PaginationBar
@@ -68,6 +69,7 @@ import { formatTimeAgo } from '@/utils/format'
 import LoadingSkeleton from '@/components/common/LoadingSkeleton.vue'
 import EmptyState from '@/components/common/EmptyState.vue'
 import PaginationBar from '@/components/common/PaginationBar.vue'
+import PageHeader from '@/components/common/PageHeader.vue'
 import type { NotificationRead } from '@/types/notification'
 
 const store = useNotificationStore()
@@ -104,19 +106,6 @@ onMounted(() => {
   padding: var(--spacing-lg) var(--spacing-md);
 }
 
-.page-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: var(--spacing-lg);
-}
-
-.page-header h1 {
-  font-size: var(--font-size-xxl);
-  font-weight: 700;
-  color: var(--color-text-primary);
-}
-
 .notification-list {
   background: var(--color-bg-card);
   border: 1px solid var(--color-border-light);
@@ -128,7 +117,7 @@ onMounted(() => {
   align-items: center;
   justify-content: space-between;
   padding: var(--spacing-md);
-  border-bottom: 1px solid var(--color-border-light);
+  border-bottom: 1px solid var(--color-border-list);
   cursor: pointer;
   transition: background var(--transition-fast);
 }
@@ -138,11 +127,11 @@ onMounted(() => {
 }
 
 .notification-item:hover {
-  background: var(--color-bg-page);
+  background: #fafbfc;
 }
 
 .notification-item.unread {
-  background: #ecf5ff;
+  background: #f0f7ff;
 }
 
 .notif-left {
@@ -167,18 +156,20 @@ onMounted(() => {
 .notif-title {
   font-size: var(--font-size-sm);
   color: var(--color-text-primary);
-  margin-bottom: 2px;
+  margin-bottom: 4px;
+  line-height: var(--line-height-base);
 }
 
 .actor-name {
   font-weight: 600;
-  color: var(--color-primary);
+  color: var(--color-text-primary);
 }
 
 .notif-content {
   font-size: var(--font-size-sm);
   color: var(--color-text-secondary);
-  margin-bottom: 4px;
+  margin-bottom: 6px;
+  line-height: var(--line-height-base);
 }
 
 .notif-time {

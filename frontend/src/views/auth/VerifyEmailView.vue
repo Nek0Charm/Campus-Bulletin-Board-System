@@ -168,9 +168,9 @@ async function handleResend() {
   width: 100%;
   max-width: 420px;
   background: var(--color-bg-card);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-md);
   padding: var(--spacing-xl);
-  box-shadow: var(--shadow-md);
+  border: 1px solid var(--color-border-light);
   text-align: center;
 }
 

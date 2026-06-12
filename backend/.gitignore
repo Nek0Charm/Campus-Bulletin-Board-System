@@ -12,3 +12,9 @@ wheels/
 *.db
 
 .coverage
+
+# Performance test artifacts
+perftests/user_pool.json
+perftests/reports/*.csv
+perftests/reports/*.html
+perftests/reports/*.log

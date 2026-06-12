@@ -107,9 +107,9 @@ async function handleSubmit() {
   width: 100%;
   max-width: 400px;
   background: var(--color-bg-card);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-md);
   padding: var(--spacing-xl);
-  box-shadow: var(--shadow-md);
+  border: 1px solid var(--color-border-light);
 }
 
 .form-card h1 {

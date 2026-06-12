@@ -285,9 +285,7 @@ async def test_board_master_can_pin_post_in_their_board(
     post = await _create_post(author_ac, str(board.id), "BM Pin Test")
 
     # Board master pins it
-    resp = await bm_ac.patch(
-        f"{POSTS_URL}/{post['id']}/pin", params={"is_pinned": True}
-    )
+    resp = await bm_ac.patch(f"{POSTS_URL}/{post['id']}/pin", json={"is_pinned": True})
     assert resp.status_code == status.HTTP_200_OK
     assert resp.json()["data"]["is_pinned"] is True
 
@@ -311,9 +309,7 @@ async def test_board_master_cannot_pin_post_in_other_board(
     # Post in board_b (where bm_user is NOT a master)
     post = await _create_post(author_ac, str(board_b.id), "Other Board Post")
 
-    resp = await bm_ac.patch(
-        f"{POSTS_URL}/{post['id']}/pin", params={"is_pinned": True}
-    )
+    resp = await bm_ac.patch(f"{POSTS_URL}/{post['id']}/pin", json={"is_pinned": True})
     assert resp.status_code == status.HTTP_403_FORBIDDEN
 
 
@@ -334,7 +330,7 @@ async def test_board_master_can_feature_post_in_their_board(
     post = await _create_post(author_ac, str(board.id), "BM Feature Test")
 
     resp = await bm_ac.patch(
-        f"{POSTS_URL}/{post['id']}/feature", params={"is_featured": True}
+        f"{POSTS_URL}/{post['id']}/feature", json={"is_featured": True}
     )
     assert resp.status_code == status.HTTP_200_OK
     assert resp.json()["data"]["is_featured"] is True
@@ -358,7 +354,7 @@ async def test_board_master_cannot_feature_post_in_other_board(
     post = await _create_post(author_ac, str(board_b.id), "Other Board Post 2")
 
     resp = await bm_ac.patch(
-        f"{POSTS_URL}/{post['id']}/feature", params={"is_featured": True}
+        f"{POSTS_URL}/{post['id']}/feature", json={"is_featured": True}
     )
     assert resp.status_code == status.HTTP_403_FORBIDDEN
 
@@ -416,7 +412,7 @@ async def test_regular_user_still_cannot_pin(client: AsyncClient, db_session):
     post = await _create_post(normal_ac, str(board.id), "Regular Pin Test")
 
     resp = await normal_ac.patch(
-        f"{POSTS_URL}/{post['id']}/pin", params={"is_pinned": True}
+        f"{POSTS_URL}/{post['id']}/pin", json={"is_pinned": True}
     )
     assert resp.status_code == status.HTTP_403_FORBIDDEN
 

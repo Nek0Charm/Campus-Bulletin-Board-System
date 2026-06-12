@@ -34,16 +34,16 @@ function handleClick() {
   gap: var(--spacing-sm);
   padding: var(--spacing-sm) 0;
   cursor: pointer;
-  border-bottom: 1px solid var(--color-border-light);
+  border-bottom: 1px solid var(--color-border-list);
   transition: background var(--transition-fast);
 }
 
 .notification-item:hover {
-  background: var(--color-bg-page);
+  background: #fafbfc;
 }
 
 .notification-item.unread {
-  background: #ecf5ff;
+  background: #f0f7ff;
 }
 
 .notif-dot {

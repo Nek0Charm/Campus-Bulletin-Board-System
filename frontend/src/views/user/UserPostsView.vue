@@ -1,13 +1,14 @@
 <template>
   <div class="user-posts-page">
     <div class="content-container">
-      <el-breadcrumb separator=">">
-        <el-breadcrumb-item :to="{ name: 'Home' }">首页</el-breadcrumb-item>
-        <el-breadcrumb-item :to="{ name: 'Profile' }">个人中心</el-breadcrumb-item>
-        <el-breadcrumb-item>我的帖子</el-breadcrumb-item>
-      </el-breadcrumb>
-
-      <h1>我的帖子</h1>
+      <PageHeader
+        title="我的帖子"
+        :breadcrumbs="[
+          { label: '首页', to: { name: 'Home' } },
+          { label: '个人中心', to: { name: 'Profile' } },
+          { label: '我的帖子' },
+        ]"
+      />
 
       <LoadingSkeleton v-if="loading" type="list-item" :count="5" />
       <ErrorState v-else-if="error" :message="error" @retry="fetchMyPosts" />
@@ -18,13 +19,15 @@
         action-text="去发帖"
         @action="$router.push('/posts/new')"
       />
-      <div v-else>
-        <PostListItem
-          v-for="post in posts"
-          :key="post.id"
-          :post="post"
-          @click="$router.push(`/posts/${post.id}`)"
-        />
+      <div v-else class="post-list-wrapper">
+        <TransitionGroup name="list-item" tag="div">
+          <PostListItem
+            v-for="post in posts"
+            :key="post.id"
+            :post="post"
+            @click="$router.push(`/posts/${post.id}`)"
+          />
+        </TransitionGroup>
         <PaginationBar
           v-if="pagination.total > pagination.pageSize"
           :current-page="pagination.page"
@@ -46,6 +49,7 @@ import PaginationBar from '@/components/common/PaginationBar.vue'
 import LoadingSkeleton from '@/components/common/LoadingSkeleton.vue'
 import ErrorState from '@/components/common/ErrorState.vue'
 import EmptyState from '@/components/common/EmptyState.vue'
+import PageHeader from '@/components/common/PageHeader.vue'
 import type { PostRead } from '@/types/post'
 import { DEFAULT_PAGE_SIZE } from '@/utils/constants'
 
@@ -92,10 +96,10 @@ onMounted(() => fetchMyPosts())
   padding: var(--spacing-lg) var(--spacing-md);
 }
 
-.content-container h1 {
-  font-size: var(--font-size-xxl);
-  font-weight: 700;
-  color: var(--color-text-primary);
-  margin: var(--spacing-md) 0 var(--spacing-lg);
+.post-list-wrapper {
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-md);
+  overflow: hidden;
 }
 </style>

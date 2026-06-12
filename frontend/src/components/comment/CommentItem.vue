@@ -11,6 +11,9 @@
           <span class="comment-author">{{
             comment.author?.nickname || comment.author?.username
           }}</span>
+          <span v-if="parentAuthorName" class="reply-target">
+            回复 <span class="reply-target-name">@{{ parentAuthorName }}</span>
+          </span>
           <span class="comment-time">{{ formatTimeAgo(comment.created_at) }}</span>
         </div>
         <div class="comment-content markdown-body" v-html="renderMarkdown(comment.content)" />
@@ -22,7 +25,6 @@
             {{ comment.like_count }}
           </span>
           <span
-            v-if="depth === 0"
             class="action-btn"
             @click="emit('reply', comment.id, comment.author?.nickname || comment.author?.username)"
           >
@@ -32,18 +34,19 @@
             <el-icon :size="14"><Delete /></el-icon> 删除
           </span>
         </div>
-        <template v-if="comment.replies && comment.replies.length">
+        <div v-if="comment.replies && comment.replies.length" class="nested-replies">
           <CommentItem
             v-for="child in comment.replies"
             :key="child.id"
             :comment="child"
             :depth="depth + 1"
             :liked-set="likedSet"
+            :parent-author-name="replyAuthorMap[child.parent_comment_id ?? '']"
             @reply="(id: string, name: string) => emit('reply', id, name)"
             @toggle-like="(id: string) => emit('toggle-like', id)"
             @delete="(id: string) => emit('delete', id)"
           />
-        </template>
+        </div>
       </div>
     </div>
   </div>
@@ -56,6 +59,7 @@ import ThumbsUp from '@/components/common/ThumbsUp.vue'
 import { useAuthStore } from '@/stores/auth'
 import UserAvatar from '@/components/common/UserAvatar.vue'
 import { renderMarkdown } from '@/utils/markdown'
+import '@/styles/markdown.css'
 import { formatTimeAgo } from '@/utils/format'
 import type { CommentRead } from '@/types/comment'
 
@@ -64,10 +68,12 @@ const props = withDefaults(
     comment: CommentRead
     depth?: number
     likedSet?: Set<string>
+    parentAuthorName?: string
   }>(),
   {
     depth: 0,
     likedSet: () => new Set(),
+    parentAuthorName: undefined,
   },
 )
 
@@ -83,6 +89,17 @@ const liked = computed(() => props.likedSet.has(props.comment.id))
 const canDelete = computed(
   () => authStore.currentUser?.id === props.comment.author?.id || authStore.isAdmin,
 )
+
+// Build a map of reply id -> author name for all children, so nested replies can show @mention
+const replyAuthorMap = computed<Record<string, string>>(() => {
+  const map: Record<string, string> = {}
+  // Include the root comment itself
+  map[props.comment.id] = props.comment.author?.nickname || props.comment.author?.username || ''
+  for (const r of props.comment.replies ?? []) {
+    map[r.id] = r.author?.nickname || r.author?.username || ''
+  }
+  return map
+})
 </script>
 
 <style scoped>
@@ -91,7 +108,7 @@ const canDelete = computed(
 }
 
 .comment-item:not(:last-child) {
-  border-bottom: 1px solid var(--color-border-light);
+  border-bottom: 1px solid var(--color-border-list);
 }
 
 .comment-main {
@@ -108,7 +125,7 @@ const canDelete = computed(
   display: flex;
   gap: var(--spacing-sm);
   align-items: center;
-  margin-bottom: 4px;
+  margin-bottom: 6px;
 }
 
 .comment-author {
@@ -126,45 +143,8 @@ const canDelete = computed(
   font-size: var(--font-size-base);
   color: var(--color-text-regular);
   line-height: var(--line-height-base);
-  margin-bottom: var(--spacing-xs);
+  margin-bottom: var(--spacing-sm);
   word-break: break-word;
-}
-
-.comment-content :deep(p) {
-  margin-bottom: 0.4em;
-  line-height: 1.6;
-}
-.comment-content :deep(p:last-child) {
-  margin-bottom: 0;
-}
-.comment-content :deep(ul),
-.comment-content :deep(ol) {
-  padding-left: 1.5em;
-  margin-bottom: 0.4em;
-}
-.comment-content :deep(code) {
-  background: rgba(175, 184, 193, 0.2);
-  border-radius: 2px;
-  padding: 1px 4px;
-  font-size: 0.9em;
-}
-.comment-content :deep(pre) {
-  background: #f6f8fa;
-  border-radius: 4px;
-  padding: 8px;
-  overflow-x: auto;
-  margin-bottom: 0.4em;
-  font-size: 0.85em;
-}
-.comment-content :deep(blockquote) {
-  border-left: 3px solid var(--color-border, #dcdfe6);
-  padding: 0.25em 0.75em;
-  margin: 0 0 0.4em;
-  color: var(--color-text-secondary);
-}
-.comment-content :deep(a) {
-  color: var(--color-primary, #409eff);
-  word-break: break-all;
 }
 
 .comment-actions {
@@ -188,5 +168,35 @@ const canDelete = computed(
 
 .delete-btn:hover {
   color: var(--color-danger);
+}
+
+.reply-target {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+}
+
+.reply-target-name {
+  color: var(--color-primary);
+}
+
+.nested-replies {
+  margin-top: var(--spacing-sm);
+  padding: var(--spacing-sm) var(--spacing-md);
+  background-color: #f8f9fa;
+  border-radius: var(--radius-sm);
+  border-left: 2px solid var(--color-border-light);
+}
+
+.nested-replies > .comment-item {
+  border-bottom: none;
+  padding: var(--spacing-xs) 0;
+}
+
+.nested-replies > .comment-item:first-child {
+  padding-top: 0;
+}
+
+.nested-replies > .comment-item:last-child {
+  padding-bottom: 0;
 }
 </style>

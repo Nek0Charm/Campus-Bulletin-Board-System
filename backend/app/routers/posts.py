@@ -23,7 +23,13 @@ from app.schemas.response import (
     PaginatedData,
     PaginationInfo,
 )
-from app.schemas.post import PostCreate, PostUpdate, PostRead
+from app.schemas.post import (
+    PostCreate,
+    PostUpdate,
+    PostRead,
+    PinToggleRequest,
+    FeatureToggleRequest,
+)
 from app.services.post_service import PostService
 
 router = APIRouter(prefix="/posts", tags=["Posts"])
@@ -50,12 +56,22 @@ def list_posts(
     author_id: Optional[UUID] = None,
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
+    sort_by: Optional[str] = Query(
+        None, description="Sort by field, e.g. 'created_at'"
+    ),
+    is_featured: Optional[bool] = Query(None, description="Filter featured posts"),
     db: Session = Depends(get_db),
     service: PostService = Depends(get_post_service),
 ):
     """获取帖子列表：支持分页、板块筛选、作者筛选，置顶优先"""
     items, total = service.get_multi(
-        db, board_id=board_id, author_id=author_id, page=page, page_size=page_size
+        db,
+        board_id=board_id,
+        author_id=author_id,
+        page=page,
+        page_size=page_size,
+        sort_by=sort_by,
+        is_featured=is_featured,
     )
     return PaginatedResponse(
         data=PaginatedData(
@@ -126,7 +142,7 @@ def delete_post(
 @router.patch("/{id}/pin", response_model=ApiResponse[PostRead])
 def pin_post(
     id: UUID,
-    is_pinned: bool = True,
+    body: PinToggleRequest,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
     service: PostService = Depends(get_post_service),
@@ -138,7 +154,7 @@ def pin_post(
     check_can_moderate_post(db, current_user, post)
     return ApiResponse(
         data=service.update_special_status(
-            db, db_obj=post, field="is_pinned", val=is_pinned
+            db, db_obj=post, field="is_pinned", val=body.is_pinned
         )
     )
 
@@ -146,7 +162,7 @@ def pin_post(
 @router.patch("/{id}/feature", response_model=ApiResponse[PostRead])
 def feature_post(
     id: UUID,
-    is_featured: bool = True,
+    body: FeatureToggleRequest,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
     service: PostService = Depends(get_post_service),
@@ -158,6 +174,6 @@ def feature_post(
     check_can_moderate_post(db, current_user, post)
     return ApiResponse(
         data=service.update_special_status(
-            db, db_obj=post, field="is_featured", val=is_featured
+            db, db_obj=post, field="is_featured", val=body.is_featured
         )
     )

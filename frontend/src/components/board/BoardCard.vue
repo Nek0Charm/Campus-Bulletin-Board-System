@@ -3,9 +3,11 @@
     <div class="board-icon">
       <el-icon :size="28"><component :is="iconComponent" /></el-icon>
     </div>
-    <h3 class="board-name">{{ board.name }}</h3>
-    <p class="board-desc">{{ board.description || '暂无描述' }}</p>
-    <span class="board-count">{{ board.post_count ?? 0 }} 篇帖子</span>
+    <div class="board-info">
+      <h3 class="board-name">{{ board.name }}</h3>
+      <p class="board-desc">{{ board.description || '暂无描述' }}</p>
+      <span class="board-count">{{ board.post_count ?? 0 }} 篇帖子</span>
+    </div>
   </div>
 </template>
 
@@ -27,18 +29,21 @@ const iconComponent = computed(() => {
 
 <style scoped>
 .board-card {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
   background: var(--color-bg-card);
   border: 1px solid var(--color-border-light);
   border-radius: var(--radius-md);
   padding: var(--spacing-lg);
-  text-align: center;
   cursor: pointer;
-  transition: all var(--transition-fast);
+  transition:
+    background var(--transition-fast),
+    border-color var(--transition-fast);
 }
 
 .board-card:hover {
-  box-shadow: var(--shadow-md);
-  transform: translateY(-2px);
+  background-color: #fafbfc;
   border-color: var(--color-primary-light);
 }
 
@@ -46,12 +51,18 @@ const iconComponent = computed(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 52px;
-  height: 52px;
-  margin: 0 auto var(--spacing-sm);
+  width: 48px;
+  height: 48px;
   border-radius: var(--radius-md);
   background: var(--color-primary-light);
   color: #fff;
+  flex-shrink: 0;
+}
+
+.board-info {
+  flex: 1;
+  min-width: 0;
+  text-align: left;
 }
 
 .board-name {
@@ -64,7 +75,7 @@ const iconComponent = computed(() => {
 .board-desc {
   font-size: var(--font-size-sm);
   color: var(--color-text-secondary);
-  margin-bottom: var(--spacing-sm);
+  margin-bottom: var(--spacing-xs);
   display: -webkit-box;
   -webkit-line-clamp: 1;
   -webkit-box-orient: vertical;

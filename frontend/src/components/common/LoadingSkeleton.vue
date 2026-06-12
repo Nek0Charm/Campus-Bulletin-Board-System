@@ -68,8 +68,8 @@ withDefaults(
   padding: var(--spacing-md);
   background: var(--color-bg-card);
   border-radius: var(--radius-sm);
-  margin-bottom: var(--spacing-sm);
-  border: 1px solid var(--color-border-light);
+  margin-bottom: 0;
+  border-bottom: 1px solid var(--color-border-list);
 }
 
 .skeleton-table-row {

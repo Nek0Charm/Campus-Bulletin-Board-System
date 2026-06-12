@@ -17,7 +17,7 @@ defineProps<{
   background: var(--color-bg-card);
   border: 1px solid var(--color-border-light);
   border-radius: var(--radius-md);
-  padding: var(--spacing-lg);
+  padding: var(--spacing-xl) var(--spacing-lg);
   text-align: center;
 }
 
@@ -25,13 +25,13 @@ defineProps<{
   display: block;
   font-size: var(--font-size-xxl);
   font-weight: 700;
-  color: var(--color-primary);
+  color: var(--color-text-primary);
 }
 
 .stats-label {
   display: block;
   margin-top: var(--spacing-xs);
-  font-size: var(--font-size-xs);
+  font-size: var(--font-size-sm);
   color: var(--color-text-secondary);
 }
 </style>

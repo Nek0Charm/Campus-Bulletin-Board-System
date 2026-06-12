@@ -1,12 +1,13 @@
 <template>
   <div class="post-edit-page">
     <div class="content-container">
-      <el-breadcrumb separator=">">
-        <el-breadcrumb-item :to="{ name: 'Home' }">首页</el-breadcrumb-item>
-        <el-breadcrumb-item>{{ isEdit ? '编辑帖子' : '发布帖子' }}</el-breadcrumb-item>
-      </el-breadcrumb>
-
-      <h1 class="page-title">{{ isEdit ? '编辑帖子' : '发布帖子' }}</h1>
+      <PageHeader
+        :title="isEdit ? '编辑帖子' : '发布帖子'"
+        :breadcrumbs="[
+          { label: '首页', to: { name: 'Home' } },
+          { label: isEdit ? '编辑帖子' : '发布帖子' },
+        ]"
+      />
 
       <LoadingSkeleton v-if="editLoading" type="detail" />
       <PostForm
@@ -27,6 +28,7 @@ import { ElMessage } from 'element-plus'
 import { usePostStore } from '@/stores/posts'
 import PostForm from '@/components/post/PostForm.vue'
 import LoadingSkeleton from '@/components/common/LoadingSkeleton.vue'
+import PageHeader from '@/components/common/PageHeader.vue'
 import type { PostCreate } from '@/types/post'
 
 const route = useRoute()
@@ -93,12 +95,5 @@ onMounted(async () => {
   max-width: var(--content-max-width);
   margin: 0 auto;
   padding: var(--spacing-lg) var(--spacing-md);
-}
-
-.page-title {
-  font-size: var(--font-size-xxl);
-  font-weight: 700;
-  color: var(--color-text-primary);
-  margin-bottom: var(--spacing-lg);
 }
 </style>

@@ -23,6 +23,7 @@ from app.schemas.user import UpdateUserStatusRequest
 from app.schemas.user import UserProfileData
 from app.schemas.user import UserPublicData
 from app.schemas.post import PostCreate, PostUpdate, PostRead, PostListResponse
+from app.schemas.post import PinToggleRequest, FeatureToggleRequest
 from app.schemas.announcement import (
     AnnouncementCreate,
     AnnouncementRead,
@@ -55,6 +56,8 @@ __all__ = [
     "PostUpdate",
     "PostRead",
     "PostListResponse",
+    "PinToggleRequest",
+    "FeatureToggleRequest",
     "BoardCreate",
     "BoardRead",
     "BoardUpdate",

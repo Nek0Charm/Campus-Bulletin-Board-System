@@ -38,7 +38,7 @@ class AuthorInfo(BaseModel):
 class PostRead(PostBase):
     id: UUID
     author_id: UUID
-    author: AuthorInfo
+    author: Optional[AuthorInfo] = None
     is_pinned: bool
     is_featured: bool
     status: str = "normal"
@@ -50,6 +50,14 @@ class PostRead(PostBase):
     updated_at: Optional[datetime] = None
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class PinToggleRequest(BaseModel):
+    is_pinned: bool
+
+
+class FeatureToggleRequest(BaseModel):
+    is_featured: bool
 
 
 class PostListResponse(BaseModel):
