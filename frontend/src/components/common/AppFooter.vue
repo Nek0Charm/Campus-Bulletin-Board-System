@@ -12,7 +12,7 @@
   height: var(--footer-height);
   font-size: var(--font-size-xs);
   color: var(--color-text-secondary);
-  border-top: 1px solid var(--color-border-light);
+  border-top: 1px solid var(--color-border-list);
   background: var(--color-bg-card);
 }
 </style>

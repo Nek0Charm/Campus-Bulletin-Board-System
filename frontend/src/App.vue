@@ -11,7 +11,7 @@ const isAdminRoute = computed(() => route.path.startsWith('/admin'))
 <template>
   <AppHeader />
   <main :class="['app-main', { 'app-main--full': isAdminRoute }]">
-    <transition name="fade" mode="out-in">
+    <transition name="page-fade" mode="out-in">
       <router-view />
     </transition>
   </main>
@@ -21,12 +21,17 @@ const isAdminRoute = computed(() => route.path.startsWith('/admin'))
 <style>
 @import '@/styles/variables.css';
 
+body {
+  background: #f2f3f5;
+}
+
 .app-main {
   max-width: 1200px;
   margin: 0 auto;
   width: 100%;
   padding: 0 var(--spacing-md);
   box-sizing: border-box;
+  background: #f2f3f5;
 }
 
 .app-main--full {
@@ -43,15 +48,5 @@ const isAdminRoute = computed(() => route.path.startsWith('/admin'))
   .app-main--full {
     padding: 0;
   }
-}
-
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity 0.2s ease;
-}
-
-.fade-enter-from,
-.fade-leave-to {
-  opacity: 0;
 }
 </style>

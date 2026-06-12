@@ -45,12 +45,14 @@
         @action="goToCreatePost"
       />
       <div v-else class="post-list-wrapper">
-        <PostListItem
-          v-for="post in postStore.postList"
-          :key="post.id"
-          :post="post"
-          @click="goToPost"
-        />
+        <TransitionGroup name="list-item" tag="div">
+          <PostListItem
+            v-for="post in postStore.postList"
+            :key="post.id"
+            :post="post"
+            @click="goToPost"
+          />
+        </TransitionGroup>
         <PaginationBar
           :current-page="postStore.pagination.page"
           :page-size="postStore.pagination.pageSize"

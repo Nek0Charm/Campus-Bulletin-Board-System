@@ -398,7 +398,7 @@ onMounted(() => {
   background: var(--color-bg-card);
   border: 1px solid var(--color-border-light);
   border-radius: var(--radius-md);
-  padding: var(--spacing-lg);
+  padding: var(--spacing-xl) var(--spacing-lg);
   margin-top: var(--spacing-md);
 }
 
@@ -455,7 +455,7 @@ onMounted(() => {
 
 .post-content {
   font-size: var(--font-size-base);
-  line-height: var(--line-height-base);
+  line-height: 1.85;
   color: var(--color-text-primary);
   min-height: 100px;
 }
@@ -482,13 +482,13 @@ onMounted(() => {
   background: var(--color-bg-card);
   border: 1px solid var(--color-border-light);
   border-radius: var(--radius-md);
-  padding: var(--spacing-lg);
+  padding: var(--spacing-lg) var(--spacing-lg);
 }
 
 .comment-input-area {
   margin-top: var(--spacing-lg);
   padding-top: var(--spacing-md);
-  border-top: 1px solid var(--color-border-light);
+  border-top: 1px solid var(--color-border-list);
 }
 
 .login-prompt {

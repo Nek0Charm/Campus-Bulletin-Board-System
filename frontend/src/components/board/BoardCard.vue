@@ -35,13 +35,15 @@ const iconComponent = computed(() => {
   background: var(--color-bg-card);
   border: 1px solid var(--color-border-light);
   border-radius: var(--radius-md);
-  padding: var(--spacing-md);
+  padding: var(--spacing-lg);
   cursor: pointer;
-  transition: all var(--transition-fast);
+  transition:
+    background var(--transition-fast),
+    border-color var(--transition-fast);
 }
 
 .board-card:hover {
-  background-color: var(--el-fill-color-light, #fafafa);
+  background-color: #fafbfc;
   border-color: var(--color-primary-light);
 }
 

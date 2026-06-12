@@ -24,27 +24,29 @@
         description="当有人回复或点赞你的内容时，会在这里显示"
       />
       <div v-else class="notification-list">
-        <div
-          v-for="item in store.notifications"
-          :key="item.id"
-          class="notification-item"
-          :class="{ unread: !item.is_read }"
-          @click="handleClick(item)"
-        >
-          <div class="notif-left">
-            <span v-if="!item.is_read" class="unread-dot" />
-            <div class="notif-body">
-              <p class="notif-title">
-                <span v-if="item.actor" class="actor-name">{{
-                  item.actor.nickname || item.actor.username
-                }}</span>
-                {{ typeLabel(item.type) }}
-              </p>
-              <p class="notif-content">{{ item.content }}</p>
-              <p class="notif-time">{{ formatTimeAgo(item.created_at) }}</p>
+        <TransitionGroup name="list-item" tag="div">
+          <div
+            v-for="item in store.notifications"
+            :key="item.id"
+            class="notification-item"
+            :class="{ unread: !item.is_read }"
+            @click="handleClick(item)"
+          >
+            <div class="notif-left">
+              <span v-if="!item.is_read" class="unread-dot" />
+              <div class="notif-body">
+                <p class="notif-title">
+                  <span v-if="item.actor" class="actor-name">{{
+                    item.actor.nickname || item.actor.username
+                  }}</span>
+                  {{ typeLabel(item.type) }}
+                </p>
+                <p class="notif-content">{{ item.content }}</p>
+                <p class="notif-time">{{ formatTimeAgo(item.created_at) }}</p>
+              </div>
             </div>
           </div>
-        </div>
+        </TransitionGroup>
       </div>
 
       <PaginationBar
@@ -115,7 +117,7 @@ onMounted(() => {
   align-items: center;
   justify-content: space-between;
   padding: var(--spacing-md);
-  border-bottom: 1px solid var(--color-border-light);
+  border-bottom: 1px solid var(--color-border-list);
   cursor: pointer;
   transition: background var(--transition-fast);
 }
@@ -125,11 +127,11 @@ onMounted(() => {
 }
 
 .notification-item:hover {
-  background: var(--color-bg-page);
+  background: #fafbfc;
 }
 
 .notification-item.unread {
-  background: var(--el-color-primary-light-9, #ecf5ff);
+  background: #f0f7ff;
 }
 
 .notif-left {
@@ -154,18 +156,20 @@ onMounted(() => {
 .notif-title {
   font-size: var(--font-size-sm);
   color: var(--color-text-primary);
-  margin-bottom: 2px;
+  margin-bottom: 4px;
+  line-height: var(--line-height-base);
 }
 
 .actor-name {
   font-weight: 600;
-  color: var(--color-primary);
+  color: var(--color-text-primary);
 }
 
 .notif-content {
   font-size: var(--font-size-sm);
   color: var(--color-text-secondary);
-  margin-bottom: 4px;
+  margin-bottom: 6px;
+  line-height: var(--line-height-base);
 }
 
 .notif-time {

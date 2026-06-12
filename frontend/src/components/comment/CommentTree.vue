@@ -3,16 +3,18 @@
     <div class="comment-header-bar">
       <h3>{{ totalCount }} 条评论</h3>
     </div>
-    <CommentItem
-      v-for="comment in comments"
-      :key="comment.id"
-      :comment="comment"
-      :depth="0"
-      :liked-set="likedSet"
-      @reply="(id, name) => emitReply(id, name)"
-      @toggle-like="(id) => emitToggleLike(id)"
-      @delete="(id) => emitDelete(id)"
-    />
+    <TransitionGroup name="list-item" tag="div">
+      <CommentItem
+        v-for="comment in comments"
+        :key="comment.id"
+        :comment="comment"
+        :depth="0"
+        :liked-set="likedSet"
+        @reply="(id, name) => emitReply(id, name)"
+        @toggle-like="(id) => emitToggleLike(id)"
+        @delete="(id) => emitDelete(id)"
+      />
+    </TransitionGroup>
   </div>
 </template>
 

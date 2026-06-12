@@ -70,8 +70,10 @@
         description="换一个关键词或放宽筛选条件试试"
       />
 
-      <div v-else>
-        <PostListItem v-for="post in results" :key="post.id" :post="post" @click="goToPost" />
+      <div v-else class="result-list-wrapper">
+        <TransitionGroup name="list-item" tag="div">
+          <PostListItem v-for="post in results" :key="post.id" :post="post" @click="goToPost" />
+        </TransitionGroup>
         <PaginationBar
           :current-page="pagination.page"
           :page-size="pagination.pageSize"
@@ -243,47 +245,16 @@ watch(
   padding: var(--spacing-lg) var(--spacing-md);
 }
 
-.keyword-row {
-  display: flex;
-  width: min(560px, 100%);
-  gap: var(--spacing-sm);
-}
-
-.filters {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: var(--spacing-md);
-  margin-bottom: var(--spacing-md);
-}
-
-.filters :deep(.el-select) {
-  width: 180px;
-}
-
-.filters :deep(.el-date-editor) {
-  width: 280px;
-}
-
 .result-summary {
-  margin-bottom: var(--spacing-sm);
+  margin-bottom: var(--spacing-md);
   font-size: var(--font-size-sm);
   color: var(--color-text-secondary);
 }
 
-@media (max-width: 767px) {
-  .search-header {
-    display: block;
-  }
-
-  .search-header h1 {
-    margin-bottom: var(--spacing-md);
-  }
-
-  .keyword-row,
-  .filters :deep(.el-select),
-  .filters :deep(.el-date-editor) {
-    width: 100%;
-  }
+.result-list-wrapper {
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-md);
+  overflow: hidden;
 }
 </style>

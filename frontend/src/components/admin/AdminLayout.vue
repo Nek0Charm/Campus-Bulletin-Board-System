@@ -70,20 +70,20 @@ function toggleCollapse() {
   font-weight: 700;
   color: var(--color-text-primary);
   text-align: center;
-  border-bottom: 1px solid var(--color-border-light);
+  border-bottom: 1px solid var(--color-border-list);
 }
 
 .admin-main {
   flex: 1;
   padding: var(--spacing-lg);
-  background: var(--el-bg-color-page, #f5f7fa);
+  background: #f2f3f5;
   overflow-y: auto;
 }
 
 .sidebar-footer {
   margin-top: auto;
   padding: var(--spacing-sm);
-  border-top: 1px solid var(--color-border-light);
+  border-top: 1px solid var(--color-border-list);
   display: flex;
   justify-content: center;
   gap: var(--spacing-xs);

@@ -19,13 +19,15 @@
         action-text="去发帖"
         @action="$router.push('/posts/new')"
       />
-      <div v-else>
-        <PostListItem
-          v-for="post in posts"
-          :key="post.id"
-          :post="post"
-          @click="$router.push(`/posts/${post.id}`)"
-        />
+      <div v-else class="post-list-wrapper">
+        <TransitionGroup name="list-item" tag="div">
+          <PostListItem
+            v-for="post in posts"
+            :key="post.id"
+            :post="post"
+            @click="$router.push(`/posts/${post.id}`)"
+          />
+        </TransitionGroup>
         <PaginationBar
           v-if="pagination.total > pagination.pageSize"
           :current-page="pagination.page"
@@ -92,5 +94,12 @@ onMounted(() => fetchMyPosts())
   max-width: var(--content-max-width);
   margin: 0 auto;
   padding: var(--spacing-lg) var(--spacing-md);
+}
+
+.post-list-wrapper {
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-md);
+  overflow: hidden;
 }
 </style>

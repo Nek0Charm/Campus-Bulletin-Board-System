@@ -108,7 +108,7 @@ const replyAuthorMap = computed<Record<string, string>>(() => {
 }
 
 .comment-item:not(:last-child) {
-  border-bottom: 1px solid var(--color-border-light);
+  border-bottom: 1px solid var(--color-border-list);
 }
 
 .comment-main {
@@ -125,7 +125,7 @@ const replyAuthorMap = computed<Record<string, string>>(() => {
   display: flex;
   gap: var(--spacing-sm);
   align-items: center;
-  margin-bottom: 4px;
+  margin-bottom: 6px;
 }
 
 .comment-author {
@@ -143,7 +143,7 @@ const replyAuthorMap = computed<Record<string, string>>(() => {
   font-size: var(--font-size-base);
   color: var(--color-text-regular);
   line-height: var(--line-height-base);
-  margin-bottom: var(--spacing-xs);
+  margin-bottom: var(--spacing-sm);
   word-break: break-word;
 }
 
@@ -181,9 +181,10 @@ const replyAuthorMap = computed<Record<string, string>>(() => {
 
 .nested-replies {
   margin-top: var(--spacing-sm);
-  padding: 12px;
-  background-color: var(--el-fill-color-lighter, #f7f8fa);
-  border-radius: 6px;
+  padding: var(--spacing-sm) var(--spacing-md);
+  background-color: #f8f9fa;
+  border-radius: var(--radius-sm);
+  border-left: 2px solid var(--color-border-light);
 }
 
 .nested-replies > .comment-item {

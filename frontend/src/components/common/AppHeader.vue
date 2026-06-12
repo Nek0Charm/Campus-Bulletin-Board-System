@@ -111,7 +111,7 @@ watch(
   height: var(--header-height);
   padding: 0 var(--spacing-lg);
   background: var(--color-bg-card);
-  border-bottom: 1px solid var(--color-border-light);
+  border-bottom: 1px solid var(--color-border-list);
   box-shadow: none;
 }
 
