@@ -50,12 +50,23 @@ describe('renderMarkdown', () => {
 
   it('preserves language class on code blocks', () => {
     const html = renderMarkdown('```python\nprint("hi")\n```')
-    expect(html).toContain('class="language-python"')
+    expect(html).toContain('class="hljs"')
+    expect(html).toContain('<span')
   })
 
   it('renders underline with ++text++', () => {
     const html = renderMarkdown('++underlined++')
     expect(html).toContain('<ins>underlined</ins>')
+  })
+
+  it('renders subscript with ~text~', () => {
+    const html = renderMarkdown('H~2~O')
+    expect(html).toContain('<sub>2</sub>')
+  })
+
+  it('renders superscript with ^text^', () => {
+    const html = renderMarkdown('x^2^')
+    expect(html).toContain('<sup>2</sup>')
   })
 
   it('renders inline math with katex', () => {
@@ -69,6 +80,24 @@ describe('renderMarkdown', () => {
     const html = renderMarkdown('$$\\sum_{i=1}^{n} i$$')
     expect(html).toContain('katex')
     expect(html).toContain('katex-display')
+  })
+
+  it('renders code block with syntax highlighting', () => {
+    const html = renderMarkdown('```python\nprint("hello")\n```')
+    expect(html).toContain('class="hljs"')
+    expect(html).toContain('<span')
+  })
+
+  it('renders code block without language', () => {
+    const html = renderMarkdown('```\nplain code\n```')
+    expect(html).toContain('class="hljs"')
+    expect(html).toContain('plain code')
+  })
+
+  it('preserves kaTeX data attributes', () => {
+    const html = renderMarkdown('$x^2$')
+    // Should contain katex classes (not stripped by DOMPurify)
+    expect(html).toContain('katex')
   })
 })
 

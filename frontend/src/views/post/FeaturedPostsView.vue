@@ -1,39 +1,30 @@
 <template>
-  <div class="user-posts-page">
+  <div class="featured-posts-page">
     <div class="content-container">
       <PageHeader
-        title="我的帖子"
-        :breadcrumbs="[
-          { label: '首页', to: { name: 'Home' } },
-          { label: '个人中心', to: { name: 'Profile' } },
-          { label: '我的帖子' },
-        ]"
-      />
+        title="精选帖子"
+        :breadcrumbs="[{ label: '首页', to: { name: 'Home' } }, { label: '精选帖子' }]"
+      >
+        <p class="page-desc">管理员推荐的高质量内容</p>
+      </PageHeader>
 
       <LoadingSkeleton v-if="loading" type="list-item" :count="5" />
-      <ErrorState v-else-if="error" :message="error" @retry="fetchMyPosts" />
+      <ErrorState v-else-if="error" :message="error" @retry="fetchPosts" />
       <EmptyState
         v-else-if="!posts.length"
-        title="暂无帖子"
-        description="你还没有发布过帖子"
-        action-text="去发帖"
-        @action="$router.push('/posts/new')"
+        title="暂无精选"
+        description="管理员还没有精选任何帖子"
       />
       <div v-else class="post-list-wrapper">
         <TransitionGroup name="list-item" tag="div">
-          <PostListItem
-            v-for="post in posts"
-            :key="post.id"
-            :post="post"
-            @click="$router.push(`/posts/${post.id}`)"
-          />
+          <PostListItem v-for="post in posts" :key="post.id" :post="post" @click="goToPost" />
         </TransitionGroup>
         <PaginationBar
-          v-if="pagination.total > pagination.pageSize"
           :current-page="pagination.page"
           :page-size="pagination.pageSize"
           :total="pagination.total"
-          @page-change="(p: number) => fetchMyPosts(p)"
+          @page-change="(p: number) => fetchPosts(p)"
+          @size-change="(s: number) => fetchPosts(pagination.page, s)"
         />
       </div>
     </div>
@@ -42,8 +33,8 @@
 
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { postsAPI } from '@/api/posts'
-import { useAuthStore } from '@/stores/auth'
 import PostListItem from '@/components/post/PostListItem.vue'
 import PaginationBar from '@/components/common/PaginationBar.vue'
 import LoadingSkeleton from '@/components/common/LoadingSkeleton.vue'
@@ -53,8 +44,7 @@ import PageHeader from '@/components/common/PageHeader.vue'
 import type { PostRead } from '@/types/post'
 import { DEFAULT_PAGE_SIZE } from '@/utils/constants'
 
-const authStore = useAuthStore()
-
+const router = useRouter()
 const posts = ref<PostRead[]>([])
 const loading = ref(false)
 const error = ref<string | null>(null)
@@ -64,29 +54,38 @@ const pagination = reactive({
   total: 0,
 })
 
-async function fetchMyPosts(page = 1) {
+async function fetchPosts(page = 1, pageSize = pagination.pageSize) {
   loading.value = true
   error.value = null
   try {
     const data = await postsAPI.getPosts({
       page,
-      page_size: pagination.pageSize,
-      author_id: authStore.currentUser?.id,
+      page_size: pageSize,
+      sort_by: 'created_at',
+      is_featured: true,
     })
     posts.value = data.items
-    Object.assign(pagination, data.pagination)
+    pagination.page = data.pagination.page
+    pagination.pageSize = data.pagination.page_size
+    pagination.total = data.pagination.total
   } catch {
-    error.value = '加载失败'
+    error.value = '加载帖子失败'
   } finally {
     loading.value = false
   }
 }
 
-onMounted(() => fetchMyPosts())
+function goToPost(postId: string) {
+  router.push(`/posts/${postId}`)
+}
+
+onMounted(() => {
+  fetchPosts()
+})
 </script>
 
 <style scoped>
-.user-posts-page {
+.featured-posts-page {
   min-height: calc(100vh - var(--header-height) - var(--footer-height));
 }
 
@@ -94,6 +93,11 @@ onMounted(() => fetchMyPosts())
   max-width: var(--content-max-width);
   margin: 0 auto;
   padding: var(--spacing-lg) var(--spacing-md);
+}
+
+.page-desc {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
 }
 
 .post-list-wrapper {

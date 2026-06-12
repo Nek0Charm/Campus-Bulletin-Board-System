@@ -174,21 +174,24 @@ async def test_public_list_only_published_in_range(client: AsyncClient, db_sessi
 
 
 @pytest.mark.asyncio
-async def test_public_list_ordered_by_starts_at_desc(client: AsyncClient, db_session):
-    """公开列表按 starts_at 降序排列。"""
+async def test_public_list_ordered_by_created_at_desc(client: AsyncClient, db_session):
+    """公开列表按创建时间降序排列。"""
+    import asyncio
+
     admin_client = await _get_admin_client(client, db_session)
 
     await admin_client.post(
         ADMIN_ANNOUNCEMENTS,
         json=_make_announcement(
-            title="Older",
+            title="First",
             starts_at=(NOW - timedelta(days=2)).isoformat(),
         ),
     )
+    await asyncio.sleep(1.1)
     await admin_client.post(
         ADMIN_ANNOUNCEMENTS,
         json=_make_announcement(
-            title="Newer",
+            title="Second",
             starts_at=(NOW - timedelta(hours=1)).isoformat(),
         ),
     )
@@ -196,7 +199,7 @@ async def test_public_list_ordered_by_starts_at_desc(client: AsyncClient, db_ses
     resp = await client.get(f"{ANNOUNCEMENTS_URL}/")
     data = resp.json()["data"]
     titles = [a["title"] for a in data]
-    assert titles[0] == "Newer"
+    assert titles[0] == "Second"
 
 
 @pytest.mark.asyncio

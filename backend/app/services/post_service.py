@@ -37,7 +37,9 @@ class PostService:
         board_id: Optional[UUID] = None,
         author_id: Optional[UUID] = None,
         page: int = 1,
-        page_size: int = 20
+        page_size: int = 20,
+        sort_by: str | None = None,
+        is_featured: bool | None = None,
     ) -> Tuple[List[Post], int]:
         query = (
             db.query(Post)
@@ -49,8 +51,13 @@ class PostService:
             query = query.filter(Post.board_id == board_id)
         if author_id:
             query = query.filter(Post.author_id == author_id)
+        if is_featured is not None:
+            query = query.filter(Post.is_featured == is_featured)
 
-        query = query.order_by(desc(Post.is_pinned), desc(Post.created_at))
+        if sort_by == "created_at":
+            query = query.order_by(desc(Post.created_at))
+        else:
+            query = query.order_by(desc(Post.is_pinned), desc(Post.created_at))
 
         total = query.count()
         items = query.offset((page - 1) * page_size).limit(page_size).all()

@@ -14,7 +14,7 @@ vi.mock('@/api/media', () => ({
 
 vi.mock('@/api/boards', () => ({
   boardsAPI: {
-    getBoards: vi.fn<() => void>().mockResolvedValue([]),
+    getBoards: vi.fn<() => Promise<never[]>>().mockResolvedValue([]),
     getBoard: vi.fn<() => void>(),
     createBoard: vi.fn<() => void>(),
     updateBoard: vi.fn<() => void>(),

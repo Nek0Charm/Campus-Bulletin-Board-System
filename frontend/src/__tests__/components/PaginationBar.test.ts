@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mountWithSetup } from '../setup'
+import type { VueWrapper } from '@vue/test-utils'
 import PaginationBar from '@/components/common/PaginationBar.vue'
 
 describe('PaginationBar', () => {
@@ -41,7 +42,7 @@ describe('PaginationBar', () => {
     })
 
     // Simulate the el-pagination emitting update:currentPage
-    const paginationStub = wrapper.findComponent('.el-pagination')
+    const paginationStub = wrapper.findComponent('.el-pagination') as VueWrapper
     await paginationStub.vm.$emit('update:currentPage', 3)
 
     expect(wrapper.emitted('page-change')).toBeTruthy()
@@ -58,8 +59,8 @@ describe('PaginationBar', () => {
       },
     })
 
-    const paginationStub = wrapper.findComponent('.el-pagination')
-    await paginationStub.vm.$emit('update:pageSize', 50)
+    const paginationStub2 = wrapper.findComponent('.el-pagination') as VueWrapper
+    await paginationStub2.vm.$emit('update:pageSize', 50)
 
     expect(wrapper.emitted('size-change')).toBeTruthy()
     expect(wrapper.emitted('size-change')![0]).toEqual([50])

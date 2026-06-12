@@ -20,6 +20,29 @@ test.describe('Admin - User Management', () => {
   })
 })
 
+test.describe('Admin - Announcements', () => {
+  test('admin can navigate to announcements page', async ({ page }) => {
+    await page.goto('/admin/announcements')
+
+    await expect(page.getByRole('heading', { name: '公告管理' })).toBeVisible({ timeout: 10000 })
+  })
+
+  test('announcements page shows create button', async ({ page }) => {
+    await page.goto('/admin/announcements')
+
+    await expect(page.getByRole('button', { name: '发布公告' })).toBeVisible({ timeout: 5000 })
+  })
+
+  test('admin can open create announcement dialog', async ({ page }) => {
+    await page.goto('/admin/announcements')
+
+    await page.getByRole('button', { name: '发布公告' }).click()
+    await expect(page.locator('.el-dialog').filter({ hasText: '发布公告' })).toBeVisible({
+      timeout: 5000,
+    })
+  })
+})
+
 test.describe('Admin - Board Management', () => {
   test('admin can navigate to board management page', async ({ page }) => {
     await page.goto('/admin/boards')

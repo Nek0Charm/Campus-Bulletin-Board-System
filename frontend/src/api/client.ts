@@ -24,8 +24,12 @@ httpClient.interceptors.request.use(
 
 httpClient.interceptors.response.use(
   (response) => {
+    // 204 No Content has no body — resolve with undefined
+    if (response.status === 204) {
+      return undefined
+    }
     const body = response.data
-    if (body.code >= 200 && body.code < 300) {
+    if (body && body.code >= 200 && body.code < 300) {
       return body.data
     }
     return Promise.reject(body)

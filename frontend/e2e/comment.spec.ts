@@ -23,7 +23,7 @@ test.describe('Comment - View', () => {
     }
 
     await page.goto(`/posts/${posts[0].id}`)
-    await expect(page.getByRole('heading', { name: '评论' })).toBeVisible({ timeout: 10000 })
+    await expect(page.getByText(/条评论/)).toBeVisible({ timeout: 10000 })
   })
 
   test('unauthenticated user sees login prompt for comments', async ({ page, request }) => {

@@ -1,58 +1,57 @@
 <template>
   <div class="search-page">
     <div class="content-container">
-      <el-breadcrumb separator=">">
-        <el-breadcrumb-item :to="{ name: 'Home' }">首页</el-breadcrumb-item>
-        <el-breadcrumb-item>搜索</el-breadcrumb-item>
-      </el-breadcrumb>
+      <PageHeader
+        title="搜索帖子"
+        :breadcrumbs="[{ label: '首页', to: { name: 'Home' } }, { label: '搜索' }]"
+      >
+        <template #actions>
+          <div class="keyword-row">
+            <el-input
+              v-model="keyword"
+              clearable
+              placeholder="搜索标题或正文"
+              @keyup.enter="submitSearch()"
+            >
+              <template #prefix>
+                <el-icon><Search /></el-icon>
+              </template>
+            </el-input>
+            <el-button type="primary" @click="submitSearch()">搜索</el-button>
+          </div>
+        </template>
 
-      <div class="search-header">
-        <h1>搜索帖子</h1>
-        <div class="keyword-row">
-          <el-input
-            v-model="keyword"
+        <div class="filters">
+          <el-select
+            v-model="selectedBoardId"
             clearable
-            placeholder="搜索标题或正文"
-            @keyup.enter="submitSearch()"
+            placeholder="全部板块"
+            @change="handleFilterChange"
           >
-            <template #prefix>
-              <el-icon><Search /></el-icon>
-            </template>
-          </el-input>
-          <el-button type="primary" @click="submitSearch()">搜索</el-button>
-        </div>
-      </div>
+            <el-option
+              v-for="board in boardStore.boards"
+              :key="board.id"
+              :label="board.name"
+              :value="board.id"
+            />
+          </el-select>
 
-      <div class="filters">
-        <el-select
-          v-model="selectedBoardId"
-          clearable
-          placeholder="全部板块"
-          @change="handleFilterChange"
-        >
-          <el-option
-            v-for="board in boardStore.boards"
-            :key="board.id"
-            :label="board.name"
-            :value="board.id"
+          <el-date-picker
+            v-model="dateRange"
+            type="daterange"
+            value-format="YYYY-MM-DD"
+            start-placeholder="开始日期"
+            end-placeholder="结束日期"
+            @change="handleFilterChange"
           />
-        </el-select>
 
-        <el-date-picker
-          v-model="dateRange"
-          type="daterange"
-          value-format="YYYY-MM-DD"
-          start-placeholder="开始日期"
-          end-placeholder="结束日期"
-          @change="handleFilterChange"
-        />
-
-        <el-radio-group v-model="sortBy" size="small" @change="handleFilterChange">
-          <el-radio-button value="relevance">相关度</el-radio-button>
-          <el-radio-button value="hot">热度</el-radio-button>
-          <el-radio-button value="time">时间</el-radio-button>
-        </el-radio-group>
-      </div>
+          <el-radio-group v-model="sortBy" size="small" @change="handleFilterChange">
+            <el-radio-button value="relevance">相关度</el-radio-button>
+            <el-radio-button value="hot">热度</el-radio-button>
+            <el-radio-button value="time">时间</el-radio-button>
+          </el-radio-group>
+        </div>
+      </PageHeader>
 
       <div v-if="searched && !loading" class="result-summary">
         找到 {{ pagination.total }} 条与“{{ routeKeyword }}”相关的帖子
@@ -71,8 +70,10 @@
         description="换一个关键词或放宽筛选条件试试"
       />
 
-      <div v-else>
-        <PostListItem v-for="post in results" :key="post.id" :post="post" @click="goToPost" />
+      <div v-else class="result-list-wrapper">
+        <TransitionGroup name="list-item" tag="div">
+          <PostListItem v-for="post in results" :key="post.id" :post="post" @click="goToPost" />
+        </TransitionGroup>
         <PaginationBar
           :current-page="pagination.page"
           :page-size="pagination.pageSize"
@@ -98,6 +99,7 @@ import PaginationBar from '@/components/common/PaginationBar.vue'
 import LoadingSkeleton from '@/components/common/LoadingSkeleton.vue'
 import ErrorState from '@/components/common/ErrorState.vue'
 import EmptyState from '@/components/common/EmptyState.vue'
+import PageHeader from '@/components/common/PageHeader.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -243,61 +245,16 @@ watch(
   padding: var(--spacing-lg) var(--spacing-md);
 }
 
-.search-header {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: var(--spacing-lg);
-  margin: var(--spacing-lg) 0;
-}
-
-.search-header h1 {
-  font-size: var(--font-size-xxl);
-  font-weight: 700;
-  color: var(--color-text-primary);
-}
-
-.keyword-row {
-  display: flex;
-  width: min(560px, 100%);
-  gap: var(--spacing-sm);
-}
-
-.filters {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: var(--spacing-md);
-  margin-bottom: var(--spacing-md);
-}
-
-.filters :deep(.el-select) {
-  width: 180px;
-}
-
-.filters :deep(.el-date-editor) {
-  width: 280px;
-}
-
 .result-summary {
-  margin-bottom: var(--spacing-sm);
+  margin-bottom: var(--spacing-md);
   font-size: var(--font-size-sm);
   color: var(--color-text-secondary);
 }
 
-@media (max-width: 767px) {
-  .search-header {
-    display: block;
-  }
-
-  .search-header h1 {
-    margin-bottom: var(--spacing-md);
-  }
-
-  .keyword-row,
-  .filters :deep(.el-select),
-  .filters :deep(.el-date-editor) {
-    width: 100%;
-  }
+.result-list-wrapper {
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-md);
+  overflow: hidden;
 }
 </style>

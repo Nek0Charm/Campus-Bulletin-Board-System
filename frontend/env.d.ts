@@ -25,3 +25,15 @@ declare module 'markdown-it-ins' {
   function plugin(md: MarkdownIt): void
   export default plugin
 }
+
+declare module 'markdown-it-sub' {
+  import type MarkdownIt from 'markdown-it'
+  function plugin(md: MarkdownIt): void
+  export = plugin
+}
+
+declare module 'markdown-it-sup' {
+  import type MarkdownIt from 'markdown-it'
+  function plugin(md: MarkdownIt): void
+  export = plugin
+}

@@ -109,15 +109,18 @@ export function mountWithSetup(
   component: unknown,
   options: MountingOptions<Record<string, unknown>> = {},
 ): VueWrapper {
-  return mount(component as never, {
-    ...options,
-    global: {
-      ...options.global,
-      stubs: {
-        ...EL_STUBS,
-        ...ROUTER_STUBS,
-        ...(options.global?.stubs as Record<string, unknown>),
+  return mount(
+    component as never,
+    {
+      ...options,
+      global: {
+        ...options.global,
+        stubs: {
+          ...EL_STUBS,
+          ...ROUTER_STUBS,
+          ...(options.global?.stubs as Record<string, unknown>),
+        },
       },
-    },
-  })
+    } as never,
+  )
 }

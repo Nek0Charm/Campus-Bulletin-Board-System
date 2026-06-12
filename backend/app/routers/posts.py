@@ -56,12 +56,22 @@ def list_posts(
     author_id: Optional[UUID] = None,
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
+    sort_by: Optional[str] = Query(
+        None, description="Sort by field, e.g. 'created_at'"
+    ),
+    is_featured: Optional[bool] = Query(None, description="Filter featured posts"),
     db: Session = Depends(get_db),
     service: PostService = Depends(get_post_service),
 ):
     """获取帖子列表：支持分页、板块筛选、作者筛选，置顶优先"""
     items, total = service.get_multi(
-        db, board_id=board_id, author_id=author_id, page=page, page_size=page_size
+        db,
+        board_id=board_id,
+        author_id=author_id,
+        page=page,
+        page_size=page_size,
+        sort_by=sort_by,
+        is_featured=is_featured,
     )
     return PaginatedResponse(
         data=PaginatedData(

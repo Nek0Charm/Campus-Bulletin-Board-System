@@ -10,7 +10,7 @@ from app.schemas.announcement import AnnouncementCreate, AnnouncementUpdate
 
 class AnnouncementService:
     def list_published(self, db: Session) -> list[Announcement]:
-        """返回已发布且在有效期内的公告，按 starts_at 降序。"""
+        """返回已发布且在有效期内的公告，按创建时间降序。"""
         now = datetime.now(timezone.utc)
         return (
             db.query(Announcement)
@@ -20,7 +20,7 @@ class AnnouncementService:
                 (Announcement.starts_at.is_(None) | (Announcement.starts_at <= now)),
                 (Announcement.ends_at.is_(None) | (Announcement.ends_at >= now)),
             )
-            .order_by(Announcement.starts_at.desc())
+            .order_by(Announcement.created_at.desc())
             .all()
         )
 

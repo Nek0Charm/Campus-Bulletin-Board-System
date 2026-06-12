@@ -1,0 +1,175 @@
+/* Markdown rendering styles — shared across post content and comments */
+
+.markdown-body {
+  font-size: var(--font-size-base);
+  line-height: var(--line-height-base);
+  color: var(--color-text-primary);
+}
+
+.markdown-body h1 {
+  font-size: 1.6em;
+  margin: 1em 0 0.5em;
+  font-weight: 700;
+  border-bottom: 1px solid var(--color-border-light);
+  padding-bottom: 0.3em;
+}
+
+.markdown-body h2 {
+  font-size: 1.4em;
+  margin: 1em 0 0.5em;
+  font-weight: 700;
+}
+
+.markdown-body h3 {
+  font-size: 1.2em;
+  margin: 0.8em 0 0.4em;
+  font-weight: 600;
+}
+
+.markdown-body h4 {
+  font-size: 1.1em;
+  margin: 0.8em 0 0.4em;
+  font-weight: 600;
+}
+
+.markdown-body p {
+  margin-bottom: 1em;
+  line-height: 1.85;
+}
+
+.markdown-body ul,
+.markdown-body ol {
+  padding-left: 2em;
+  margin-bottom: 1em;
+  line-height: 1.85;
+}
+
+.markdown-body li {
+  margin-bottom: 0.25em;
+}
+
+.markdown-body blockquote {
+  border-left: 4px solid var(--color-primary-light, #409eff);
+  padding: 0.5em 1em;
+  margin: 0 0 1em;
+  color: var(--color-text-secondary);
+  background: var(--color-bg-subtle, #f5f7fa);
+  border-radius: 0 4px 4px 0;
+}
+
+.markdown-body pre {
+  background: #f6f8fa;
+  border-radius: 6px;
+  padding: 16px;
+  overflow-x: auto;
+  margin-bottom: 1em;
+  font-size: 0.9em;
+  line-height: 1.5;
+}
+
+.markdown-body code {
+  background: rgba(175, 184, 193, 0.2);
+  border-radius: 3px;
+  padding: 2px 6px;
+  font-size: 0.9em;
+  font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+}
+
+.markdown-body pre code {
+  background: none;
+  padding: 0;
+  border-radius: 0;
+}
+
+.markdown-body table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 1em;
+  line-height: 1.6;
+}
+
+.markdown-body th,
+.markdown-body td {
+  border: 1px solid var(--color-border, #dcdfe6);
+  padding: 8px 12px;
+  text-align: left;
+}
+
+.markdown-body th {
+  background: var(--color-bg-subtle, #f5f7fa);
+  font-weight: 600;
+}
+
+.markdown-body img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 4px;
+  margin: 1em 0;
+}
+
+.markdown-body hr {
+  border: none;
+  border-top: 1px solid var(--color-border, #dcdfe6);
+  margin: 1.5em 0;
+}
+
+.markdown-body a {
+  color: var(--color-primary, #409eff);
+  text-decoration: none;
+}
+
+.markdown-body a:hover {
+  text-decoration: underline;
+}
+
+.markdown-body ins {
+  text-decoration: underline;
+}
+
+.markdown-body u {
+  text-decoration: underline;
+}
+
+/* Comment-specific overrides */
+.comment-content.markdown-body p {
+  margin-bottom: 0.4em;
+  line-height: 1.6;
+}
+
+.comment-content.markdown-body p:last-child {
+  margin-bottom: 0;
+}
+
+.comment-content.markdown-body ul,
+.comment-content.markdown-body ol {
+  padding-left: 1.5em;
+  margin-bottom: 0.4em;
+}
+
+.comment-content.markdown-body code {
+  background: rgba(175, 184, 193, 0.2);
+  border-radius: 2px;
+  padding: 1px 4px;
+  font-size: 0.9em;
+}
+
+.comment-content.markdown-body pre {
+  background: #f6f8fa;
+  border-radius: 4px;
+  padding: 8px;
+  overflow-x: auto;
+  margin-bottom: 0.4em;
+  font-size: 0.85em;
+}
+
+.comment-content.markdown-body blockquote {
+  border-left: 3px solid var(--color-border, #dcdfe6);
+  padding: 0.25em 0.75em;
+  margin: 0 0 0.4em;
+  color: var(--color-text-secondary);
+}
+
+.comment-content.markdown-body a {
+  color: var(--color-primary, #409eff);
+  word-break: break-all;
+}

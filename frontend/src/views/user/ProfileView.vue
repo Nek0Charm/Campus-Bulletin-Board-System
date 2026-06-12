@@ -312,7 +312,7 @@ onMounted(() => {
   color: var(--color-text-primary);
   margin-bottom: var(--spacing-md);
   padding-bottom: var(--spacing-sm);
-  border-bottom: 1px solid var(--color-border-light);
+  border-bottom: 1px solid var(--color-border-list);
 }
 
 .profile-avatar-section {

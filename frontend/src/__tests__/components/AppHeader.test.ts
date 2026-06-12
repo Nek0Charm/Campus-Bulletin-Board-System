@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
 import { mountWithSetup } from '../setup'
+import type { VueWrapper } from '@vue/test-utils'
 import AppHeader from '@/components/common/AppHeader.vue'
 import { useAuthStore } from '@/stores/auth'
 import type { User } from '@/types/user'
@@ -43,7 +44,7 @@ const mockUser: User = {
   username: 'testuser',
   email: 'test@example.com',
   nickname: 'Test User',
-  avatar_url: null,
+  avatar_url: undefined,
   role: 'user',
   status: 'active',
   email_verified: true,
@@ -150,7 +151,7 @@ describe('AppHeader', () => {
 
       // Set the search keyword directly on the component's ref
       const input = wrapper.find('.el-input')
-      const inputEl = wrapper.findComponent('.el-input')
+      const inputEl = wrapper.findComponent('.el-input') as VueWrapper
       await inputEl.vm.$emit('update:modelValue', 'test query')
 
       // Trigger the enter key to search
@@ -171,7 +172,7 @@ describe('AppHeader', () => {
       const dropdownItems = wrapper.findAll('.el-dropdown-item')
       // Items: 个人中心, 通知, 管理后台 (if admin), 退出登录
       const logoutIdx = dropdownItems.length - 1 // Last item is always logout
-      await dropdownItems[logoutIdx].trigger('click')
+      await dropdownItems[logoutIdx]!.trigger('click')
 
       // Wait for async handleLogout to complete
       await new Promise((r) => setTimeout(r, 10))

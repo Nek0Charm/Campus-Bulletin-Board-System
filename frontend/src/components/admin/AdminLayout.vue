@@ -15,6 +15,10 @@
           <el-icon><Grid /></el-icon>
           <span>板块管理</span>
         </el-menu-item>
+        <el-menu-item index="/admin/announcements">
+          <el-icon><Bell /></el-icon>
+          <span>公告管理</span>
+        </el-menu-item>
       </el-menu>
       <div class="sidebar-footer">
         <el-button text @click="toggleCollapse">
@@ -34,7 +38,7 @@
 
 <script setup lang="ts">
 import { useRoute } from 'vue-router'
-import { DataAnalysis, User, Grid, Fold, Expand, HomeFilled } from '@element-plus/icons-vue'
+import { DataAnalysis, User, Grid, Bell, Fold, Expand, HomeFilled } from '@element-plus/icons-vue'
 import { useUIStore } from '@/stores/ui'
 
 const route = useRoute()
@@ -70,20 +74,20 @@ function toggleCollapse() {
   font-weight: 700;
   color: var(--color-text-primary);
   text-align: center;
-  border-bottom: 1px solid var(--color-border-light);
+  border-bottom: 1px solid var(--color-border-list);
 }
 
 .admin-main {
   flex: 1;
   padding: var(--spacing-lg);
-  background: var(--color-bg-page);
+  background: #f2f3f5;
   overflow-y: auto;
 }
 
 .sidebar-footer {
   margin-top: auto;
   padding: var(--spacing-sm);
-  border-top: 1px solid var(--color-border-light);
+  border-top: 1px solid var(--color-border-list);
   display: flex;
   justify-content: center;
   gap: var(--spacing-xs);

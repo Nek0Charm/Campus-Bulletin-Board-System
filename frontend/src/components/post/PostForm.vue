@@ -42,6 +42,8 @@ import type { PostCreate, PostUpdate } from '@/types/post'
 import type { Component } from 'vue'
 import type MarkdownIt from 'markdown-it'
 import ins from 'markdown-it-ins'
+import sub from 'markdown-it-sub'
+import sup from 'markdown-it-sup'
 
 const MdEditor = defineAsyncComponent(() =>
   import('md-editor-v3').then((m) => m.MdEditor as Component),
@@ -49,6 +51,8 @@ const MdEditor = defineAsyncComponent(() =>
 
 function configureMd(md: MarkdownIt) {
   md.use(ins)
+  md.use(sub)
+  md.use(sup)
 }
 
 const props = withDefaults(

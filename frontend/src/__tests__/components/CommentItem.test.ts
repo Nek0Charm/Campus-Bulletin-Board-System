@@ -48,7 +48,7 @@ const mockAuthor: User = {
   username: 'comment_author',
   email: 'author@example.com',
   nickname: 'Comment Author',
-  avatar_url: null,
+  avatar_url: undefined,
   role: 'user',
   status: 'active',
   email_verified: true,
@@ -65,7 +65,7 @@ function makeMockComment(overrides: Partial<CommentRead> = {}): CommentRead {
       id: 'author-1',
       username: 'comment_author',
       nickname: 'Comment Author',
-      avatar_url: null,
+      avatar_url: undefined,
     },
     content: 'This is a test comment',
     status: 'normal',
@@ -198,7 +198,7 @@ describe('CommentItem', () => {
 
     const actionBtns = wrapper.findAll('.action-btn')
     // First button (before reply) should be the like button
-    const likeBtn = actionBtns[0]
+    const likeBtn = actionBtns[0]!
     await likeBtn.trigger('click')
 
     expect(wrapper.emitted('toggle-like')).toBeTruthy()

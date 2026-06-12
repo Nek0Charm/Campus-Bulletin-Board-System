@@ -1,22 +1,15 @@
 <template>
   <div class="board-posts-page">
     <div class="content-container">
-      <!-- Breadcrumb -->
-      <el-breadcrumb separator=">">
-        <el-breadcrumb-item :to="{ name: 'Home' }">首页</el-breadcrumb-item>
-        <el-breadcrumb-item>{{ boardName }}</el-breadcrumb-item>
-      </el-breadcrumb>
+      <PageHeader
+        :title="boardName"
+        :breadcrumbs="[{ label: '首页', to: { name: 'Home' } }, { label: boardName }]"
+      >
+        <template #actions>
+          <el-tag v-if="isBoardMasterHere" type="warning" size="small">版主</el-tag>
+        </template>
 
-      <!-- Board Info -->
-      <div class="board-info">
-        <h1>
-          {{ boardName }}
-          <el-tag v-if="isBoardMasterHere" type="warning" size="small" class="bm-badge"
-            >版主</el-tag
-          >
-        </h1>
-        <p v-if="boardDesc">{{ boardDesc }}</p>
-        <!-- Board Masters -->
+        <p v-if="boardDesc" class="board-desc">{{ boardDesc }}</p>
         <div v-if="boardMasters.length" class="board-masters">
           <span class="masters-label">版主：</span>
           <span v-for="bm in boardMasters" :key="bm.id" class="master-item">
@@ -28,19 +21,18 @@
             <span class="master-name">{{ bm.user.nickname || bm.user.username }}</span>
           </span>
         </div>
-      </div>
 
-      <!-- Toolbar -->
-      <div class="toolbar">
-        <div class="sort-bar">
-          <el-radio-group v-model="sortBy" size="small" @change="fetchPosts">
-            <el-radio-button value="created_at">最新发布</el-radio-button>
-          </el-radio-group>
+        <div class="toolbar">
+          <div class="sort-bar">
+            <el-radio-group v-model="sortBy" size="small" @change="fetchPosts">
+              <el-radio-button value="created_at">最新发布</el-radio-button>
+            </el-radio-group>
+          </div>
+          <el-button v-if="authStore.isAuthenticated" type="primary" @click="goToCreatePost">
+            + 发帖
+          </el-button>
         </div>
-        <el-button v-if="authStore.isAuthenticated" type="primary" @click="goToCreatePost">
-          + 发帖
-        </el-button>
-      </div>
+      </PageHeader>
 
       <!-- Post List -->
       <LoadingSkeleton v-if="loading" type="list-item" :count="5" />
@@ -52,13 +44,15 @@
         :action-text="authStore.isAuthenticated ? '去发帖' : undefined"
         @action="goToCreatePost"
       />
-      <div v-else>
-        <PostListItem
-          v-for="post in postStore.postList"
-          :key="post.id"
-          :post="post"
-          @click="goToPost"
-        />
+      <div v-else class="post-list-wrapper">
+        <TransitionGroup name="list-item" tag="div">
+          <PostListItem
+            v-for="post in postStore.postList"
+            :key="post.id"
+            :post="post"
+            @click="goToPost"
+          />
+        </TransitionGroup>
         <PaginationBar
           :current-page="postStore.pagination.page"
           :page-size="postStore.pagination.pageSize"
@@ -97,6 +91,7 @@ import LoadingSkeleton from '@/components/common/LoadingSkeleton.vue'
 import ErrorState from '@/components/common/ErrorState.vue'
 import EmptyState from '@/components/common/EmptyState.vue'
 import UserAvatar from '@/components/common/UserAvatar.vue'
+import PageHeader from '@/components/common/PageHeader.vue'
 import type { BoardMasterInfo } from '@/types/board'
 
 const route = useRoute()
@@ -181,24 +176,9 @@ onMounted(() => {
   padding: var(--spacing-lg) var(--spacing-md);
 }
 
-.board-info {
-  margin-bottom: var(--spacing-lg);
-}
-
-.board-info h1 {
-  font-size: var(--font-size-xxl);
-  font-weight: 700;
-  color: var(--color-text-primary);
-  margin-bottom: var(--spacing-xs);
-}
-
-.board-info p {
+.board-desc {
   font-size: var(--font-size-sm);
   color: var(--color-text-secondary);
-}
-
-.bm-badge {
-  vertical-align: middle;
 }
 
 .board-masters {
@@ -231,6 +211,13 @@ onMounted(() => {
   align-items: center;
   justify-content: space-between;
   margin-bottom: var(--spacing-md);
+}
+
+.post-list-wrapper {
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-md);
+  overflow: hidden;
 }
 
 .fab-btn {

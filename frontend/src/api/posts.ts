@@ -9,6 +9,7 @@ export const postsAPI = {
     page?: number
     page_size?: number
     sort_by?: string
+    is_featured?: boolean
   }): Promise<PaginatedData<PostRead>> {
     return httpClient.get('/api/v1/posts/', { params })
   },

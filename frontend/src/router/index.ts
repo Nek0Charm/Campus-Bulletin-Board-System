@@ -16,6 +16,12 @@ const routes: RouteRecordRaw[] = [
     meta: { title: '登录/注册', requiresGuest: true },
   },
   {
+    path: '/boards',
+    name: 'BoardList',
+    component: () => import('@/views/board/BoardListView.vue'),
+    meta: { title: '版面列表' },
+  },
+  {
     path: '/boards/:slug',
     name: 'BoardPosts',
     component: () => import('@/views/board/BoardPostsView.vue'),
@@ -26,6 +32,18 @@ const routes: RouteRecordRaw[] = [
     name: 'Search',
     component: () => import('@/views/search/SearchView.vue'),
     meta: { title: '搜索帖子' },
+  },
+  {
+    path: '/latest',
+    name: 'LatestPosts',
+    component: () => import('@/views/post/LatestPostsView.vue'),
+    meta: { title: '最新帖子' },
+  },
+  {
+    path: '/featured',
+    name: 'FeaturedPosts',
+    component: () => import('@/views/post/FeaturedPostsView.vue'),
+    meta: { title: '精选帖子' },
   },
   {
     path: '/posts/:id',
@@ -97,6 +115,12 @@ const routes: RouteRecordRaw[] = [
         name: 'AdminBoards',
         component: () => import('@/views/admin/AdminBoardsView.vue'),
         meta: { title: '管理后台 - 板块管理' },
+      },
+      {
+        path: 'announcements',
+        name: 'AdminAnnouncements',
+        component: () => import('@/views/admin/AdminAnnouncementsView.vue'),
+        meta: { title: '管理后台 - 公告管理' },
       },
     ],
   },

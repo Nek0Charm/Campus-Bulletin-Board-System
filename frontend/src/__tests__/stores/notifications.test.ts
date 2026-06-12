@@ -18,18 +18,20 @@ import { notificationsAPI } from '@/api/notifications'
 function makeMockNotification(overrides: Partial<NotificationRead> = {}): NotificationRead {
   return {
     id: 'notif-1',
+    recipient_id: 'user-1',
     type: 'comment',
     actor: {
       id: 'user-2',
       username: 'commenter',
       nickname: 'Commenter',
-      avatar_url: null,
+      avatar_url: undefined,
     },
-    post_id: 'post-1',
-    comment_id: 'comment-1',
+    title: '新评论',
+    related_type: 'post',
+    related_id: 'post-1',
     content: '评论了你的帖子',
     is_read: false,
-    read_at: null,
+    read_at: undefined,
     created_at: '2026-01-01T00:00:00Z',
     ...overrides,
   }
@@ -122,8 +124,8 @@ describe('useNotificationStore', () => {
       await store.markRead('n1')
 
       expect(notificationsAPI.markRead).toHaveBeenCalledWith('n1')
-      expect(store.notifications[0].is_read).toBe(true)
-      expect(store.notifications[0].read_at).toBeTruthy()
+      expect(store.notifications[0]!.is_read).toBe(true)
+      expect(store.notifications[0]!.read_at).toBeTruthy()
       expect(store.unreadCount).toBe(2)
     })
 
