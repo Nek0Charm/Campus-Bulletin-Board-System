@@ -54,6 +54,7 @@ declare module 'vue' {
     LoadingSkeleton: typeof import('./src/components/common/LoadingSkeleton.vue')['default']
     NotificationBell: typeof import('./src/components/notification/NotificationBell.vue')['default']
     NotificationItem: typeof import('./src/components/notification/NotificationItem.vue')['default']
+    PageHeader: typeof import('./src/components/common/PageHeader.vue')['default']
     PaginationBar: typeof import('./src/components/common/PaginationBar.vue')['default']
     PostForm: typeof import('./src/components/post/PostForm.vue')['default']
     PostListItem: typeof import('./src/components/post/PostListItem.vue')['default']

@@ -1,4 +1,7 @@
 :root {
+  --el-border-radius-base: 8px;
+  --el-bg-color-page: #f5f7fa;
+
   --color-primary: #409eff;
   --color-primary-light: #66b1ff;
   --color-primary-dark: #3a8ee6;
@@ -72,7 +75,7 @@ html {
 body {
   font-family: var(--font-family-base);
   color: var(--color-text-primary);
-  background: var(--color-bg-page);
+  background: var(--el-bg-color-page, #f5f7fa);
   line-height: var(--line-height-base);
   min-height: 100vh;
 }

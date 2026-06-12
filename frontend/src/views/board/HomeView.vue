@@ -61,7 +61,7 @@ function goToBoard(slug: string) {
 .content-container {
   max-width: var(--content-max-width);
   margin: 0 auto;
-  padding: var(--spacing-xl) var(--spacing-md);
+  padding: var(--spacing-lg) var(--spacing-md);
 }
 
 .page-hero {

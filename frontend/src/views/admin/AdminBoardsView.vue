@@ -20,9 +20,9 @@
         <el-table-column prop="sort_order" label="排序" width="70" />
         <el-table-column label="操作" min-width="320">
           <template #default="{ row }">
-            <el-button size="small" @click="openEditDialog(row)">编辑</el-button>
-            <el-button size="small" type="danger" @click="handleDelete(row)">删除</el-button>
-            <el-button size="small" type="warning" @click="openMastersDialog(row)"
+            <el-button link size="small" @click="openEditDialog(row)">编辑</el-button>
+            <el-button link size="small" type="danger" @click="handleDelete(row)">删除</el-button>
+            <el-button link size="small" type="warning" @click="openMastersDialog(row)"
               >管理版主</el-button
             >
           </template>

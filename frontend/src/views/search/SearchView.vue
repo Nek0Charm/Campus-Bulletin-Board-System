@@ -1,58 +1,57 @@
 <template>
   <div class="search-page">
     <div class="content-container">
-      <el-breadcrumb separator=">">
-        <el-breadcrumb-item :to="{ name: 'Home' }">首页</el-breadcrumb-item>
-        <el-breadcrumb-item>搜索</el-breadcrumb-item>
-      </el-breadcrumb>
+      <PageHeader
+        title="搜索帖子"
+        :breadcrumbs="[{ label: '首页', to: { name: 'Home' } }, { label: '搜索' }]"
+      >
+        <template #actions>
+          <div class="keyword-row">
+            <el-input
+              v-model="keyword"
+              clearable
+              placeholder="搜索标题或正文"
+              @keyup.enter="submitSearch()"
+            >
+              <template #prefix>
+                <el-icon><Search /></el-icon>
+              </template>
+            </el-input>
+            <el-button type="primary" @click="submitSearch()">搜索</el-button>
+          </div>
+        </template>
 
-      <div class="search-header">
-        <h1>搜索帖子</h1>
-        <div class="keyword-row">
-          <el-input
-            v-model="keyword"
+        <div class="filters">
+          <el-select
+            v-model="selectedBoardId"
             clearable
-            placeholder="搜索标题或正文"
-            @keyup.enter="submitSearch()"
+            placeholder="全部板块"
+            @change="handleFilterChange"
           >
-            <template #prefix>
-              <el-icon><Search /></el-icon>
-            </template>
-          </el-input>
-          <el-button type="primary" @click="submitSearch()">搜索</el-button>
-        </div>
-      </div>
+            <el-option
+              v-for="board in boardStore.boards"
+              :key="board.id"
+              :label="board.name"
+              :value="board.id"
+            />
+          </el-select>
 
-      <div class="filters">
-        <el-select
-          v-model="selectedBoardId"
-          clearable
-          placeholder="全部板块"
-          @change="handleFilterChange"
-        >
-          <el-option
-            v-for="board in boardStore.boards"
-            :key="board.id"
-            :label="board.name"
-            :value="board.id"
+          <el-date-picker
+            v-model="dateRange"
+            type="daterange"
+            value-format="YYYY-MM-DD"
+            start-placeholder="开始日期"
+            end-placeholder="结束日期"
+            @change="handleFilterChange"
           />
-        </el-select>
 
-        <el-date-picker
-          v-model="dateRange"
-          type="daterange"
-          value-format="YYYY-MM-DD"
-          start-placeholder="开始日期"
-          end-placeholder="结束日期"
-          @change="handleFilterChange"
-        />
-
-        <el-radio-group v-model="sortBy" size="small" @change="handleFilterChange">
-          <el-radio-button value="relevance">相关度</el-radio-button>
-          <el-radio-button value="hot">热度</el-radio-button>
-          <el-radio-button value="time">时间</el-radio-button>
-        </el-radio-group>
-      </div>
+          <el-radio-group v-model="sortBy" size="small" @change="handleFilterChange">
+            <el-radio-button value="relevance">相关度</el-radio-button>
+            <el-radio-button value="hot">热度</el-radio-button>
+            <el-radio-button value="time">时间</el-radio-button>
+          </el-radio-group>
+        </div>
+      </PageHeader>
 
       <div v-if="searched && !loading" class="result-summary">
         找到 {{ pagination.total }} 条与“{{ routeKeyword }}”相关的帖子
@@ -98,6 +97,7 @@ import PaginationBar from '@/components/common/PaginationBar.vue'
 import LoadingSkeleton from '@/components/common/LoadingSkeleton.vue'
 import ErrorState from '@/components/common/ErrorState.vue'
 import EmptyState from '@/components/common/EmptyState.vue'
+import PageHeader from '@/components/common/PageHeader.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -241,20 +241,6 @@ watch(
   max-width: var(--content-max-width);
   margin: 0 auto;
   padding: var(--spacing-lg) var(--spacing-md);
-}
-
-.search-header {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: var(--spacing-lg);
-  margin: var(--spacing-lg) 0;
-}
-
-.search-header h1 {
-  font-size: var(--font-size-xxl);
-  font-weight: 700;
-  color: var(--color-text-primary);
 }
 
 .keyword-row {

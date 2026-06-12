@@ -1,13 +1,14 @@
 <template>
   <div class="user-posts-page">
     <div class="content-container">
-      <el-breadcrumb separator=">">
-        <el-breadcrumb-item :to="{ name: 'Home' }">首页</el-breadcrumb-item>
-        <el-breadcrumb-item :to="{ name: 'Profile' }">个人中心</el-breadcrumb-item>
-        <el-breadcrumb-item>我的帖子</el-breadcrumb-item>
-      </el-breadcrumb>
-
-      <h1>我的帖子</h1>
+      <PageHeader
+        title="我的帖子"
+        :breadcrumbs="[
+          { label: '首页', to: { name: 'Home' } },
+          { label: '个人中心', to: { name: 'Profile' } },
+          { label: '我的帖子' },
+        ]"
+      />
 
       <LoadingSkeleton v-if="loading" type="list-item" :count="5" />
       <ErrorState v-else-if="error" :message="error" @retry="fetchMyPosts" />
@@ -46,6 +47,7 @@ import PaginationBar from '@/components/common/PaginationBar.vue'
 import LoadingSkeleton from '@/components/common/LoadingSkeleton.vue'
 import ErrorState from '@/components/common/ErrorState.vue'
 import EmptyState from '@/components/common/EmptyState.vue'
+import PageHeader from '@/components/common/PageHeader.vue'
 import type { PostRead } from '@/types/post'
 import { DEFAULT_PAGE_SIZE } from '@/utils/constants'
 
@@ -90,12 +92,5 @@ onMounted(() => fetchMyPosts())
   max-width: var(--content-max-width);
   margin: 0 auto;
   padding: var(--spacing-lg) var(--spacing-md);
-}
-
-.content-container h1 {
-  font-size: var(--font-size-xxl);
-  font-weight: 700;
-  color: var(--color-text-primary);
-  margin: var(--spacing-md) 0 var(--spacing-lg);
 }
 </style>

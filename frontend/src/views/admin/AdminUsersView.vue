@@ -48,6 +48,7 @@
           <template #default="{ row }">
             <el-button
               v-if="row.status === 'active'"
+              link
               size="small"
               type="warning"
               @click="handleBan(row.id)"
@@ -56,6 +57,7 @@
             </el-button>
             <el-button
               v-if="row.status === 'banned'"
+              link
               size="small"
               type="success"
               @click="handleActivate(row.id)"
@@ -64,6 +66,7 @@
             </el-button>
             <el-button
               v-if="!row.email_verified"
+              link
               size="small"
               type="success"
               @click="handleVerifyEmail(row.id)"
@@ -71,10 +74,14 @@
               激活
             </el-button>
             <template v-if="isUserMuted(row)">
-              <el-button size="small" type="info" @click="handleUnmute(row)"> 解除禁言 </el-button>
+              <el-button link size="small" type="info" @click="handleUnmute(row)">
+                解除禁言
+              </el-button>
             </template>
             <template v-else>
-              <el-button size="small" type="warning" @click="openMuteDialog(row)"> 禁言 </el-button>
+              <el-button link size="small" type="warning" @click="openMuteDialog(row)">
+                禁言
+              </el-button>
             </template>
           </template>
         </el-table-column>

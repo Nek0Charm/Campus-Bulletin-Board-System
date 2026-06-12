@@ -76,7 +76,7 @@ function toggleCollapse() {
 .admin-main {
   flex: 1;
   padding: var(--spacing-lg);
-  background: var(--color-bg-page);
+  background: var(--el-bg-color-page, #f5f7fa);
   overflow-y: auto;
 }
 

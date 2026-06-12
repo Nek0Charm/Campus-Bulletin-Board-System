@@ -60,17 +60,17 @@ const preview = computed(() => {
   align-items: center;
   justify-content: space-between;
   padding: var(--spacing-md);
-  background: var(--color-bg-card);
-  border: 1px solid var(--color-border-light);
-  border-radius: var(--radius-sm);
   cursor: pointer;
   transition: all var(--transition-fast);
-  margin-bottom: var(--spacing-sm);
+  border-bottom: 1px solid var(--el-border-color-lighter);
+}
+
+.post-list-item:last-child {
+  border-bottom: none;
 }
 
 .post-list-item:hover {
-  border-color: var(--color-primary-light);
-  box-shadow: var(--shadow-sm);
+  background-color: var(--el-fill-color-light, #fafafa);
 }
 
 .post-main {
@@ -88,7 +88,7 @@ const preview = computed(() => {
 .post-title {
   font-size: var(--font-size-md);
   font-weight: 500;
-  color: var(--color-text-primary);
+  color: var(--el-text-color-primary);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -99,7 +99,7 @@ const preview = computed(() => {
   align-items: center;
   gap: var(--spacing-xs);
   font-size: var(--font-size-xs);
-  color: var(--color-text-secondary);
+  color: var(--el-text-color-secondary);
 }
 
 .meta-author {

@@ -1,22 +1,21 @@
 <template>
   <div class="notifications-page">
     <div class="content-container">
-      <el-breadcrumb separator=">">
-        <el-breadcrumb-item :to="{ name: 'Home' }">首页</el-breadcrumb-item>
-        <el-breadcrumb-item>通知</el-breadcrumb-item>
-      </el-breadcrumb>
-
-      <div class="page-header">
-        <h1>通知</h1>
-        <el-button
-          v-if="store.notifications.length && store.unreadCount > 0"
-          text
-          type="primary"
-          @click="handleMarkAllRead"
-        >
-          全部标为已读
-        </el-button>
-      </div>
+      <PageHeader
+        title="通知"
+        :breadcrumbs="[{ label: '首页', to: { name: 'Home' } }, { label: '通知' }]"
+      >
+        <template #actions>
+          <el-button
+            v-if="store.notifications.length && store.unreadCount > 0"
+            text
+            type="primary"
+            @click="handleMarkAllRead"
+          >
+            全部标为已读
+          </el-button>
+        </template>
+      </PageHeader>
 
       <LoadingSkeleton v-if="store.loading" type="list-item" :count="5" />
       <EmptyState
@@ -68,6 +67,7 @@ import { formatTimeAgo } from '@/utils/format'
 import LoadingSkeleton from '@/components/common/LoadingSkeleton.vue'
 import EmptyState from '@/components/common/EmptyState.vue'
 import PaginationBar from '@/components/common/PaginationBar.vue'
+import PageHeader from '@/components/common/PageHeader.vue'
 import type { NotificationRead } from '@/types/notification'
 
 const store = useNotificationStore()
@@ -104,19 +104,6 @@ onMounted(() => {
   padding: var(--spacing-lg) var(--spacing-md);
 }
 
-.page-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: var(--spacing-lg);
-}
-
-.page-header h1 {
-  font-size: var(--font-size-xxl);
-  font-weight: 700;
-  color: var(--color-text-primary);
-}
-
 .notification-list {
   background: var(--color-bg-card);
   border: 1px solid var(--color-border-light);
@@ -142,7 +129,7 @@ onMounted(() => {
 }
 
 .notification-item.unread {
-  background: #ecf5ff;
+  background: var(--el-color-primary-light-9, #ecf5ff);
 }
 
 .notif-left {

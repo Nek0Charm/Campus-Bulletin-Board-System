@@ -112,7 +112,7 @@ watch(
   padding: 0 var(--spacing-lg);
   background: var(--color-bg-card);
   border-bottom: 1px solid var(--color-border-light);
-  box-shadow: var(--shadow-sm);
+  box-shadow: none;
 }
 
 .header-left {

@@ -3,7 +3,7 @@
     <div class="content-container">
       <el-breadcrumb separator=">">
         <el-breadcrumb-item :to="{ name: 'Home' }">首页</el-breadcrumb-item>
-        <el-breadcrumb-item :to="backRoute">板块</el-breadcrumb-item>
+        <el-breadcrumb-item v-if="backRoute" :to="backRoute">{{ backLabel }}</el-breadcrumb-item>
         <el-breadcrumb-item>{{ post?.title || '帖子详情' }}</el-breadcrumb-item>
       </el-breadcrumb>
 
@@ -32,24 +32,35 @@
 
         <!-- Author/Admin/BoardMaster actions -->
         <div class="post-actions" v-if="canEdit || canDelete || authStore.isAdmin || canModerate">
-          <el-button v-if="isAuthor" size="small" @click="$router.push(`/posts/${post.id}/edit`)">
-            <el-icon><Edit /></el-icon>编辑
-          </el-button>
-          <el-button v-if="canDelete" size="small" type="danger" @click="confirmDelete">
-            <el-icon><Delete /></el-icon>删除
-          </el-button>
-          <el-button v-if="authStore.isAdmin || canModerate" size="small" @click="togglePin">
-            {{ post.is_pinned ? '取消置顶' : '置顶' }}
-          </el-button>
-          <el-button v-if="authStore.isAdmin || canModerate" size="small" @click="toggleFeature">
-            {{ post.is_featured ? '取消加精' : '加精' }}
-          </el-button>
+          <el-dropdown trigger="click">
+            <el-button text size="small">
+              <el-icon><MoreFilled /></el-icon>更多操作
+            </el-button>
+            <template #dropdown>
+              <el-dropdown-menu>
+                <el-dropdown-item v-if="isAuthor" @click="$router.push(`/posts/${post.id}/edit`)">
+                  <el-icon><Edit /></el-icon>编辑
+                </el-dropdown-item>
+                <el-dropdown-item v-if="canDelete" @click="confirmDelete">
+                  <el-icon><Delete /></el-icon>删除
+                </el-dropdown-item>
+                <el-dropdown-item v-if="authStore.isAdmin || canModerate" @click="togglePin">
+                  {{ post.is_pinned ? '取消置顶' : '置顶' }}
+                </el-dropdown-item>
+                <el-dropdown-item v-if="authStore.isAdmin || canModerate" @click="toggleFeature">
+                  {{ post.is_featured ? '取消加精' : '加精' }}
+                </el-dropdown-item>
+              </el-dropdown-menu>
+            </template>
+          </el-dropdown>
         </div>
 
         <el-divider />
 
         <!-- Post Content -->
-        <div class="post-content markdown-body" v-html="renderMarkdown(post.content ?? '')" />
+        <div class="post-content-wrapper">
+          <div class="post-content markdown-body" v-html="renderMarkdown(post.content ?? '')" />
+        </div>
 
         <el-divider />
 
@@ -67,18 +78,19 @@
 
       <!-- Comments Section -->
       <div v-if="post" class="comments-section">
-        <LoadingSkeleton v-if="commentsLoading" type="list-item" :count="3" />
-        <div v-else>
-          <CommentTree
-            :comments="comments"
-            :total-count="post.comment_count"
-            :liked-set="likedComments"
-            @reply="handleReply"
-            @toggle-like="handleCommentLike"
-            @delete="handleCommentDelete"
-          />
+        <div class="comments-card">
+          <LoadingSkeleton v-if="commentsLoading" type="list-item" :count="3" />
+          <div v-else>
+            <CommentTree
+              :comments="comments"
+              :total-count="post.comment_count"
+              :liked-set="likedComments"
+              @reply="handleReply"
+              @toggle-like="handleCommentLike"
+              @delete="handleCommentDelete"
+            />
+          </div>
         </div>
-
         <!-- Comment Form -->
         <div class="comment-input-area">
           <template v-if="authStore.isAuthenticated">
@@ -110,11 +122,13 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Edit, Delete, ChatDotRound } from '@element-plus/icons-vue'
+import { Edit, Delete, ChatDotRound, MoreFilled } from '@element-plus/icons-vue'
 import ThumbsUp from '@/components/common/ThumbsUp.vue'
 import { renderMarkdown } from '@/utils/markdown'
+import '@/styles/markdown.css'
 import { usePostStore } from '@/stores/posts'
 import { useAuthStore } from '@/stores/auth'
+import { useBoardStore } from '@/stores/boards'
 import { postsAPI } from '@/api/posts'
 import { likesAPI } from '@/api/likes'
 import { commentsAPI } from '@/api/comments'
@@ -133,6 +147,7 @@ const route = useRoute()
 const router = useRouter()
 const postStore = usePostStore()
 const authStore = useAuthStore()
+const boardStore = useBoardStore()
 
 const loading = ref(false)
 const error = ref<string | null>(null)
@@ -148,8 +163,16 @@ const canEdit = computed(() => isAuthor.value || authStore.isAdmin)
 const canDelete = computed(() => isAuthor.value || authStore.isAdmin || canModerate.value)
 
 const backRoute = computed(() => {
-  if (post.value?.board_id) return { name: 'Home' }
-  return { name: 'Home' }
+  if (!post.value?.board_id) return undefined
+  const board = boardStore.boards.find((b) => b.id === post.value?.board_id)
+  if (board) return { path: `/boards/${board.slug}` }
+  return undefined
+})
+
+const backLabel = computed(() => {
+  if (!post.value?.board_id) return undefined
+  const board = boardStore.boards.find((b) => b.id === post.value?.board_id)
+  return board?.name || '板块'
 })
 
 async function loadPost() {
@@ -159,6 +182,13 @@ async function loadPost() {
     await postStore.fetchPostById(route.params.id as string)
     if (post.value?.is_liked !== undefined) {
       liked.value = post.value.is_liked
+    }
+    if (post.value?.board_id && !boardStore.boards.length) {
+      try {
+        await boardStore.fetchBoards()
+      } catch {
+        /* silent */
+      }
     }
     if (post.value?.board_id && authStore.currentUser?.id) {
       try {
@@ -412,110 +442,22 @@ onMounted(() => {
   margin-top: var(--spacing-md);
 }
 
+.post-content-wrapper {
+  max-width: 860px;
+  margin: 0 auto;
+}
+
+@media (max-width: 767px) {
+  .post-content-wrapper {
+    max-width: 100%;
+  }
+}
+
 .post-content {
   font-size: var(--font-size-base);
   line-height: var(--line-height-base);
   color: var(--color-text-primary);
   min-height: 100px;
-}
-
-.post-content :deep(h1) {
-  font-size: 1.6em;
-  margin: 1em 0 0.5em;
-  font-weight: 700;
-  border-bottom: 1px solid var(--color-border-light);
-  padding-bottom: 0.3em;
-}
-.post-content :deep(h2) {
-  font-size: 1.4em;
-  margin: 1em 0 0.5em;
-  font-weight: 700;
-}
-.post-content :deep(h3) {
-  font-size: 1.2em;
-  margin: 0.8em 0 0.4em;
-  font-weight: 600;
-}
-.post-content :deep(h4) {
-  font-size: 1.1em;
-  margin: 0.8em 0 0.4em;
-  font-weight: 600;
-}
-.post-content :deep(p) {
-  margin-bottom: 1em;
-  line-height: 1.8;
-}
-.post-content :deep(ul),
-.post-content :deep(ol) {
-  padding-left: 2em;
-  margin-bottom: 1em;
-  line-height: 1.8;
-}
-.post-content :deep(li) {
-  margin-bottom: 0.25em;
-}
-.post-content :deep(blockquote) {
-  border-left: 4px solid var(--color-primary-light, #409eff);
-  padding: 0.5em 1em;
-  margin: 0 0 1em;
-  color: var(--color-text-secondary);
-  background: var(--color-bg-subtle, #f5f7fa);
-  border-radius: 0 4px 4px 0;
-}
-.post-content :deep(pre) {
-  background: #f6f8fa;
-  border-radius: 6px;
-  padding: 16px;
-  overflow-x: auto;
-  margin-bottom: 1em;
-  font-size: 0.9em;
-  line-height: 1.5;
-}
-.post-content :deep(code) {
-  background: rgba(175, 184, 193, 0.2);
-  border-radius: 3px;
-  padding: 2px 6px;
-  font-size: 0.9em;
-  font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
-}
-.post-content :deep(pre code) {
-  background: none;
-  padding: 0;
-  border-radius: 0;
-}
-.post-content :deep(table) {
-  width: 100%;
-  border-collapse: collapse;
-  margin-bottom: 1em;
-  line-height: 1.6;
-}
-.post-content :deep(th),
-.post-content :deep(td) {
-  border: 1px solid var(--color-border, #dcdfe6);
-  padding: 8px 12px;
-  text-align: left;
-}
-.post-content :deep(th) {
-  background: var(--color-bg-subtle, #f5f7fa);
-  font-weight: 600;
-}
-.post-content :deep(img) {
-  max-width: 100%;
-  height: auto;
-  border-radius: 4px;
-  margin: 1em 0;
-}
-.post-content :deep(hr) {
-  border: none;
-  border-top: 1px solid var(--color-border, #dcdfe6);
-  margin: 1.5em 0;
-}
-.post-content :deep(a) {
-  color: var(--color-primary, #409eff);
-  text-decoration: none;
-}
-.post-content :deep(a:hover) {
-  text-decoration: underline;
 }
 
 .interaction-bar {
@@ -534,6 +476,13 @@ onMounted(() => {
 
 .comments-section {
   margin-top: var(--spacing-lg);
+}
+
+.comments-card {
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-lg);
 }
 
 .comment-input-area {
