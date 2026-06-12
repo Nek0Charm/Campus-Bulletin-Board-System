@@ -28,7 +28,7 @@ function makeMockPost(overrides: Partial<PostRead> = {}): PostRead {
       id: 'user-1',
       username: 'author',
       nickname: 'Author',
-      avatar_url: null,
+      avatar_url: undefined,
     },
     is_pinned: false,
     is_featured: false,
@@ -213,7 +213,7 @@ describe('usePostStore', () => {
 
       store.updateLikeCount('p1', 1)
 
-      expect(store.postList[0].like_count).toBe(6)
+      expect(store.postList[0]!.like_count).toBe(6)
     })
 
     it('increments like_count on currentPost when it matches', () => {
@@ -233,7 +233,7 @@ describe('usePostStore', () => {
 
       store.updateLikeCount('p1', -1)
 
-      expect(store.postList[0].like_count).toBe(0)
+      expect(store.postList[0]!.like_count).toBe(0)
     })
 
     it('no-ops when post not found', () => {
@@ -250,7 +250,7 @@ describe('usePostStore', () => {
 
       store.updateCommentCount('p1', 1)
 
-      expect(store.postList[0].comment_count).toBe(11)
+      expect(store.postList[0]!.comment_count).toBe(11)
     })
 
     it('decrements comment_count and clamps to 0', () => {
@@ -260,7 +260,7 @@ describe('usePostStore', () => {
 
       store.updateCommentCount('p1', -2)
 
-      expect(store.postList[0].comment_count).toBe(0)
+      expect(store.postList[0]!.comment_count).toBe(0)
     })
   })
 })

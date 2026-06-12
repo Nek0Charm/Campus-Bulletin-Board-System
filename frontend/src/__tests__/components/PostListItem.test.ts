@@ -24,7 +24,7 @@ function makeMockPost(overrides: Partial<PostRead> = {}): PostRead {
       id: 'user-1',
       username: 'testauthor',
       nickname: 'Test Author',
-      avatar_url: null,
+      avatar_url: undefined,
     },
     is_pinned: false,
     is_featured: false,
@@ -62,7 +62,7 @@ describe('PostListItem', () => {
     const wrapper = mountWithSetup(PostListItem, {
       props: {
         post: makeMockPost({
-          author: { id: 'u1', username: 'no_nick', nickname: undefined, avatar_url: null },
+          author: { id: 'u1', username: 'no_nick', nickname: undefined, avatar_url: undefined },
         }),
       },
     })

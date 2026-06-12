@@ -25,7 +25,6 @@ const mockBoard: Board = {
   sort_order: 1,
   post_count: 3,
   created_at: '2026-01-01T00:00:00Z',
-  updated_at: '2026-01-01T00:00:00Z',
 }
 
 const mockBoards: Board[] = [
@@ -34,11 +33,10 @@ const mockBoards: Board[] = [
     id: 'board-2',
     name: '校园生活',
     slug: 'campus-life',
-    description: null as unknown as string,
+    description: undefined,
     sort_order: 2,
     post_count: 0,
     created_at: '2026-01-01T00:00:00Z',
-    updated_at: '2026-01-01T00:00:00Z',
   },
 ]
 

@@ -28,17 +28,15 @@ const mockBoards: Board[] = [
     sort_order: 1,
     post_count: 5,
     created_at: '2026-01-01T00:00:00Z',
-    updated_at: '2026-01-01T00:00:00Z',
   },
   {
     id: 'board-2',
     name: '校园生活',
     slug: 'campus',
-    description: null as unknown as string,
+    description: undefined,
     sort_order: 2,
     post_count: 0,
     created_at: '2026-01-01T00:00:00Z',
-    updated_at: '2026-01-01T00:00:00Z',
   },
 ]
 
@@ -70,8 +68,8 @@ describe('BoardSelector', () => {
 
     const options = wrapper.findAll('.el-option')
     expect(options).toHaveLength(2)
-    expect(options[0].text()).toBe('课程讨论')
-    expect(options[1].text()).toBe('校园生活')
+    expect(options[0]!.text()).toBe('课程讨论')
+    expect(options[1]!.text()).toBe('校园生活')
   })
 
   it('passes modelValue to el-select', () => {
